@@ -44,51 +44,16 @@
           }
         });
         
-        function openDeviceNav() {
-            document.getElementById("myDevicenav").style.width = "350px";
-            document.getElementById("myDevicenav").style.visibility = "all";
-        }
-
-        function closeDeviceNav() {
-            document.getElementById("myDevicenav").style.width = "0px";
-            document.getElementById("myDevicenav").style.visibility = "hidden";
-        }
-        
-        window.addEventListener('click', function(e){   
-          if (!document.getElementById('myDevicenav').contains(e.target) && !document.getElementById('myDeviceMenu').contains(e.target)){
-            // Clicked in box
-           document.getElementById("myDevicenav").style.width = "0px";  
-           document.getElementById("myDevicenav").style.visibility = "hidden";
-          } else{
-           
-         // document.getElementById("mySidenav").style.width = "0px";
-         document.getElementById("myDevicenav").style.visibility = "visible";
-          }
-        });
-
         </script>
         
         
-        <div id="mySidenav" class="sidenav" onmouseleave="closeNav()" style="left: 0%;">
-          <a href="#" class="nav-link">Dashboard</a>
+        <div id="mySidenav" class="sidenav" onmouseleave="closeNav()">
           <a href="#" class="nav-link">Config</a>
           <a href="#" class="nav-link">Logs</a>
           <a href="#" class="nav-link">Terminal</a>
           <a href="#" class="nav-link">Comms</a>
           <a href="#" class="nav-link">DAQ</a>
         </div>
-
-
-        <div id="myDevicenav" class="sidenav" onmouseleave="closeDeviceNav()" style="left: 82%;">
-            <a href="#" class="nav-link">WiFi</a>
-            <a href="#" class="nav-link">Mavlink</a>
-            <a href="#" class="nav-link">Bluetooth</a>
-            <a href="#" class="nav-link">LabJack</a>
-            <a href="#" class="nav-link">RS</a>
-            <a href="#" class="nav-link">SSH</a>
-            <a href="#" class="nav-link">LoRa</a>
-          </div>
-      
     
   
 
@@ -99,21 +64,14 @@
         -->
         <div id="page-container" class="modern-sf">
             <!-- Header -->
-            <header id="page-header" class=" hidden-xs">
-                <h1 class="h3 font-w200 ">
+            <header id="page-header">
+                <div class="h3 text-right pull-right hidden-xs">
+                    <div class="text-crystal font-w300">DEVICE_{}</div>
+                    <div class="text-success animated infinite pulse pull-right">[LIVE]</div>
+                </div>
+                <h1 class="h3 font-w200">
                     <span class="text-crystal">//</span> <a onmouseover="openNav()" style="font-size:30px;cursor:pointer" class="link-sf font-w300" id="myMenu" onclick="openNav()" >COMMS</a>
                 </h1>
-                
-
-
-                <div class="h3 text-right pull-right hidden-xs">  
-                    <div class="text-crystal font-w300" style="font-size:30px;cursor:pointer" class="link-sf font-w300"">                    <h1 class="h3 font-w200" text-right pull-right>
-                        <span class="text-crystal">//</span> <a onmouseover="openDeviceNav()" style="font-size:30px;cursor:pointer; position: relative;" class="link-sf font-w300" id="myDeviceMenu" onclick="openDeviceNav()" >DEVICE_{}</a>
-                    </h1></div>
-
-                    <div class="text-danger animated infinite pulse pull-right">[LIVE]</div>
-                </div>
-
             </header>
             <!-- END Header -->
 

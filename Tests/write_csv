@@ -1,0 +1,15 @@
+# importing pandas as pd
+import pandas as pd
+
+# list of name, degree, score
+time = [0, 1, 2, 3]
+A0 = [90, 40, 80, 98]
+A1 = [90, 40, 80, 98]
+Relay_Val = [True, False, True, False]
+
+# dictionary of lists
+dict = {'time_elapsed': time, 'A0': A0, 'A1': A1, 'Relay_Val': Relay_Val}
+	
+df = pd.DataFrame(dict)
+
+print(df)
