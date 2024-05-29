@@ -2,10 +2,142 @@
 import sys
 # the mock-0.3.1 dir contains testcase.py, testutils.py & mock.py
 import imp
+import importlib.util
+import random
 import threading
+import time
+
+import webview
 #engine = imp.load_source("engine","Engine/engine.py")
 #gui = imp.load_source("gui","Gui/app.py")
     
+class HeavyStuffAPI:
+    def __init__(self):
+        self.cancel_heavy_stuff_flag = False
+
+    def doHeavyStuff(self):
+        time.sleep(0.1)  # sleep to prevent from the ui thread from freezing for a moment
+        now = time.time()
+        self.cancel_heavy_stuff_flag = False
+        for i in range(0, 1000000):
+            _ = i * random.randint(0, 1000)
+            if self.cancel_heavy_stuff_flag:
+                response = {'message': 'Operation cancelled'}
+                break
+        else:
+            then = time.time()
+            response = {
+                'message': 'Operation took {0:.1f} seconds on the thread {1}'.format(
+                    (then - now), threading.current_thread()
+                )
+            }
+        return response
+
+    def cancelHeavyStuff(self):
+        time.sleep(0.1)
+        self.cancel_heavy_stuff_flag = True
+
+class NotExposedApi:
+    def notExposedMethod(self):
+        return 'This method is not exposed'
+
+class Api:
+    heavy_stuff = HeavyStuffAPI()
+    _this_wont_be_exposed = NotExposedApi()
+    lj = None
+
+    def init(self):
+        response = {'message': 'Hello from Python {0}'.format(sys.version)}
+        return response
+
+    def getRandomNumber(self):
+        response = {
+            'message': 'Here is a random number courtesy of randint: {0}'.format(
+                random.randint(0, 100000000)
+            )
+        }
+        return response
+
+    def sayHelloTo(self, name):
+        response = {'message': 'Hello {0}!'.format(name)}
+        return response
+    
+
+    def initLMJ(self):
+
+        lj = CommunicationHardwawre.Win_LJM().Win_LMJ()
+        self.lj = lj
+        self.lj.device.device_connect()
+        self.lj.device.device_setup()
+        response = {'message': 'LMJ initialized'}
+        return response
+
+    def GetChartValue(self, name):
+
+        response = {'message': 'Hello {0}!'.format(name)}
+        return response 
+
+    def ToggleRelay(self, value):
+        int_value = int(value)
+        lj = self.lj
+        lj.device.fioState = int_value
+        response = {'message': 'Relay toggled to {0}'.format(int_value)}
+        return response
+    
+    
+    def StartRead(self):
+        lj = self.lj
+        reading_thread = threading.Thread(target=lj.device.read_loop, args=(lj.main_logger,)).start()
+        #read_thread = threading.Thread(target=lj.device.read_loop, args=(lj.main_logger,)).start()
+        return "Read thread started"
+    
+    def CloseDevice(self):
+        lj = self.lj
+        lj.device.device_close()
+        lj = None
+        return "Device closed"
+    
+    def createLog(self):
+        lj = self.lj
+        log = lj.main_logger.log_createdraft()
+        print(log)
+        return log
+
+    def createDF(self):
+        lj = self.lj
+        log = lj.main_logger.log_createdraft()
+        lj.data_handler.create_df_from_list(log[0], log[1])
+        print(lj.data_handler.df)
+        DFjson = lj.data_handler.df_to_json()
+        response = {'message': DFjson}
+        return response
+    
+    def saveDF(self, name):
+        lj = self.lj
+        #create directory if it doesnt exist
+        lj.folder_handler.create_folder("Logs/")
+        lj.data_handler.df_to_csv("Logs/"+name)
+        response = {'message': 'CSV saved'}
+        return response
+
+    def error(self):
+        raise Exception('This is a Python exception')
+
+
+    
+class ProcessHandler:
+    def start_engine():
+            spec = importlib.util.spec_from_file_location("engine", "Engine/engine.py")
+            engine = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(engine)
+            return engine
+
+
+    def start_gui():
+            spec = importlib.util.spec_from_file_location("gui", "Gui/app.py")
+            gui = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(gui)
+            return gui
 
 class CommunicationHardwawre:
     def Win_bluetooth():
@@ -25,8 +157,10 @@ class CommunicationHardwawre:
         return wifi    
     
     def Win_LJM():
-        CommsLJM = imp.load_source("CommsLJM","Modules/Win_LJM/Engine/CommsLJM.py")
-        return CommsLJM
+        #CommsLJM = importlib.import_module("Modules/Win_LJM/Engine/main.py")
+        sys.path.append("Modules/Win_LJM/Engine/")
+        import Win_LMJ
+        return Win_LMJ
     
     def Win_LoRa():
         CommsLJM = imp.load_source("CommsLoRa","Modules/Win_LoRa/Engine/CommsLoRa.py")
@@ -52,11 +186,24 @@ class CommunicationProtocol:
     
     
 if __name__ =="__main__":
-    engine = threading.Thread(target=imp.load_source("engine","Engine/engine.py"), args=(10,))
-    engine.start()
-    gui = threading.Thread(target= imp.load_source("gui","Gui/app.py"), args=(10,))
-    gui.start()
-    gui.join()
-    engine.join()
+    
+
+
+    
+    spec = importlib.util.spec_from_file_location("engine", "Engine/engine.py")
+    engine = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(engine)
+
+    
+    api = Api()
+    window = webview.create_window('JS API example', "GUI/aresUI/testv1.html", js_api=api)
+    webview.start()
+
+
+    
+
+    #engine_thread.join()
+    
+
  
     print("Done!")

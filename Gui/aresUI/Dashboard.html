@@ -47,7 +47,7 @@ let draggableElems = document.querySelectorAll('.draggable');
 let draggies = []
 // init Draggabillies
 for ( let draggableElem of draggableElems ) {
-  let draggie = new Draggabilly( draggableElem, {
+ let draggie = new Draggabilly( draggableElem, {
     containment: true,
     grid: [ 20, 20 ],
   });

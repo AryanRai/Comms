@@ -12,11 +12,12 @@ body {
     color: #e8f4ff;
     font-family: 'Open Sans', sans-serif;
     font-size: 13px;
-    background-image: url(../img/bg_ares.jpg);
+    background-image: url();
     background-size: cover;
     background-attachment: fixed;
     background-repeat: no-repeat;
 }
+
 
 h1, h2, h3, .h1, .h2, .h3, .heading {
     font-family: 'Raleway', sans-serif;
@@ -25,7 +26,7 @@ h1, h2, h3, .h1, .h2, .h3, .heading {
 }
 
 a {
-    color: #62d0f0;
+    color: #46cdba;
     font-weight: 600;
     -webkit-transition: color .15s ease-out;
     transition: color .15s ease-out;
@@ -153,7 +154,7 @@ a.link-sf:active:before {
 }
 
 #page-container.modern-sf:before {
-    background-color: rgba(0, 22, 41, .75);
+    background-color: rgb(0 0 0 / 75%);
 }
 
 #page-container.vintage-sf:before {

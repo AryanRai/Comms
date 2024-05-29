@@ -48,6 +48,7 @@ class LMJdevice:
     handle = None
     info = None
     deviceType = None
+    fioState = 0  # 0 or 1
     
     
 
@@ -75,7 +76,7 @@ class LMJdevice:
     
     def device_connect(self):
         # Open first found LabJack
-        #handle = ljm.openS("T7", "ANY", "ANY")  # Any device, Any connection, Any identifier
+        #self.handle = ljm.openS("T7", "ANY", "ANY")  # Any device, Any connection, Any identifier
         self.handle = ljm.openS("T7", "ANY", -2)  # demo modeS
         #handle = ljm.openS("T8", "ANY", "ANY")  # T8 device, Any connection, Any identifier
         #handle = ljm.openS("T7", "ANY", "ANY")  # T7 device, Any connection, Any identifier
@@ -144,7 +145,6 @@ class LMJdevice:
         #attach logger
         print("\nStarting %s read loops.%s\n" % (str(self.loopAmount), self.loopMessage))
         i = 0
-        fioState = 0
         intervalHandle = 1
         intervalValue = int(1000000 * delay)  # 2000000 microseconds = 2 seconds
         ljm.startInterval(intervalHandle, intervalValue)
@@ -159,8 +159,8 @@ class LMJdevice:
                     aNames = ["FIO5"]
                 else:
                     aNames = ["FIO1"]
-                fioState = 1  # 0 or 1
-                aValues = [fioState]
+                
+                aValues = [self.fioState]
                 numFrames = len(aNames)
                 ljm.eWriteNames(self.handle, numFrames, aNames, aValues)
                 print("\neWriteNames : " +
@@ -181,7 +181,7 @@ class LMJdevice:
                 print("eReadNames  : " +
                     "".join(["%s = %f, " % (aNames[j], aValues[j]) for j in range(numFrames)]))
                 if logger is not None:
-                    logger.log_add(time1, aValues[0], aValues[1], fioState)
+                    logger.log_add(time1, aValues[0], aValues[1], self.fioState)
                 # Repeat every 200 milli seconds
                 skippedIntervals = ljm.waitForNextInterval(intervalHandle)
                 if skippedIntervals > 0:

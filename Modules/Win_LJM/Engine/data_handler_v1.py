@@ -1,5 +1,6 @@
 # importing pandas as pd
 import pandas as pd
+import os
 
 class CSVDataHandler:
     df = None
@@ -21,6 +22,12 @@ class CSVDataHandler:
     def print_df(self):
         print(self.df)
 
+    def df_to_csv(self, path):
+        self.df.to_csv(path)
+    
+    def df_to_json(self):
+        return self.df.to_json(orient='records')
+
 class JSONDataHandler:
     def __init__(self, names, values):
         self.names = names
@@ -37,6 +44,11 @@ class JSONDataHandler:
     def print_json(self):
         print(self.json).pretty()
 
+class FolderHandler:
+    #create folder if it doesnt exist
+    def create_folder(self, path):
+        os.makedirs(path, exist_ok=True)
+        return True
 
     
 

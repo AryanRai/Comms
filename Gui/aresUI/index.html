@@ -26,6 +26,11 @@
     </head>
 
     <script>
+
+        //JS
+
+            
+        
         function openNav() {
             document.getElementById("mySidenav").style.width = "350px";
         }
@@ -75,7 +80,8 @@
           <a href="#" class="nav-link">Logs</a>
           <a href="#" class="nav-link">Terminal</a>
           <a href="#" class="nav-link">Comms</a>
-          <a href="#" class="nav-link">DAQ</a>
+          <a href="DAQ.html" class="nav-link">DAQ</a>
+          <a href="test.html" class="nav-link">Test</a>
         </div>
 
 
@@ -163,10 +169,10 @@
                                 <button class="btn btn-xl btn-block btn-sf push-10">PO_DATABASE</button>
                             </div>
                             <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="500">
-                                <button class="btn btn-xl btn-block btn-sf">ACTIVE_ROUTE</button>
+                                <button class="btn btn-xl btn-block btn-sf" onclick="TestFunction()">ACTIVE_ROUTE</button>
                             </div>
                             <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="500">
-                                <button class="btn btn-xl btn-block btn-sf">AUTO_PILOT</button>
+                                <button class="btn btn-xl btn-block btn-sf" onclick="pywebview.api.log('init msg from js')">AUTO_PILOT</button>
                             </div>
                         </div>
                     </div>
