@@ -141,14 +141,18 @@ class LMJdevice:
         for i in range(numFrames):
             print("    %s : %f" % (aNames[i], aValues[i]))
         
-    def read_loop(self, logger = None, delay = 0.2):
+    def read_loop(self, logger = None, delay = 0.01):
         #attach logger
         print("\nStarting %s read loops.%s\n" % (str(self.loopAmount), self.loopMessage))
         i = 0
         intervalHandle = 1
         intervalValue = int(1000000 * delay)  # 2000000 microseconds = 2 seconds
         ljm.startInterval(intervalHandle, intervalValue)
+        firstRun = True
         while True:
+            if firstRun:
+                firstRun = False
+                firstRunTime = ljm.getHostTick()
             try:
                 
                 # Setup and call eWriteNames to write to DAC0, and FIO5 (T4) or
@@ -177,11 +181,12 @@ class LMJdevice:
                 aValues = ljm.eReadNames(self.handle, numFrames, aNames)
                 time1 = ljm.getHostTick()
                 read_run_time = time1 - time0
+                relative_time = time1 - firstRunTime
                 #print("LJM_eReadName took %lld microseconds.\n", read_run_time)
                 print("eReadNames  : " +
                     "".join(["%s = %f, " % (aNames[j], aValues[j]) for j in range(numFrames)]))
                 if logger is not None:
-                    logger.log_add(time1, aValues[0], aValues[1], self.fioState)
+                    logger.log_add(relative_time, aValues[0], aValues[1], self.fioState)
                 # Repeat every 200 milli seconds
                 skippedIntervals = ljm.waitForNextInterval(intervalHandle)
                 if skippedIntervals > 0:

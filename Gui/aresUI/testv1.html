@@ -134,7 +134,7 @@
     <div id="page-container" class="modern-sf">
     <header id="page-header" class=" hidden-xs">
         <h1 class="h3 font-w200 ">
-            <span class="text-crystal">//</span> <a onmouseover="openNav()" style="font-size:30px;cursor:pointer" class="link-sf font-w300" id="myMenu" onclick="openNav()" >COMMS</a>
+            <span class="text-crystal">//</span> <a onmouseover="openNav()" style="font-size:30px;cursor:pointer" class="link-sf font-w300" id="myMenu" onclick="openNav()" >DAQ</a>
         </h1>
         
 
@@ -144,36 +144,35 @@
                 <span class="text-crystal">//</span> <a onmouseover="openDeviceNav()" style="font-size:30px;cursor:pointer; position: relative;" class="link-sf font-w300" id="myDeviceMenu" onclick="openDeviceNav()" >DEVICE_{}</a>
             </h1></div>
 
-            <div class="text-danger animated infinite pulse pull-right">[LIVE]</div>
+            <div id="device_status" class="text-danger animated infinite pulse pull-right">[LIVE]</div>
         </div>
 
     </header>
-<h1>JS API Example</h1>
-<p id='pywebview-status'><i>pywebview</i> is not ready</p>
+<h1>Valve Test</h1>
+<p id='pywebview-status'><i>Backend</i> is not ready</p>
 
-<button onClick="initialize()">Hello Python</button><br/>
-<button id="heavy-stuff-btn" onClick="doHeavyStuff()">Perform a heavy operation</button><br/>
-<button onClick="getRandomNumber()">Get a random number</button><br/>
-<label for="name_input">Say hello to:</label><input id="name_input" placeholder="put a name here">
-<button onClick="greet()">Greet</button><br/>
-<button onClick="catchException()">Catch Exception</button><br/>
-
-<button onClick="initLMJ()">init</button><br/>
-<button onClick="startreading()">start reading</button><br/>
-<label for="relay_input">relay val:</label><input id="relay_input" placeholder="enter relay val here">
-<button onClick="changerelay()">change relay val</button><br/>
-<button onClick="closedevice()">close device</button><br/>
-<button onClick="GetLog()">get log</button><br/>
-<button onClick="createDF()">get DF</button><br/>
+<button onClick="initLMJ()">Connect Device</button><br/>
+<button onClick="startreading()">Start Logging</button><br/>
+<label for="relay_input">Toggle Valve:</label><input id="relay_input" placeholder="enter relay val here">
+<button onClick="changerelay()">Toggle Valve</button><br/>
+<button onClick="closedevice()">Close connection</button><br/>
+<button onClick="CreateLog()">Generate Log</button><br/>
+<button onClick="GetLog()">Get Log</button><br/>
 <label for="dfname">savefile:</label><input id="dfname" placeholder="enter csv name here">
-<button onClick="savefile()">save</button><br/>
-
+<button onClick="savefile()">Save</button><br/>
+<div id="container">
+    <div class="box"><canvas id="line-chart" width="800" height="450"></canvas></div>
+    <div class="box2"></div>
+</div>
 
 <div id="response-container"></div>
+<script
+src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
+</script>
 <script>
     window.addEventListener('pywebviewready', function() {
         var container = document.getElementById('pywebview-status')
-        container.innerHTML = '<i>pywebview</i> is ready'
+        container.innerHTML = '<i>backend</i> is ready'
     })
 
     function showResponse(response) {
@@ -183,8 +182,63 @@
         container.style.display = 'block'
     }
 
+    function setStatus(status, color='yellow') {
+        var container = document.getElementById('device_status')
+
+        container.innerText = status
+        //container.style.display = 'block'
+        container.style.color = color
+    }
+
+    function DisplayChart(response) {
+        
+        //alert(response.message)
+        //alert(response.message)
+        json_data = JSON.parse(response.message)
+        time_data = json_data['time_elapsed']
+        A0_data = json_data['A0']
+        A1_data = json_data['A1']
+
+        var ctx = document.getElementById('line-chart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: time_data,
+                datasets: [{
+                    label: 'A0',
+                    data: A0_data,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'A1',
+                    data: A1_data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
+            }
+        });
+        
+    }
+
     function initialize() {
-        pywebview.api.init().then(showResponse)
+        pywebview.api.init().then(
+            function(response) {
+                showResponse(response)
+                setStatus('Waiting', 'Red')
+            }
+        )
     }
 
     function doHeavyStuff() {
@@ -223,29 +277,57 @@
 
 
     function initLMJ() {
-        pywebview.api.initLMJ().then(showResponse)
+        pywebview.api.initLMJ().then(
+            function(response) {
+                showResponse(response)
+                setStatus('Connected', 'Green')
+            }
+        )
     }
     
     function startreading() {
-        pywebview.api.StartRead().then(showResponse)
+        pywebview.api.StartRead().then(
+            function(response) {
+                showResponse(response)
+                setStatus('Reading', 'Yellow')
+            }
+        )
     }
 
 
     function changerelay() {
         var relay_input = document.getElementById('relay_input').value;
-        pywebview.api.ToggleRelay(relay_input).then(showResponse)
+        pywebview.api.ToggleRelay(relay_input).then(
+            function(response) {
+                showResponse(response)
+                setStatus('Toggled', 'Green')
+            }
+        )
     }
 
     function closedevice() {
-        pywebview.api.CloseDevice().then(showResponse)
+        pywebview.api.CloseDevice().then(
+            function(response) {
+                showResponse(response)
+                setStatus('Closed', 'Red')
+            }
+        )
+        
     }
 
-    function GetLog () {
-        pywebview.api.createLog().then(showResponse)
+    function CreateLog() {
+        pywebview.api.createLog().then(function(response) {
+            DisplayChart(response);
+            //showResponse(response);
+            setStatus('Logged', 'Green')
+        })
     }
 
-    function createDF () {
-        pywebview.api.createDF().then(showResponse)
+    function GetLog() {
+        response =  ""
+        pywebview.api.createDF().then( function(response) {
+            showResponse(response);
+        })
     }
 
     function savefile () {
@@ -253,9 +335,16 @@
         pywebview.api.saveDF(dfname).then(showResponse)
     }
 
-
+    
 
 </script>
+
+
+
+
+
+
+
 </div>
 </body>
 </html>

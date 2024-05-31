@@ -18,6 +18,7 @@
     <!-- Bootstrap and Ares CSS -->
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/animate.min.css">
+    <link rel="stylesheet" href="assets/css/grid.css">
     <link rel="stylesheet" href="assets/css/ares.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
 <script>
@@ -108,7 +109,7 @@
                     <span class="text-crystal">//</span> <a onmouseover="openDeviceNav()" style="font-size:30px;cursor:pointer; position: relative;" class="link-sf font-w300" id="myDeviceMenu" onclick="openDeviceNav()">DEVICE_{}</a>
                 </h1></div>
 
-                <div class="text-danger animated infinite pulse pull-right">[LIVE]</div>
+                <div id="device_status" class="text-danger animated infinite pulse pull-right">[LIVE]</div>
             </div>
 
         </header>
@@ -119,9 +120,12 @@
             <!-- Columns -->
             <!-- partial:index.partial.html -->
 <div id="container">
-    <div class="box"><canvas id="line-chart" width="800" height="450"></canvas></div>
-    <div class="box2"></div>
+  
 </div>
+
+ <!-- make a button to add more boxes -->
+  <button id="add" onclick="createBox()">Add Box</button>
+  
             <!-- END Columns -->
 
             <!-- Page Footer -->
@@ -129,7 +133,7 @@
             <!-- END Page Footer -->
         </main>
         <!-- END Main Content -->
-    </div>
+    
     <!-- END Page Container -->
 
     <!-- Scripts -->
@@ -152,11 +156,10 @@
 
 
 <!-- partial -->
-<link rel="stylesheet" href="assets/css/grid.css">
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.0/TweenMax.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/utils/Draggable.min.js'></script>
-
 
 <script src="assets/js/custom/grid.js"></script>
 
@@ -168,48 +171,196 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
 </script>
 
 <script>
-new Chart(document.getElementById("line-chart"), {
-  type: 'line',
-  data: {
-    labels: [1500,1600,1700,1750,1800,1850,1900,1950,1999,2050],
-    datasets: [{ 
-        data: [86,114,106,106,107,111,133,221,783,2478],
-        label: "Africa",
-        borderColor: "#3e95cd",
-        fill: false
-      }, { 
-        data: [282,350,411,502,635,809,947,1402,3700,5267],
-        label: "Asia",
-        borderColor: "#8e5ea2",
-        fill: false
-      }, { 
-        data: [168,170,178,190,203,276,408,547,675,734],
-        label: "Europe",
-        borderColor: "#3cba9f",
-        fill: false
-      }, { 
-        data: [40,20,10,16,24,38,74,167,508,784],
-        label: "Latin America",
-        borderColor: "#e8c3b9",
-        fill: false
-      }, { 
-        data: [6,3,2,2,7,26,82,172,312,433],
-        label: "North America",
-        borderColor: "#c45850",
-        fill: false
-      }
-    ]
-  },
-  options: {
-    title: {
-      display: true,
-      text: 'World population per region (in millions)'
-    }
+ 
+
+
+
+
+createBox('<div class="block-header"><h2 id="pywebview-status" class="block-title animated fadeInDown"><i>Backend</i> is not ready</h2></div><div class="block-content"><button onClick="initLMJ()">Connect Device</button><br/></div>');
+
+
+
+createBox('<button onClick="startreading()">Start Logging</button><br/><label for="relay_input">Toggle Valve:</label><input id="relay_input" placeholder="enter relay val here"><button onClick="changerelay()">Toggle Valve</button><br/><button onClick="closedevice()">Close connection</button><br/>')
+
+
+createBox('<button onClick="CreateLog()">Generate Log</button><br/><button onClick="GetLog()">Get Log</button><br/><label for="dfname">savefile:</label><input id="dfname" placeholder="enter csv name here"><button onClick="savefile()">Save</button><br/>')
+
+createBox('<div id="response-container"></div>');
+createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>');
+
+</script>
+
+<script>
+  window.addEventListener('pywebviewready', function() {
+      var container = document.getElementById('pywebview-status')
+      container.innerHTML = '<i>backend</i> is ready'
+  })
+
+  function showResponse(response) {
+      var container = document.getElementById('response-container')
+
+      container.innerText = response.message
+      container.style.display = 'block'
   }
-});
+
+  function setStatus(status, color='yellow') {
+      var container = document.getElementById('device_status')
+
+      container.innerText = status
+      //container.style.display = 'block'
+      container.style.color = color
+  }
+
+  function DisplayChart(response) {
+      
+      //alert(response.message)
+      //alert(response.message)
+      json_data = JSON.parse(response.message)
+      time_data = json_data['time_elapsed']
+      A0_data = json_data['A0']
+      A1_data = json_data['A1']
+
+      var ctx = document.getElementById('line-chart').getContext('2d');
+      var myChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+              labels: time_data,
+              datasets: [{
+                  label: 'A0',
+                  data: A0_data,
+                  backgroundColor: '#46cdba',
+                  borderColor: '#46cdba',
+                  borderWidth: 1
+              },
+              {
+                  label: 'A1',
+                  data: A1_data,
+                  backgroundColor: '#46d190',
+                  borderColor: '#46d190',
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              scales: {
+                  yAxes: [{
+                      ticks: {
+                          beginAtZero: true
+                      }
+                  }]
+              }
+          }
+      });
+      
+  }
+
+  function initialize() {
+      pywebview.api.init().then(
+          function(response) {
+              showResponse(response)
+              setStatus('Waiting', 'Red')
+          }
+      )
+  }
+
+  function doHeavyStuff() {
+      var btn = document.getElementById('heavy-stuff-btn')
+
+      pywebview.api.heavy_stuff.doHeavyStuff().then(function(response) {
+          showResponse(response)
+          btn.onclick = doHeavyStuff
+          btn.innerText = 'Perform a heavy operation'
+      })
+
+      showResponse({message: 'Working...'})
+      btn.innerText = 'Cancel the heavy operation'
+      btn.onclick = cancelHeavyStuff
+  }
+
+  function cancelHeavyStuff() {
+      pywebview.api.heavy_stuff.cancelHeavyStuff()
+  }
+
+  function getRandomNumber() {
+      pywebview.api.getRandomNumber().then(showResponse)
+  }
+
+  function greet() {
+      var name_input = document.getElementById('name_input').value;
+      pywebview.api.sayHelloTo(name_input).then(showResponse)
+  }
+
+  function catchException() {
+      pywebview.api.error().catch(showResponse)
+  }
+
+
+
+
+
+  function initLMJ() {
+      pywebview.api.initLMJ().then(
+          function(response) {
+              showResponse(response)
+              setStatus('Connected', 'Green')
+          }
+      )
+  }
+  
+  function startreading() {
+      pywebview.api.StartRead().then(
+          function(response) {
+              showResponse(response)
+              setStatus('Reading', 'Yellow')
+          }
+      )
+  }
+
+
+  function changerelay() {
+      var relay_input = document.getElementById('relay_input').value;
+      pywebview.api.ToggleRelay(relay_input).then(
+          function(response) {
+              showResponse(response)
+              setStatus('Toggled', 'Green')
+          }
+      )
+  }
+
+  function closedevice() {
+      pywebview.api.CloseDevice().then(
+          function(response) {
+              showResponse(response)
+              setStatus('Closed', 'Red')
+          }
+      )
+      
+  }
+
+  function CreateLog() {
+      pywebview.api.createLog().then(function(response) {
+          DisplayChart(response);
+          //showResponse(response);
+          setStatus('Logged', 'Green')
+      })
+  }
+
+  function GetLog() {
+      response =  ""
+      pywebview.api.createDF().then( function(response) {
+          showResponse(response);
+      })
+  }
+
+  function savefile () {
+      var dfname = document.getElementById('dfname').value;
+      pywebview.api.saveDF(dfname).then(showResponse)
+  }
+
+  
 
 </script>
 
 
+</div>
 
 </body></html>

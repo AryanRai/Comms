@@ -8,32 +8,22 @@
   }
   
   .box {
-    height: 500px;
-    width: 500px;
+    height: fit-content;
+    width: fit-content;
+    max-width: 50%;
+    max-height: 50%;
     position: absolute;
     background: rgba( 52, 52, 52, 0 );
     box-shadow: 0 8px 32px 0 rgb(97 97 97 / 37%);
     backdrop-filter: blur( 4px );
     -webkit-backdrop-filter: blur( 4px );
     border-radius: 10px;
-    border: 1px solid rgba( 255, 255, 255, 0.18 );
+   ---border: 1px solid rgba( 255, 255, 255, 0.18 );
     
-   
   
   }
   
-  .box2 {
-    height: 500px;
-    width: 500px;
-    position: absolute;
-    background: rgba( 74, 144, 226, 0.2 );
-    background: rgba( 52, 52, 52, 0 );
-    box-shadow: 0 8px 32px 0 rgb(97 97 97 / 37%);
-    backdrop-filter: blur( 4px );
-    -webkit-backdrop-filter: blur( 4px );
-    border-radius: 10px;
-    border: 1px solid rgba( 255, 255, 255, 0.18 );
-  }
+
   
   
   [grid-cell] {

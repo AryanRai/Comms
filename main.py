@@ -6,6 +6,7 @@ import importlib.util
 import random
 import threading
 import time
+import json
 
 import webview
 #engine = imp.load_source("engine","Engine/engine.py")
@@ -50,18 +51,6 @@ class Api:
         response = {'message': 'Hello from Python {0}'.format(sys.version)}
         return response
 
-    def getRandomNumber(self):
-        response = {
-            'message': 'Here is a random number courtesy of randint: {0}'.format(
-                random.randint(0, 100000000)
-            )
-        }
-        return response
-
-    def sayHelloTo(self, name):
-        response = {'message': 'Hello {0}!'.format(name)}
-        return response
-    
 
     def initLMJ(self):
 
@@ -71,11 +60,6 @@ class Api:
         self.lj.device.device_setup()
         response = {'message': 'LMJ initialized'}
         return response
-
-    def GetChartValue(self, name):
-
-        response = {'message': 'Hello {0}!'.format(name)}
-        return response 
 
     def ToggleRelay(self, value):
         int_value = int(value)
@@ -89,19 +73,24 @@ class Api:
         lj = self.lj
         reading_thread = threading.Thread(target=lj.device.read_loop, args=(lj.main_logger,)).start()
         #read_thread = threading.Thread(target=lj.device.read_loop, args=(lj.main_logger,)).start()
-        return "Read thread started"
+        response = {'message': 'Reading started'}
+        return response
     
     def CloseDevice(self):
         lj = self.lj
         lj.device.device_close()
         lj = None
-        return "Device closed"
+        response = {'message': 'Device closed'}
+        return response
     
     def createLog(self):
         lj = self.lj
         log = lj.main_logger.log_createdraft()
-        print(log)
-        return log
+        log_dict = { log[0][0]: log[1][0], log[0][1]: log[1][1], log[0][2]: log[1][2], log[0][3]: log[1][3]}
+        log_json = json.dumps(log_dict)  
+        #json = { log[0][0]: log[1][0], log[0][1]: log[1][1], log[0][2]: log[1][2], log[0][3]: log[1][3]}
+        response = {'message': str(log_json)}
+        return response
 
     def createDF(self):
         lj = self.lj
@@ -196,7 +185,7 @@ if __name__ =="__main__":
 
     
     api = Api()
-    window = webview.create_window('JS API example', "GUI/aresUI/testv1.html", js_api=api)
+    window = webview.create_window('Valve Test', "GUI/aresUI/DAQ.html", js_api=api)
     webview.start()
 
 
