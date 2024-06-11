@@ -13,7 +13,7 @@
     <link rel="icon" type="image/png" href="assets/img/favicon.png" sizes="32x32">
 
     <!-- Web fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway:200,300,400,600,700&amp;Open+Sans:300,400,600,700">
+    <link rel="stylesheet" href="assets/fonts/Railway-OpenSans.css">
 
     <!-- Bootstrap and Ares CSS -->
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
@@ -123,8 +123,8 @@
   
 </div>
 
- <!-- make a button to add more boxes -->
-  <button id="add" onclick="createBox()">Add Box</button>
+ <!-- make a button to add more boxes 
+  <button id="add" onclick="createBox()">Add Box</button>-->
   
             <!-- END Columns -->
 
@@ -157,17 +157,17 @@
 
 <!-- partial -->
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.0/TweenMax.min.js'></script>
-<script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/utils/Draggable.min.js'></script>
+<script src="/assets/js/plugins/jquery.min.js"></script>
+<script src='/assets/js/plugins/TweenMax.min.js'></script>
+<script src='/assets/js/plugins/Draggable.min.js'></script>
 
-<script src="assets/js/custom/grid.js"></script>
+<script src="/assets/js/custom/grid.js"></script>
 
 
 
 
 <script
-src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
+src="/assets/js/plugins/Chart.js">
 </script>
 
 <script>
@@ -180,10 +180,10 @@ createBox('<div class="block-header"><h2 id="pywebview-status" class="block-titl
 
 
 
-createBox('<button onClick="startreading()">Start Logging</button><br/><label for="relay_input">Toggle Valve:</label><input id="relay_input" placeholder="enter relay val here"><button onClick="changerelay()">Toggle Valve</button><br/><button onClick="closedevice()">Close connection</button><br/>')
+createBox('<button onClick="startreading()">Start Logging</button><br/><label for="relay_input">Toggle Valve:</label><input id="relay_input" placeholder="set valve state here open/close"><button onClick="changerelay()">Toggle Valve</button><br/><button onClick="closedevice()">Stop Reading & Close connection</button><br/>')
 
 
-createBox('<button onClick="CreateLog()">Generate Log</button><br/><button onClick="GetLog()">Get Log</button><br/><label for="dfname">savefile:</label><input id="dfname" placeholder="enter csv name here"><button onClick="savefile()">Save</button><br/>')
+createBox('<button onClick="CreateLog()">Generate Log & Plot</button><br/><button onClick="GetLog()">Finalize Log & Preview</button><br/><label for="dfname">savefile:</label><input id="dfname" placeholder="enter csv name here"><button onClick="savefile()">Save</button><br/>')
 
 createBox('<div id="response-container"></div>');
 createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>');
@@ -262,6 +262,7 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
       )
   }
 
+/*
   function doHeavyStuff() {
       var btn = document.getElementById('heavy-stuff-btn')
 
@@ -288,9 +289,9 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
       var name_input = document.getElementById('name_input').value;
       pywebview.api.sayHelloTo(name_input).then(showResponse)
   }
-
+*/
   function catchException() {
-      pywebview.api.error().catch(showResponse)
+      pywebview.api.LJM.catch(showResponse)
   }
 
 
@@ -298,7 +299,7 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
 
 
   function initLMJ() {
-      pywebview.api.initLMJ().then(
+      pywebview.api.Module_Labjack.initLMJ().then(
           function(response) {
               showResponse(response)
               setStatus('Connected', 'Green')
@@ -307,7 +308,7 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
   }
   
   function startreading() {
-      pywebview.api.StartRead().then(
+      pywebview.api.Module_Labjack.StartRead().then(
           function(response) {
               showResponse(response)
               setStatus('Reading', 'Yellow')
@@ -318,7 +319,16 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
 
   function changerelay() {
       var relay_input = document.getElementById('relay_input').value;
-      pywebview.api.ToggleRelay(relay_input).then(
+      if (relay_input == "") {
+          relay_input = 0
+      }
+      if (relay_input == "open") {
+          relay_input = 1
+      }
+      if (relay_input == "close") {
+          relay_input = 0
+      }
+      pywebview.api.Module_Labjack.ToggleRelay(relay_input).then(
           function(response) {
               showResponse(response)
               setStatus('Toggled', 'Green')
@@ -327,7 +337,7 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
   }
 
   function closedevice() {
-      pywebview.api.CloseDevice().then(
+      pywebview.api.Module_Labjack.CloseDevice().then(
           function(response) {
               showResponse(response)
               setStatus('Closed', 'Red')
@@ -337,7 +347,7 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
   }
 
   function CreateLog() {
-      pywebview.api.createLog().then(function(response) {
+      pywebview.api.Module_Labjack.createLog().then(function(response) {
           DisplayChart(response);
           //showResponse(response);
           setStatus('Logged', 'Green')
@@ -346,14 +356,14 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
 
   function GetLog() {
       response =  ""
-      pywebview.api.createDF().then( function(response) {
+      pywebview.api.Module_Labjack.createDF().then( function(response) {
           showResponse(response);
       })
   }
 
   function savefile () {
       var dfname = document.getElementById('dfname').value;
-      pywebview.api.saveDF(dfname).then(showResponse)
+      pywebview.api.Module_Labjack.saveDF(dfname).then(showResponse)
   }
 
   

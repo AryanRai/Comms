@@ -233,7 +233,7 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
     }
 
     function initialize() {
-        pywebview.api.init().then(
+        pywebview.api.Module_Win_LJM.init().then(
             function(response) {
                 showResponse(response)
                 setStatus('Waiting', 'Red')
@@ -244,7 +244,7 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
     function doHeavyStuff() {
         var btn = document.getElementById('heavy-stuff-btn')
 
-        pywebview.api.heavy_stuff.doHeavyStuff().then(function(response) {
+        pywebview.api.Module_Win_LJM.heavy_stuff.doHeavyStuff().then(function(response) {
             showResponse(response)
             btn.onclick = doHeavyStuff
             btn.innerText = 'Perform a heavy operation'
@@ -256,20 +256,20 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
     }
 
     function cancelHeavyStuff() {
-        pywebview.api.heavy_stuff.cancelHeavyStuff()
+        pywebview.api.Module_Win_LJM.heavy_stuff.cancelHeavyStuff()
     }
 
     function getRandomNumber() {
-        pywebview.api.getRandomNumber().then(showResponse)
+        pywebview.api.Module_Win_LJM.getRandomNumber().then(showResponse)
     }
 
     function greet() {
         var name_input = document.getElementById('name_input').value;
-        pywebview.api.sayHelloTo(name_input).then(showResponse)
+        pywebview.api.Module_Win_LJM.sayHelloTo(name_input).then(showResponse)
     }
 
     function catchException() {
-        pywebview.api.error().catch(showResponse)
+        pywebview.api.Module_Win_LJM.error().catch(showResponse)
     }
 
 
@@ -277,7 +277,7 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
 
 
     function initLMJ() {
-        pywebview.api.initLMJ().then(
+        pywebview.api.Module_Win_LJM.initLMJ().then(
             function(response) {
                 showResponse(response)
                 setStatus('Connected', 'Green')
@@ -286,7 +286,7 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
     }
     
     function startreading() {
-        pywebview.api.StartRead().then(
+        pywebview.api.Module_Win_LJM.StartRead().then(
             function(response) {
                 showResponse(response)
                 setStatus('Reading', 'Yellow')
@@ -297,7 +297,7 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
 
     function changerelay() {
         var relay_input = document.getElementById('relay_input').value;
-        pywebview.api.ToggleRelay(relay_input).then(
+        pywebview.api.Module_Win_LJM.ToggleRelay(relay_input).then(
             function(response) {
                 showResponse(response)
                 setStatus('Toggled', 'Green')
@@ -306,7 +306,7 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
     }
 
     function closedevice() {
-        pywebview.api.CloseDevice().then(
+        pywebview.api.Module_Win_LJM.CloseDevice().then(
             function(response) {
                 showResponse(response)
                 setStatus('Closed', 'Red')
@@ -316,7 +316,7 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
     }
 
     function CreateLog() {
-        pywebview.api.createLog().then(function(response) {
+        pywebview.api.Module_Win_LJM.createLog().then(function(response) {
             DisplayChart(response);
             //showResponse(response);
             setStatus('Logged', 'Green')
@@ -325,14 +325,14 @@ src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
 
     function GetLog() {
         response =  ""
-        pywebview.api.createDF().then( function(response) {
+        pywebview.api.Module_Win_LJM.createDF().then( function(response) {
             showResponse(response);
         })
     }
 
     function savefile () {
         var dfname = document.getElementById('dfname').value;
-        pywebview.api.saveDF(dfname).then(showResponse)
+        pywebview.api.Module_Win_LJM.saveDF(dfname).then(showResponse)
     }
 
     
