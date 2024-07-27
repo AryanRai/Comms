@@ -555,3 +555,16 @@ input {
     color: #e8f4ff;
     border-color: rgba(255, 255, 255, 0.1);
 }
+ 
+
+input[type="radio"] {
+    margin-left: 0.3rem;
+    margin-right: 0.3rem;
+    background-color: black;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    background-color: transparent;
+    transition: border-color 0.15s ease-out;
+    color: #000000;
+    border-color: rgba(255, 255, 255, 0.1);
+}

@@ -22,12 +22,29 @@
     <link rel="stylesheet" href="assets/css/ares.css">
     <link rel="stylesheet" href="assets/css/sidebar.css">
 <script>
+
+    var lockedpage = true;
+
+    if ((lockedpage) == false) {
+        
     function openNav() {
         document.getElementById("mySidenav").style.width = "350px";
     }
 
     function closeNav() {
         document.getElementById("mySidenav").style.width = "0px";
+    }
+
+    function openDeviceNav() {
+        document.getElementById("myDevicenav").style.width = "350px";
+        document.getElementById("myDevicenav").style.visibility = "all";
+    }
+
+    function closeDeviceNav() {
+        document.getElementById("myDevicenav").style.width = "0px";
+        document.getElementById("myDevicenav").style.visibility = "hidden";
+    }
+    
     }
     
     window.addEventListener('click', function(e){   
@@ -40,16 +57,7 @@
       }
     });
     
-    function openDeviceNav() {
-        document.getElementById("myDevicenav").style.width = "350px";
-        document.getElementById("myDevicenav").style.visibility = "all";
-    }
 
-    function closeDeviceNav() {
-        document.getElementById("myDevicenav").style.width = "0px";
-        document.getElementById("myDevicenav").style.visibility = "hidden";
-    }
-    
     window.addEventListener('click', function(e){   
       if (!document.getElementById('myDevicenav').contains(e.target) && !document.getElementById('myDeviceMenu').contains(e.target)){
         // Clicked in box
@@ -180,10 +188,10 @@ createBox('<div class="block-header"><h2 id="pywebview-status" class="block-titl
 
 
 
-createBox('<button onClick="startreading()">Start Logging</button><br/><label for="relay_input">Toggle Valve:</label><input id="relay_input" placeholder="set valve state here open/close"><button onClick="changerelay()">Toggle Valve</button><br/><button onClick="closedevice()">Stop Reading & Close connection</button><br/>')
+createBox('<br><label for="disablelongpreview">Disable msg preview for running > 10 mins:</label><input type="checkbox" id="disablelongpreview" name="disablelongpreview" value="" checked><br><label for="disableautograph">Disable auto graphing, for running > 10 mins:</label><input type="checkbox" id="disableautograph" name="disableautograph" value="" checked><br><button onClick="startreading()">Start Logging</button><br/><label for="relay_input">Toggle Valve:</label><input id="relay_input" placeholder="set valve state here open/close"><button onClick="changerelay()">Toggle Valve</button><br/><button onClick="closedevice()">Stop Reading & Close connection</button><br/>')
 
 
-createBox('<button onClick="CreateLog()">Generate Log & Plot</button><br/><button onClick="GetLog()">Finalize Log & Preview</button><br/><label for="dfname">savefile:</label><input id="dfname" placeholder="enter csv name here"><button onClick="savefile()">Save</button><br/>')
+createBox('<button onClick="CreateLog()">Generate Log & Plot</button><br/><button onClick="GetLog()">Finalize Log & Preview</button><br/><label for="dfname">savefile:</label><input id="dfname" placeholder="csv name (dont forget .csv)"><button onClick="savefile()">Save</button><br/>')
 
 createBox('<div id="response-container"></div>');
 createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>');
@@ -191,6 +199,33 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
 </script>
 
 <script>
+
+initialized = false
+reading = false
+var graphrefresh = null
+
+document.getElementById('disableautograph').addEventListener('change', checkgraph);
+
+function checkgraph(){
+    if (document.getElementById('disableautograph').checked) {
+        clearInterval(graphrefresh);
+    }
+
+    if (initialized == false && reading == false) {
+        graphrefresh = setInterval(function() {
+            //CreateLog()
+            clearInterval(graphrefresh);
+        }, 1000)
+    }
+
+    if (document.getElementById('disableautograph').checked != true && initialized == true && reading == true) {
+        graphrefresh = setInterval(function() {
+            CreateLog()
+        }, 1000)
+    }
+
+}
+
   window.addEventListener('pywebviewready', function() {
       var container = document.getElementById('pywebview-status')
       container.innerHTML = '<i>backend</i> is ready'
@@ -216,9 +251,11 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
       //alert(response.message)
       //alert(response.message)
       json_data = JSON.parse(response.message)
-      time_data = json_data['time_elapsed']
+      time_data = json_data['timestamp']
       A0_data = json_data['A0']
       A1_data = json_data['A1']
+      VoltageDiff = json_data['VoltageDiff']
+      //Pressure = json_data['Pressure']
 
       var ctx = document.getElementById('line-chart').getContext('2d');
       var myChart = new Chart(ctx, {
@@ -235,6 +272,14 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
               {
                   label: 'A1',
                   data: A1_data,
+                  backgroundColor: '#46d190',
+                  borderColor: '#46d190',
+                  borderWidth: 1
+              }
+              ,
+              {
+                  label: 'VoltageDiff',
+                  data: VoltageDiff,
                   backgroundColor: '#46d190',
                   borderColor: '#46d190',
                   borderWidth: 1
@@ -296,13 +341,22 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
 
 
 
+  function CreateLog() {
+      pywebview.api.Module_Labjack.createLog().then(function(response) {
+          DisplayChart(response);
+          response = {message: 'Log Created & Plotted'}
+          showResponse(response);
 
+          //setStatus('Logged', 'Green')
+      })
+  }
 
   function initLMJ() {
       pywebview.api.Module_Labjack.initLMJ().then(
           function(response) {
               showResponse(response)
               setStatus('Connected', 'Green')
+              initialized = true
           }
       )
   }
@@ -311,8 +365,15 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
       pywebview.api.Module_Labjack.StartRead().then(
           function(response) {
               showResponse(response)
-              setStatus('Reading', 'Yellow')
-          }
+              setStatus(response.message, 'Yellow')
+              reading = true
+
+            //every 1 seconds create graph
+
+            //call the function every 1 second
+            
+            checkgraph()
+            }
       )
   }
 
@@ -331,7 +392,7 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
       pywebview.api.Module_Labjack.ToggleRelay(relay_input).then(
           function(response) {
               showResponse(response)
-              setStatus('Toggled', 'Green')
+              //setStatus('Toggled', 'Green')
           }
       )
   }
@@ -341,23 +402,22 @@ createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>
           function(response) {
               showResponse(response)
               setStatus('Closed', 'Red')
+                initialized = false
+                reading = false
+                checkgraph()
           }
       )
       
   }
 
-  function CreateLog() {
-      pywebview.api.Module_Labjack.createLog().then(function(response) {
-          DisplayChart(response);
-          //showResponse(response);
-          setStatus('Logged', 'Green')
-      })
-  }
+
 
   function GetLog() {
       response =  ""
-      pywebview.api.Module_Labjack.createDF().then( function(response) {
-          showResponse(response);
+      var longpreview = document.getElementById('disablelongpreview').checked;
+      pywebview.api.Module_Labjack.createDF(longpreview).then( function(response) {
+    showResponse(response);
+        
       })
   }
 

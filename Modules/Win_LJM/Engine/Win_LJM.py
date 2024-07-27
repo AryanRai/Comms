@@ -10,7 +10,11 @@ import json
 
 class Device:
     device = LJM.LMJdevice()
-    main_logger = LJM.LMJlogger(['time_elapsed', 'A0', 'A1', 'Relay_Val'])
+    #single ended
+    main_logger = LJM.LMJlogger(['time_elapsed', 'timestamp', 'A0', 'A1', 'Relay_Val', 'VoltageDiff'])
+    
+    #differential
+    #main_logger = LJM.LMJlogger(['time_elapsed', 'timestamp', 'A0', 'A1', 'Relay_Val', 'PresurePSI'])
     data_handler = CSVDataHandler()
     folder_handler = FolderHandler()
 
@@ -42,6 +46,7 @@ class Module_Win_LJM:
     #heavy_stuff = HeavyStuffAPI()
     #_this_wont_be_exposed = NotExposedApi()
     lj = None
+    reading_thread = None
 
     def initLMJ(self):
 
@@ -61,34 +66,41 @@ class Module_Win_LJM:
     
     def StartRead(self):
         lj = self.lj
-        reading_thread = threading.Thread(target=lj.device.read_loop, args=(lj.main_logger,)).start()
+        self.reading_thread = threading.Thread(target=lj.device.read_loop, args=(lj.main_logger,)).start()
         #read_thread = threading.Thread(target=lj.device.read_loop, args=(lj.main_logger,)).start()
-        response = {'message': 'Reading started'}
+        response = {'message': lj.device.status}
         return response
     
     def CloseDevice(self):
+        print("active threads: ", threading.active_count())
         lj = self.lj
         lj.device.device_close()
-        lj = None
+        del lj
+        #lj = None
+    
+        
         response = {'message': 'Device closed'}
         return response
     
     def createLog(self):
         lj = self.lj
         log = lj.main_logger.log_createdraft()
-        log_dict = { log[0][0]: log[1][0], log[0][1]: log[1][1], log[0][2]: log[1][2], log[0][3]: log[1][3]}
+        log_dict = { log[0][0]: log[1][0], log[0][1]: log[1][1], log[0][2]: log[1][2], log[0][3]: log[1][3], log[0][4]: log[1][4], log[0][5]: log[1][5]}
         log_json = json.dumps(log_dict)  
         #json = { log[0][0]: log[1][0], log[0][1]: log[1][1], log[0][2]: log[1][2], log[0][3]: log[1][3]}
         response = {'message': str(log_json)}
         return response
 
-    def createDF(self):
+    def createDF(self, disablelongresponse=False):
         lj = self.lj
         log = lj.main_logger.log_createdraft()
         lj.data_handler.create_df_from_list(log[0], log[1])
         print(lj.data_handler.df)
         DFjson = lj.data_handler.df_to_json()
-        response = {'message': DFjson}
+        if not disablelongresponse:
+            response = {'message': str(DFjson)}
+        if disablelongresponse:
+            response = {'message': "response too long to display, check logs for full response"} 
         return response
     
     def saveDF(self, name):

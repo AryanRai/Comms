@@ -8,6 +8,8 @@ class LMJlogger:
     A1 = []
     Relay_Val = []
     time_elapsed = []
+    absolute_time = []
+    pressurePSI = []
     names = []
     last_draft = None
     last_update = None
@@ -17,18 +19,20 @@ class LMJlogger:
 
     #this time is from when program starts not the labjack
     def log_createdraft(self):
-        self.values = [self.time_elapsed, self.A0, self.A1, self.Relay_Val] 
+        self.values = [self.time_elapsed, self.absolute_time ,self.A0, self.A1, self.Relay_Val, self.pressurePSI] 
         log = (self.names, self.values)
         self.last_draft = log
         self.last_draft_timer = time.time()
         return log
 
     #this is labjack timing
-    def log_add(self, log_time, A0, A1, Relay_Val):
+    def log_add(self, log_time, absolute_time ,A0, A1, Relay_Val, pressurePSI):
         self.time_elapsed.append(log_time)
+        self.absolute_time.append(absolute_time)
         self.A0.append(A0)
         self.A1.append(A1)
         self.Relay_Val.append(Relay_Val)
+        self.pressurePSI.append(pressurePSI)
         self.last_update = time.time()
         print(str(time.time()) + ": ", "log added") #need to make a global program run timer and use that instead of time.time()
 
@@ -49,12 +53,17 @@ class LMJdevice:
     info = None
     deviceType = None
     fioState = 0  # 0 or 1
+    runner = True
+    singleEnded = True
+    status = None
     
     
 
     def __init__(self):
         self.device_connect()
         self.device_setup()
+        self.runner = True
+        self.status = "Initialized"
 
     def function_loop(self, count= None):
         if count is None:
@@ -89,6 +98,7 @@ class LMJdevice:
             (self.info[0], self.info[1], self.info[2], ljm.numberToIP(self.info[3]), self.info[4], self.info[5]))
 
         self.deviceType = self.info[0]
+        self.status = "Connected"
 
     def device_setup(self):
         # Setup and call eWriteNames for AIN0 (all devices) and digital I/O (T4 only)
@@ -114,25 +124,41 @@ class LMJdevice:
             #     Settling = 0 (auto)
             aNames = ["AIN0_RESOLUTION_INDEX", "AIN0_SETTLING_US"]
             aValues = [0, 0]
-        else:
+        #else:
+        if True:
             # LabJack T7 and T8 configuration
 
             # AINO:
             #     Range = +/- 10 V
             #     Resolution index = 0 (default)
             aNames = ["AIN0_RANGE", "AIN0_RESOLUTION_INDEX"]
+            #aValues = [10, 0]
             aValues = [10, 0]
             aNames = ["AIN1_RANGE", "AIN1_RESOLUTION_INDEX"]
+            #aValues = [10, 0]
             aValues = [10, 0]
-
+            
             # Negative channel and settling configurations do not apply to the T8
-            if self.deviceType == ljm.constants.dtT7:
+            #if self.deviceType == ljm.constants.dtT7:
+            if True:
                 #     Negative Channel = 199 (Single-ended)
                 #     Settling = 0 (auto)
-                aNames.extend(["AIN0_NEGATIVE_CH", "AIN0_SETTLING_US"])
-                aValues.extend([199, 0])
-                aNames.extend(["AIN1_NEGATIVE_CH", "AIN1_SETTLING_US"])
-                aValues.extend([199, 0])
+                
+                if self.singleEnded:
+                #single ended
+                    aNames.extend(["AIN0_NEGATIVE_CH", "AIN0_SETTLING_US"])
+                    aValues.extend([199, 0])
+                    aNames.extend(["AIN1_NEGATIVE_CH", "AIN1_SETTLING_US"])
+                    aValues.extend([199, 0])
+                
+                #differential
+
+                if not self.singleEnded:
+                    aNames.extend(["AIN0_NEGATIVE_CH", "AIN0_SETTLING_US"])
+                    aValues.extend([1, 0])
+                    aNames.extend(["AIN1_NEGATIVE_CH", "AIN1_SETTLING_US"])
+                    aValues.extend([1, 0])
+                
 
         numFrames = len(aNames)
         ljm.eWriteNames(self.handle, numFrames, aNames, aValues)
@@ -140,16 +166,18 @@ class LMJdevice:
         print("\nSet configuration:")
         for i in range(numFrames):
             print("    %s : %f" % (aNames[i], aValues[i]))
+        self.status = "Reading"
         
     def read_loop(self, logger = None, delay = 0.01):
         #attach logger
+        self.runner = True
         print("\nStarting %s read loops.%s\n" % (str(self.loopAmount), self.loopMessage))
         i = 0
         intervalHandle = 1
-        intervalValue = int(1000000 * delay)  # 2000000 microseconds = 2 seconds
+        intervalValue = int(1000000 * delay)  # 2000000 microseconds = 1 seconds
         ljm.startInterval(intervalHandle, intervalValue)
         firstRun = True
-        while True:
+        while self.runner:
             if firstRun:
                 firstRun = False
                 firstRunTime = ljm.getHostTick()
@@ -159,9 +187,9 @@ class LMJdevice:
                 # FIO1 (T7 and T8).
                 # DAC0 will cycle ~0.0 to ~5.0 volts in 1.0 volt increments.
                 # FIO5/FIO1 will toggle output high (1) and low (0) states.
-                if self.deviceType == ljm.constants.dtT4:
-                    aNames = ["FIO5"]
-                else:
+                #if self.deviceType == ljm.constants.dtT4:
+                    #aNames = ["FIO5"]
+                if True:
                     aNames = ["FIO1"]
                 
                 aValues = [self.fioState]
@@ -172,9 +200,9 @@ class LMJdevice:
 
                 # Setup and call eReadNames to read AIN0 and FIO6 (T4) for
                 # FIO2 (T7 and T8).
-                if self.deviceType == ljm.constants.dtT4:
-                    aNames = ["AIN0", "FIO6"]
-                else:
+                #if self.deviceType == ljm.constants.dtT4:
+                    #aNames = ["AIN0", "FIO6"]
+                if True:
                     aNames = ["AIN0", "AIN1"]
                 numFrames = len(aNames)
                 time0 = ljm.getHostTick()
@@ -182,11 +210,20 @@ class LMJdevice:
                 time1 = ljm.getHostTick()
                 read_run_time = time1 - time0
                 relative_time = time1 - firstRunTime
+                #pressurePSI = aValues[0] + 10
+                if self.singleEnded:
+                    Vr = aValues[0] - aValues[1]
+                    pressurePSI = Vr  #here we are reading the difference between two analog inputs, Voltage Reading as a whole, modify this line to the equation you need based on whatever PT you are using and whatever formula you need
+
+                if not self.singleEnded:
+                    pressurePSI = aValues[0]
+                
                 #print("LJM_eReadName took %lld microseconds.\n", read_run_time)
                 print("eReadNames  : " +
                     "".join(["%s = %f, " % (aNames[j], aValues[j]) for j in range(numFrames)]))
+                self.status = "Reading"
                 if logger is not None:
-                    logger.log_add(relative_time, aValues[0], aValues[1], self.fioState)
+                    logger.log_add(relative_time, time1, aValues[0], aValues[1], self.fioState, pressurePSI)
                 # Repeat every 200 milli seconds
                 skippedIntervals = ljm.waitForNextInterval(intervalHandle)
                 if skippedIntervals > 0:
@@ -201,12 +238,18 @@ class LMJdevice:
             except Exception:
                 import sys
                 print(sys.exc_info()[1])
+                self.runner = False
+                self.status = sys.exc_info()[1]
                 break
+            
 
     def device_close(self):
         # Close interval and device handles
+        self.runner = False
         ljm.cleanInterval(self.intervalHandle)
         ljm.close(self.handle)
+        self.status = "Disconnected"
+        
 
 #test
 
