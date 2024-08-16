@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>load() Test</title>
+  <link rel="stylesheet" href="../../../demo/demo.css"/>
+  <script src="../../../demo/events.js"></script>
+  <script src="../../../dist/gridstack-all.js"></script>
+</head>
+<body>
+  <div class="container-fluid">
+    <h1>load() Test</h1>
+    <br/>
+    <div class="grid-stack">
+      <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="4" gs-h="2" gs-id="item1" id="item1">
+        <div class="grid-stack-item-content">item 1</div>
+      </div>
+      <div class="grid-stack-item" gs-x="4" gs-y="0" gs-w="4" gs-h="4" gs-id="item2" id="item2">
+        <div class="grid-stack-item-content">item 2</div>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript">
+    var grid = GridStack.init();
+    addEvents(grid);
+
+    grid.load([{width:2, height:1, id:'item3'}], true);
+    var layout = grid.save();
+    console.log('layout should be {x:0, y:0, width:2, height:1, id:item3}');
+    console.log(layout);
+    // expect(layout).toEqual([{x:0, y:0, width:2, height:1, id:'item3'}]);
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+*.log
+*.tgz
+*.zip
+.npmrc
+coverage
+dist
+dist_save
+node_modules
+.vscode
+.idea/

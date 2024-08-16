@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>maxRow Test</title>
+  <link rel="stylesheet" href="../../../demo/demo.css"/>
+  <script src="../../../dist/gridstack-all.js"></script>
+</head>
+<body>
+  <div class="container-fluid">
+    <h1>maxRow Test</h1>
+    <br/>
+    <div class="grid-stack"></div>
+  </div>
+
+  <script type="text/javascript">
+    let grid = GridStack.init({float: true, maxRow: 3});
+    let items = [
+      {x: 0, y: 1, h: 2, content: '0'},
+      {x: 1, y: 3, w: 2,  content: 'Y=3 out of bound should align'}
+    ];
+    grid.load(items);
+  </script>
+</body>
+</html>

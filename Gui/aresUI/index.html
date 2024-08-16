@@ -1,396 +1,436 @@
-<!DOCTYPE html>
-<!--[if IE 9]>         <html class="ie9" lang="en"> <![endif]-->
-<!--[if gt IE 9]><!--> <html lang="en"> <!--<![endif]-->
-    <head>
-        <meta charset="utf-8">
+<html lang="en"><!--<![endif]--><head>
+    <meta charset="utf-8">
 
-        <title>Ares Dashboard</title>
+    <title>Ares Dashboard</title>
 
-        <meta name="description" content="A multipurpose GroundComms & Data Aquisition Software">
-        <meta name="author" content="AryanRai">
-        <meta name="robots" content="noindex, nofollow">
-        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0">
+    <meta name="description" content="A multipurpose GroundComms &amp; Data Aquisition Software">
+    <meta name="author" content="AryanRai">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0">
 
-        <!-- Favicons (just the basics for now, check out http://realfavicongenerator.net/ for all available) -->
-        <link rel="shortcut icon" href="assets/img/favicon.png">
-        <link rel="icon" type="image/png" href="assets/img/favicon.png" sizes="32x32">
+    <!-- Favicons (just the basics for now, check out http://realfavicongenerator.net/ for all available) -->
+    <link rel="shortcut icon" href="assets/img/favicon.png">
+    <link rel="icon" type="image/png" href="assets/img/favicon.png" sizes="32x32">
 
-        <!-- Web fonts -->
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway:200,300,400,600,700&Open+Sans:300,400,600,700">
+    <!-- Web fonts -->
+    <link rel="stylesheet" href="assets/fonts/Railway-OpenSans.css">
 
-        <!-- Bootstrap and Ares CSS -->
-        <link rel="stylesheet" href="assets/css/bootstrap.min.css">
-        <link rel="stylesheet" href="assets/css/animate.min.css">
-        <link rel="stylesheet" href="assets/css/ares.css">
-        <link rel="stylesheet" href="assets/css/sidebar.css">
-    </head>
+    <!-- Bootstrap and Ares CSS -->
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/animate.min.css">
+    <link rel="stylesheet" href="assets/css/grid.css">
+    <link rel="stylesheet" href="assets/css/ares.css">
+    <link rel="stylesheet" href="assets/css/sidebar.css">
+<script>
 
-    <script>
+    var lockedpage = false;
 
-        //JS
-
-            
+    if ((lockedpage) == false) {
         
-        function openNav() {
-            document.getElementById("mySidenav").style.width = "350px";
-        }
+    function openNav() {
+        document.getElementById("mySidenav").style.width = "350px";
+    }
 
-        function closeNav() {
-            document.getElementById("mySidenav").style.width = "0px";
-        }
-        
-        window.addEventListener('click', function(e){   
-          if (!document.getElementById('mySidenav').contains(e.target) && !document.getElementById('myMenu').contains(e.target)){
-            // Clicked in box
-           document.getElementById("mySidenav").style.width = "0px";  
-          } else{
-           
-         // document.getElementById("mySidenav").style.width = "0px";
-          }
-        });
-        
-        function openDeviceNav() {
-            document.getElementById("myDevicenav").style.width = "350px";
-            document.getElementById("myDevicenav").style.visibility = "all";
-        }
+    function closeNav() {
+        document.getElementById("mySidenav").style.width = "0px";
+    }
 
-        function closeDeviceNav() {
-            document.getElementById("myDevicenav").style.width = "0px";
-            document.getElementById("myDevicenav").style.visibility = "hidden";
-        }
-        
-        window.addEventListener('click', function(e){   
-          if (!document.getElementById('myDevicenav').contains(e.target) && !document.getElementById('myDeviceMenu').contains(e.target)){
-            // Clicked in box
-           document.getElementById("myDevicenav").style.width = "0px";  
-           document.getElementById("myDevicenav").style.visibility = "hidden";
-          } else{
-           
-         // document.getElementById("mySidenav").style.width = "0px";
-         document.getElementById("myDevicenav").style.visibility = "visible";
-          }
-        });
+    function openDeviceNav() {
+        document.getElementById("myDevicenav").style.width = "350px";
+        document.getElementById("myDevicenav").style.visibility = "all";
+    }
 
-        </script>
-        
-        
-        <div id="mySidenav" class="sidenav" onmouseleave="closeNav()" style="left: 0%;">
-          <a href="#" class="nav-link">Dashboard</a>
-          <a href="#" class="nav-link">Config</a>
-          <a href="#" class="nav-link">Logs</a>
-          <a href="#" class="nav-link">Terminal</a>
-          <a href="#" class="nav-link">Comms</a>
-          <a href="DAQ.html" class="nav-link">DAQ</a>
-          <a href="testv1.html" class="nav-link">Test</a>
-        </div>
-
-
-        <div id="myDevicenav" class="sidenav" onmouseleave="closeDeviceNav()" style="left: 82%;">
-            <a href="#" class="nav-link">WiFi</a>
-            <a href="#" class="nav-link">Mavlink</a>
-            <a href="#" class="nav-link">Bluetooth</a>
-            <a href="#" class="nav-link">LabJack</a>
-            <a href="#" class="nav-link">RS</a>
-            <a href="#" class="nav-link">SSH</a>
-            <a href="#" class="nav-link">LoRa</a>
-          </div>
-      
+    function closeDeviceNav() {
+        document.getElementById("myDevicenav").style.width = "0px";
+        document.getElementById("myDevicenav").style.visibility = "hidden";
+    }
     
+    }
+    
+    window.addEventListener('click', function(e){   
+      if (!document.getElementById('mySidenav').contains(e.target) && !document.getElementById('myMenu').contains(e.target)){
+        // Clicked in box
+       document.getElementById("mySidenav").style.width = "0px";  
+      } else{
+       
+     // document.getElementById("mySidenav").style.width = "0px";
+      }
+    });
+    
+
+    window.addEventListener('click', function(e){   
+      if (!document.getElementById('myDevicenav').contains(e.target) && !document.getElementById('myDeviceMenu').contains(e.target)){
+        // Clicked in box
+       document.getElementById("myDevicenav").style.width = "0px";  
+       document.getElementById("myDevicenav").style.visibility = "hidden";
+      } else{
+       
+     // document.getElementById("mySidenav").style.width = "0px";
+     document.getElementById("myDevicenav").style.visibility = "visible";
+      }
+    });
+
+    </script></head>
+
+
+    
+    
+    <body><div id="mySidenav" class="sidenav" onmouseleave="closeNav()" style="left: 0%; width: 0px;">
+      <a href="index.html" class="nav-link">Dashboard</a>
+      <a href="#" class="nav-link">Config</a>
+      <a href="#" class="nav-link">Logs</a>
+      <a href="#" class="nav-link">Terminal</a>
+      <a href="#" class="nav-link">Comms</a>
+      <a href="DAQ.html" class="nav-link">DAQ</a>
+    </div>
+
+
+    <div id="myDevicenav" class="sidenav" onmouseleave="closeDeviceNav()" style="left: 82%; width: 0px; visibility: hidden;">
+        <a href="#" class="nav-link">WiFi</a>
+        <a href="#" class="nav-link">Mavlink</a>
+        <a href="#" class="nav-link">Bluetooth</a>
+        <a href="#" class="nav-link">LabJack</a>
+        <a href="#" class="nav-link">RS</a>
+        <a href="#" class="nav-link">SSH</a>
+        <a href="#" class="nav-link">LoRa</a>
+      </div>
   
 
-    <body>
-        <!-- Page Container -->
-        <!--
-            Available Classes: 'modern-sf', 'vintage-sf', 'interstellar-sf'
-        -->
-        <div id="page-container" class="modern-sf">
-            <!-- Header -->
-            <header id="page-header" class=" hidden-xs">
-                <h1 class="h3 font-w200 ">
-                    <span class="text-crystal">//</span> <a onmouseover="openNav()" style="font-size:30px;cursor:pointer" class="link-sf font-w300" id="myMenu" onclick="openNav()" >COMMS</a>
-                </h1>
-                
 
 
-                <div class="h3 text-right pull-right hidden-xs">  
-                    <div class="text-crystal font-w300" style="font-size:30px;cursor:pointer" class="link-sf font-w300"">                    <h1 class="h3 font-w200" text-right pull-right>
-                        <span class="text-crystal">//</span> <a onmouseover="openDeviceNav()" style="font-size:30px;cursor:pointer; position: relative;" class="link-sf font-w300" id="myDeviceMenu" onclick="openDeviceNav()" >DEVICE_{}</a>
-                    </h1></div>
 
-                    <div class="text-danger animated infinite pulse pull-right">[LIVE]</div>
-                </div>
+    <!-- Page Container -->
+    <!--
+        Available Classes: 'modern-sf', 'vintage-sf', 'interstellar-sf'
+    -->
+    <div id="page-container" class="modern-sf">
+        <!-- Header -->
+        <header id="page-header" class=" hidden-xs">
+            <h1 class="h3 font-w200 ">
+                <span class="text-crystal">//</span> <a onmouseover="openNav()" style="font-size:30px;cursor:pointer" class="link-sf font-w300" id="myMenu" onclick="openNav()">COMMS</a>
+            </h1>
+            
 
-            </header>
-            <!-- END Header -->
 
-            <!-- Main Content -->
-            <main id="page-main">
-                <!-- Columns -->
-                <div class="row">
-                    <!-- Animated Circles Column -->
-                    <div class="col-lg-6 col-lg-push-3 overflow-hidden push-20">
-                        <div class="circles push-50">
-                            <div class="visibility-hidden" data-toggle="appear" data-class="animated fadeIn">
-                                <span class="circle circle-0"></span>
-                            </div>
-                            <div class="visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="100">
-                                <span class="circle circle-1"></span>
-                            </div>
-                            <div class="visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="200">
-                                <span class="circle circle-2"></span>
-                            </div>
-                            <div class="visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="300">
-                                <span class="circle circle-3"></span>
-                            </div>
-                            <div class="visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="400">
-                                <span class="circle circle-4"></span>
-                            </div>
-                            <div class="visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="500">
-                                <span class="circle circle-5"></span>
-                            </div>
-                            <div class="visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="600">
-                                <span class="circle circle-6"></span>
-                            </div>
-                            <div class="visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="800">
-                                <span class="circle circle-over-1 hidden-xs"><span data-toggle="countTo" data-to="798" data-speed="100000"></span></span>
-                                <span class="circle circle-over-2 hidden-xs"></span>
-                                <span class="circle circle-over-3 hidden-xs"></span>
-                            </div>
-                            <span class="circle circles-main-content visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="100">
-                                <span data-toggle="countTo" data-to="16540" data-speed="60000"></span><br>
-                                <span class="text-crystal">km/h</span>
-                            </span>
-                        </div>
-                        <div class="row">
-                            <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="100">
-                                <button class="btn btn-xl btn-block btn-sf push-10">DATA_DRIVE</button>
-                            </div>
-                            <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="100">
-                                <button class="btn btn-xl btn-block btn-sf push-10">PO_DATABASE</button>
-                            </div>
-                            <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="500">
-                                <button class="btn btn-xl btn-block btn-sf" onclick="TestFunction()">ACTIVE_ROUTE</button>
-                            </div>
-                            <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="500">
-                                <button class="btn btn-xl btn-block btn-sf" onclick="pywebview.api.log('init msg from js')">AUTO_PILOT</button>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- END Animated Circles Column -->
+            <div class="h3 text-right pull-right hidden-xs">  
+                <div class="text-crystal font-w300" style="font-size:30px;cursor:pointer" "="">                    <h1 class="h3 font-w200" text-right="" pull-right="">
+                    <span class="text-crystal">//</span> <a onmouseover="openDeviceNav()" style="font-size:30px;cursor:pointer; position: relative;" class="link-sf font-w300" id="myDeviceMenu" onclick="openDeviceNav()">DEVICE_{}</a>
+                </h1></div>
 
-                    <!-- Left Column -->
-                    <div class="col-sm-6 col-lg-3 col-lg-pull-6">
-                        <!-- Environment -->
-                        <div class="block">
-                            <div class="block-header overflow-hidden">
-                                <h2 class="block-title visibility-hidden" data-toggle="appear" data-class="animated fadeInDown">Environment</h2>
-                            </div>
-                            <div class="block-content">
-                                <div class="row items-push overflow-hidden">
-                                    <div class="col-xs-4 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="100">
-                                        <div class="js-pie-chart pie-chart" data-percent="50" data-line-width="5" data-size="65" data-bar-color="rgba(255, 255, 255, .2)" data-track-color="rgba(255, 255, 255, .1)">
-                                            <span class="font-s16 font-w600">PSI</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-xs-8 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="400">
-                                        <div class="text-uppercase font-w600 text-white-op">Pressure</div>
-                                        <div class="font-s36 font-w300">15.65</div>
-                                    </div>
-                                </div>
-                                <div class="row items-push overflow-hidden">
-                                    <div class="col-xs-4 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="200">
-                                        <div class="js-pie-chart pie-chart" data-percent="29" data-line-width="5" data-size="65" data-bar-color="rgba(255, 255, 255, .2)" data-track-color="rgba(255, 255, 255, .1)">
-                                            <span class="font-s16 font-w600">%</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-xs-8 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="500">
-                                        <div class="text-uppercase font-w600 text-white-op">Oxygen</div>
-                                        <div class="font-s36 font-w300">29.15</div>
-                                    </div>
-                                </div>
-                                <div class="row items-push overflow-hidden">
-                                    <div class="col-xs-4 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="300">
-                                        <div class="js-pie-chart pie-chart" data-percent="60" data-line-width="5" data-size="65" data-bar-color="rgba(255, 255, 255, .2)" data-track-color="rgba(255, 255, 255, .1)">
-                                            <span class="font-s16 font-w600">C&deg;</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-xs-8 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="600">
-                                        <div class="text-uppercase font-w600 text-white-op">Temperature</div>
-                                        <div class="font-s36 font-w300">5.3</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- END Environment -->
+                <div id="device_status" class="text-danger animated infinite pulse pull-right">[LIVE]</div>
+            </div>
 
-                        <!-- Planets -->
-                        <div class="block">
-                            <div class="block-header overflow-hidden">
-                                <h2 class="block-title visibility-hidden" data-toggle="appear" data-class="animated fadeInDown">Planets</h2>
-                            </div>
-                            <div class="block-content">
-                                <div class="row items-push overflow-hidden">
-                                    <div class="col-xs-4 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="100">
-                                        <div class="js-pie-chart pie-chart" data-percent="100" data-line-width="20" data-size="45" data-bar-color="rgba(255, 255, 255, .2)" data-track-color="#c07635">
-                                            <span class="font-s16 font-w600"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-xs-8 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="400">
-                                        <div class="text-uppercase font-w600 text-white-op">Mars</div>
-                                        <div class="font-s36 font-w300">1.67 <span class="font-s16 font-w400 text-crystal">L.Y.</span></div>
-                                    </div>
-                                </div>
-                                <div class="row items-push overflow-hidden">
-                                    <div class="col-xs-4 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="200">
-                                        <div class="js-pie-chart pie-chart" data-percent="100" data-line-width="22" data-size="50" data-bar-color="rgba(255, 255, 255, .2)" data-track-color="#3673cc">
-                                            <span class="font-s16 font-w600"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-xs-8 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="500">
-                                        <div class="text-uppercase font-w600 text-white-op">Earth</div>
-                                        <div class="font-s36 font-w300">1.62 <span class="font-s16 font-w400 text-crystal">L.Y.</span></div>
-                                    </div>
-                                </div>
-                                <div class="row items-push overflow-hidden">
-                                    <div class="col-xs-4 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="300">
-                                        <div class="js-pie-chart pie-chart" data-percent="100" data-line-width="30" data-size="70" data-bar-color="rgba(255, 255, 255, .2)" data-track-color="#f7c880">
-                                            <span class="font-s16 font-w600"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-xs-8 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="600">
-                                        <div class="text-uppercase font-w600 text-white-op">Saturn</div>
-                                        <div class="font-s36 font-w300">2.22 <span class="font-s16 font-w400 text-crystal">L.Y.</span></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- END Planets -->
-                    </div>
-                    <!-- END Left Column -->
+        </header>
+        <!-- END Header -->
 
-                    <!-- Right Column -->
-                    <div class="col-sm-6 col-lg-3">
-                        <!-- HQ_COMS -->
-                        <div class="block">
-                            <div class="block-header overflow-hidden">
-                                <h2 class="block-title visibility-hidden" data-toggle="appear" data-class="animated fadeInDown">HQ_COMS</h2>
-                            </div>
-                            <div class="block-content overflow-hidden">
-                                <div class="row items-push">
-                                    <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="300">
-                                        <div class="font-s24 font-w300 text-white-op">C1 [<span class="text-success">40</span>]</div>
-                                    </div>
-                                    <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="500">
-                                        <div class="font-s24 font-w300 text-white-op">C2 [<span class="text-success">60</span>]</div>
-                                    </div>
-                                    <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="700">
-                                        <div class="font-s24 font-w300 text-white-op">C3 [<span class="text-success">80</span>]</div>
-                                    </div>
-                                    <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="900">
-                                        <div class="font-s24 font-w300 text-white-op">C4 [<span class="text-success">90</span>]</div>
-                                    </div>
-                                    <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="1100">
-                                        <div class="font-s24 font-w300 text-white-op">C5 [<span class="text-success">20</span>]</div>
-                                    </div>
-                                    <div class="col-xs-6 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="1300">
-                                        <div class="font-s24 font-w300 text-white-op">C6 [<span class="text-success">30</span>]</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- END HQ_COMS -->
+        <!-- Main Content -->
+        <main id="page-main">
+            <!-- Columns -->
+            <!-- partial:index.partial.html -->
+<div id="container">
+  
+</div>
 
-                        <!-- POS_TRACKING -->
-                        <div class="block">
-                            <div class="block-header overflow-hidden">
-                                <h2 class="block-title visibility-hidden" data-toggle="appear" data-class="animated fadeInDown">POS_TRACKING</h2>
-                            </div>
-                            <div class="block-content block-content-full overflow-hidden">
-                                <div class="font-w600 text-white-op push-5 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="100">X: 95</div>
-                                <div class="progress visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="100">
-                                    <div class="progress-bar progress-bar-sf progress-bar-striped active" role="progressbar" aria-valuenow="95" aria-valuemin="0" aria-valuemax="100" style="width: 95%"></div>
-                                </div>
-                                <div class="font-w600 text-white-op push-5 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="300">Y: 49</div>
-                                <div class="progress visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="300">
-                                    <div class="progress-bar progress-bar-sf progress-bar-striped active" role="progressbar" aria-valuenow="49" aria-valuemin="0" aria-valuemax="100" style="width: 49%"></div>
-                                </div>
-                                <div class="font-w600 text-white-op push-5 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="500">Z: 59</div>
-                                <div class="progress visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="500">
-                                    <div class="progress-bar progress-bar-sf progress-bar-striped active" role="progressbar" aria-valuenow="59" aria-valuemin="0" aria-valuemax="100" style="width: 59%"></div>
-                                </div>
-                                <div class="font-w600 text-white-op push-5 visibility-hidden" data-toggle="appear" data-class="animated fadeInRight" data-timeout="700">V: +60</div>
-                                <div class="progress visibility-hidden" data-toggle="appear" data-class="animated fadeInLeft" data-timeout="700">
-                                    <div class="progress-bar progress-bar-sf progress-bar-striped active" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- END POS_TRACKING -->
+ <!-- make a button to add more boxes 
+  <button id="add" onclick="createBox()">Add Box</button>-->
+  
+            <!-- END Columns -->
 
-                        <!-- DATA_STREAM -->
-                        <div class="block">
-                            <div class="block-header overflow-hidden">
-                                <h2 class="block-title visibility-hidden" data-toggle="appear" data-class="animated fadeInDown">DATA_STREAM</h2>
-                            </div>
-                            <div class="block-content">
-                                <div class="row items-push">
-                                    <div class="col-xs-4 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="100">
-                                        <div class="font-s12 text-white-op">AT1</div>
-                                        <div class="font-s18 text-success" data-toggle="countTo" data-to="148" data-speed="4000"></div>
-                                    </div>
-                                    <div class="col-xs-4 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="300">
-                                        <div class="font-s12 text-white-op">SR1</div>
-                                        <div class="font-s18 text-success" data-toggle="countTo" data-to="30" data-speed="4000"></div>
-                                    </div>
-                                    <div class="col-xs-4 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="500">
-                                        <div class="font-s12 text-white-op">AF1</div>
-                                        <div class="font-s18 text-success" data-toggle="countTo" data-to="123" data-speed="4000"></div>
-                                    </div>
-                                    <div class="col-xs-4 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="700">
-                                        <div class="font-s12 text-white-op">AT2</div>
-                                        <div class="font-s18 text-success" data-toggle="countTo" data-to="180" data-speed="4000"></div>
-                                    </div>
-                                    <div class="col-xs-4 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="900">
-                                        <div class="font-s12 text-white-op">SR2</div>
-                                        <div class="font-s18 text-success" data-toggle="countTo" data-to="680" data-speed="4000"></div>
-                                    </div>
-                                    <div class="col-xs-4 visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="1100">
-                                        <div class="font-s12 text-white-op">AF2</div>
-                                        <div class="font-s18 text-success" data-toggle="countTo" data-to="15" data-speed="4000"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- END DATA_STREAM -->
-                    </div>
-                    <!-- END Right Column -->
-                </div>
-                <!-- END Columns -->
+            <!-- Page Footer -->
+            
+            <!-- END Page Footer -->
+        </main>
+        <!-- END Main Content -->
+    
+    <!-- END Page Container -->
 
-                <!-- Page Footer -->
-                <div class="block">
-                    <div class="block-content block-content-full font-s12 text-center visibility-hidden" data-toggle="appear" data-class="animated fadeIn" data-timeout="1000">
-                        2024 &copy; Crafted with <span class="text-danger">&hearts;</span> by <a class="link-sf" href="https://github.com/AryanRai/">AryanRai</a>
-                    </div>
-                </div>
-                <!-- END Page Footer -->
-            </main>
-            <!-- END Main Content -->
-        </div>
-        <!-- END Page Container -->
+    <!-- Scripts -->
+    <script src="assets/js/core/jquery.min.js"></script>
+    <script src="assets/js/plugins/jquery.appear.min.js"></script>
+    <script src="assets/js/plugins/jquery.countTo.min.js"></script>
+    <script src="assets/js/plugins/jquery.easypiechart.min.js"></script>
+    <script src="assets/js/ares.js"></script>
 
-        <!-- Scripts -->
-        <script src="assets/js/core/jquery.min.js"></script>
-        <script src="assets/js/plugins/jquery.appear.min.js"></script>
-        <script src="assets/js/plugins/jquery.countTo.min.js"></script>
-        <script src="assets/js/plugins/jquery.easypiechart.min.js"></script>
-        <script src="assets/js/ares.js"></script>
+    <!-- Page JS Code -->
+    <script>
+        jQuery(function(){
+            // Init page helpers (Appear + CountTo + Easy Pie Chart plugins)
+            Ares.initHelpers(['appear', 'appear-countTo', 'easy-pie-chart']);
+        });
+    </script>
 
-        <!-- Page JS Code -->
-        <script>
-            jQuery(function(){
-                // Init page helpers (Appear + CountTo + Easy Pie Chart plugins)
-                Ares.initHelpers(['appear', 'appear-countTo', 'easy-pie-chart']);
-            });
-        </script>
-    </body>
-</html>
+
+
+
+
+<!-- partial -->
+
+<script src="/assets/js/plugins/jquery.min.js"></script>
+<script src='/assets/js/plugins/TweenMax.min.js'></script>
+<script src='/assets/js/plugins/Draggable.min.js'></script>
+
+<script src="/assets/js/custom/grid.js"></script>
+
+
+
+
+<script
+src="/assets/js/plugins/Chart.js">
+</script>
+
+<script>
+ 
+
+
+
+
+createBox('<div class="block-header"><h2 id="pywebview-status" class="block-title animated fadeInDown"><i>Backend</i> is not ready</h2></div><div class="block-content"><button onClick="initLMJ()">Connect ROS Device</button><br/></div>');
+
+
+
+createBox('<br><label for="disablelongpreview">Disable msg preview for running > 10 mins:</label><input type="checkbox" id="disablelongpreview" name="disablelongpreview" value="" checked><br><label for="disableautograph">Disable auto graphing, for running > 10 mins:</label><input type="checkbox" id="disableautograph" name="disableautograph" value="" checked><br><button onClick="startreading()">Start Logging</button><br/><label for="relay_input">Toggle Valve:</label><input id="relay_input" placeholder="set valve state here open/close"><button onClick="changerelay()">Toggle Valve</button><br/><button onClick="closedevice()">Stop Reading & Close connection</button><br/>')
+
+
+createBox('<button onClick="CreateLog()">Generate Log & Plot</button><br/><button onClick="GetLog()">Finalize Log & Preview</button><br/><label for="dfname">savefile:</label><input id="dfname" placeholder="csv name (dont forget .csv)"><button onClick="savefile()">Save</button><br/>')
+
+createBox('<div id="response-container"></div>');
+createBox('<div><canvas id="line-chart" width="800" height="450"></canvas></div>');
+
+</script>
+
+<script>
+
+initialized = false
+reading = false
+var graphrefresh = null
+
+document.getElementById('disableautograph').addEventListener('change', checkgraph);
+
+function checkgraph(){
+    if (document.getElementById('disableautograph').checked) {
+        clearInterval(graphrefresh);
+    }
+
+    if (initialized == false && reading == false) {
+        graphrefresh = setInterval(function() {
+            //CreateLog()
+            clearInterval(graphrefresh);
+        }, 1000)
+    }
+
+    if (document.getElementById('disableautograph').checked != true && initialized == true && reading == true) {
+        graphrefresh = setInterval(function() {
+            CreateLog()
+        }, 1000)
+    }
+
+}
+
+  window.addEventListener('pywebviewready', function() {
+      var container = document.getElementById('pywebview-status')
+      container.innerHTML = '<i>backend</i> is ready'
+  })
+
+  function showResponse(response) {
+      var container = document.getElementById('response-container')
+
+      container.innerText = response.message
+      container.style.display = 'block'
+  }
+
+  function setStatus(status, color='yellow') {
+      var container = document.getElementById('device_status')
+
+      container.innerText = status
+      //container.style.display = 'block'
+      container.style.color = color
+  }
+
+  function DisplayChart(response) {
+      
+      //alert(response.message)
+      //alert(response.message)
+      json_data = JSON.parse(response.message)
+      time_data = json_data['timestamp']
+      A0_data = json_data['A0']
+      A1_data = json_data['A1']
+      VoltageDiff = json_data['VoltageDiff']
+      //Pressure = json_data['Pressure']
+
+      var ctx = document.getElementById('line-chart').getContext('2d');
+      var myChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+              labels: time_data,
+              datasets: [{
+                  label: 'A0',
+                  data: A0_data,
+                  backgroundColor: '#46cdba',
+                  borderColor: '#46cdba',
+                  borderWidth: 1
+              },
+              {
+                  label: 'A1',
+                  data: A1_data,
+                  backgroundColor: '#46d190',
+                  borderColor: '#46d190',
+                  borderWidth: 1
+              }
+              ,
+              {
+                  label: 'VoltageDiff',
+                  data: VoltageDiff,
+                  backgroundColor: '#46d190',
+                  borderColor: '#46d190',
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              scales: {
+                  yAxes: [{
+                      ticks: {
+                          beginAtZero: true
+                      }
+                  }]
+              }
+          }
+      });
+      
+  }
+
+  function initialize() {
+      pywebview.api.init().then(
+          function(response) {
+              showResponse(response)
+              setStatus('Waiting', 'Red')
+          }
+      )
+  }
+
+/*
+  function doHeavyStuff() {
+      var btn = document.getElementById('heavy-stuff-btn')
+
+      pywebview.api.heavy_stuff.doHeavyStuff().then(function(response) {
+          showResponse(response)
+          btn.onclick = doHeavyStuff
+          btn.innerText = 'Perform a heavy operation'
+      })
+
+      showResponse({message: 'Working...'})
+      btn.innerText = 'Cancel the heavy operation'
+      btn.onclick = cancelHeavyStuff
+  }
+
+  function cancelHeavyStuff() {
+      pywebview.api.heavy_stuff.cancelHeavyStuff()
+  }
+
+  function getRandomNumber() {
+      pywebview.api.getRandomNumber().then(showResponse)
+  }
+
+  function greet() {
+      var name_input = document.getElementById('name_input').value;
+      pywebview.api.sayHelloTo(name_input).then(showResponse)
+  }
+*/
+  function catchException() {
+      pywebview.api.LJM.catch(showResponse)
+  }
+
+
+
+  function CreateLog() {
+      pywebview.api.Module_Labjack.createLog().then(function(response) {
+          DisplayChart(response);
+          response = {message: 'Log Created & Plotted'}
+          showResponse(response);
+
+          //setStatus('Logged', 'Green')
+      })
+  }
+
+  function initLMJ() {
+      pywebview.api.Module_Labjack.initLMJ().then(
+          function(response) {
+              showResponse(response)
+              setStatus('Connected', 'Green')
+              initialized = true
+          }
+      )
+  }
+  
+  function startreading() {
+      pywebview.api.Module_Labjack.StartRead().then(
+          function(response) {
+              showResponse(response)
+              setStatus(response.message, 'Yellow')
+              reading = true
+
+            //every 1 seconds create graph
+
+            //call the function every 1 second
+            
+            checkgraph()
+            }
+      )
+  }
+
+
+  function changerelay() {
+      var relay_input = document.getElementById('relay_input').value;
+      if (relay_input == "") {
+          relay_input = 0
+      }
+      if (relay_input == "open") {
+          relay_input = 1
+      }
+      if (relay_input == "close") {
+          relay_input = 0
+      }
+      pywebview.api.Module_Labjack.ToggleRelay(relay_input).then(
+          function(response) {
+              showResponse(response)
+              //setStatus('Toggled', 'Green')
+          }
+      )
+  }
+
+  function closedevice() {
+      pywebview.api.Module_Labjack.CloseDevice().then(
+          function(response) {
+              showResponse(response)
+              setStatus('Closed', 'Red')
+                initialized = false
+                reading = false
+                checkgraph()
+          }
+      )
+      
+  }
+
+
+
+  function GetLog() {
+      response =  ""
+      var longpreview = document.getElementById('disablelongpreview').checked;
+      pywebview.api.Module_Labjack.createDF(longpreview).then( function(response) {
+    showResponse(response);
+        
+      })
+  }
+
+  function savefile () {
+      var dfname = document.getElementById('dfname').value;
+      pywebview.api.Module_Labjack.saveDF(dfname).then(showResponse)
+  }
+
+  
+
+</script>
+
+
+</div>
+
+</body></html>

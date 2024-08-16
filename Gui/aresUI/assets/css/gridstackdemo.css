@@ -1,0 +1,71 @@
+/* required file for gridstack to work */
+@import "../node_modules/gridstack/dist/gridstack.min.css";
+
+/* Optional styles for demos */
+
+
+
+.grid-stack {
+  background-color: rgba(8,20,26,255);
+}
+
+
+
+.grid-stack-item-content {
+  text-align: center;
+  background: rgba( 52, 52, 52, 0 );
+  box-shadow: 0 5px 5px 0 #4582954b;
+  backdrop-filter: blur( 4px );
+  -webkit-backdrop-filter: blur( 4px );
+  border-radius: 10px;
+  border: 1px dashed #d6ebf12c;
+  padding: auto;
+  
+}
+
+.grid-stack-item-removing {
+  opacity: 0.5;
+}
+.trash {
+  background: rgba(255, 0, 0, 0.1) 
+}
+.sidebar {
+  background: rgba(0, 255, 213, 0.1);
+  padding: 25px 0;
+  border: 2px solid transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0px;
+  text-align: center;
+}
+.sidebar .grid-stack-item {
+  width: 120px;
+  height: 50px;
+  border: 2px dashed rgb(0, 124, 128);
+  text-align: center;
+  line-height: 35px;
+  background: rgba(0, 204, 255, 0.1);
+  cursor: default;
+  display: inline-block;
+}
+.sidebar .grid-stack-item .grid-stack-item-content {
+  background: none;
+}
+
+/* make nested grid have slightly darker bg take almost all space (need some to tell them apart) so items inside can have similar to external size+margin */
+.grid-stack > .grid-stack-item.grid-stack-sub-grid > .grid-stack-item-content {
+  background: rgba(0,0,0,0.1);
+  inset: 0 2px;
+}
+.grid-stack.grid-stack-nested {
+  background: none;
+  /* background-color: red; */
+  /* take entire space */
+  position: absolute;
+  height: auto;
+  inset: 0; /* TODO change top: if you have content in nested grid */
+}
+
+.container-fluid {
+  resize: both;
+  border: dashed 1px #d6ebf12c;
+}

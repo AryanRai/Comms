@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>1142 demo</title>
+  <link rel="stylesheet" href="../../../demo/demo.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@5.1.1/dist/gridstack-jq.js"></script>
+</head>
+<body>
+  <h1>JQ test case with click to remove</h1>
+  <div class="grid-stack">
+    <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="3" gs-h="1"><div class="grid-stack-item-content">1 click to delete</div></div>
+    <div class="grid-stack-item" gs-x="0" gs-y="1" gs-w="3" gs-h="1"><div class="grid-stack-item-content">2 missing change event</div></div>
+    <div class="grid-stack-item" gs-x="0" gs-y="2" gs-w="1" gs-h="1"><div class="grid-stack-item-content">3</div></div>
+    <div class="grid-stack-item" gs-x="4" gs-y="0" gs-w="1" gs-h="1"><div class="grid-stack-item-content">4</div></div>
+  </div>
+  
+<script type="text/javascript">
+  let grid = GridStack.init({float: false});
+
+  grid.on('added removed change', function(e, items) {
+    let str = '';
+    items.forEach(function(item) { str += ' (x,y)=' + item.x + ',' + item.y; });
+    console.log(e.type + ' ' + items.length + ' items:' + str );
+  });
+
+  $('.grid-stack .grid-stack-item').click(function(e) {
+    let item = $(e.currentTarget).closest('.grid-stack-item');
+    grid.removeWidget(item.get(0));
+  });
+</script>
+</body>
+</html>

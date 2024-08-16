@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Many columns demo</title>
+
+  <link rel="stylesheet" href="../../../demo/demo.css"/>
+  <link rel="stylesheet" href="810-many-columns.css"/>
+  <script src="../../../dist/gridstack-all.js"></script>
+</head>
+<body>
+  <div class="container-fluid">
+    <h1>Many Columns demo</h1>
+    <div>
+      <a class="btn btn-primary" onClick="addNewWidget()" href="#">Add Widget</a>
+    </div>
+    <br><br>
+    <div class="grid-stack"></div>
+  </div>
+
+  <script type="text/javascript">
+    const COLUMNS = 60; // # of columns, also need to update CSS
+    let count = 0;
+    let options = {
+      column: COLUMNS,
+      cellHeight: 'auto',
+      margin: 1,
+      // staticGrid: true,
+    };
+    let grid = GridStack.init(options);
+
+    grid.batchUpdate();
+    for (; count <= COLUMNS;) grid.addWidget({content: String(count++)});
+    grid.batchUpdate(false);
+  </script>
+</body>
+</html>
