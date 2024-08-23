@@ -23,6 +23,7 @@ function closeDeviceNav() {
 
 }
 
+/*
 window.addEventListener('click', function(e){   
   if (!document.getElementById('mySidenav').contains(e.target) && !document.getElementById('title-main').contains(e.target)){
     // Clicked in box
@@ -46,6 +47,8 @@ window.addEventListener('click', function(e){
  document.getElementById("myDevicenav").style.visibility = "visible";
   }
 });
+
+*/
 
 //mouseover
 document.getElementById("title-main").addEventListener("mouseover", function() {

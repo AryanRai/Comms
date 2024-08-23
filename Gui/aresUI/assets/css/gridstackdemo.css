@@ -68,4 +68,6 @@
 .container-fluid {
   resize: both;
   border: dashed 1px #d6ebf12c;
+  margin-left: 2%;
+  margin-right: 2%;
 }
