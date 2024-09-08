@@ -1,5 +1,5 @@
 // src/index.js
-const ws = new WebSocket('ws://localhost:8765');
+const ws = new WebSocket('ws://localhost:3000');
 
 ws.onopen = () => {
   console.log('Connected to WebSocket server');
