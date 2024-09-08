@@ -5,7 +5,7 @@ import json
 
 async def subscribe_and_fetch():
     uri = "ws://localhost:8765"  # Connect to the WebSocket server
-    async with websockets.connect(uri) as websocket:
+    async with websockets.connect(uri, ping_interval=None, ping_timeout=None) as websocket:
         # Send a request to fetch a stream value
         fetch_message = json.dumps({
             'type': 'fetch',

@@ -1,3 +1,8 @@
 # Ignore temporary files
-Gui/aresUI/assets/node_modules/
+Gui/Pre_aresUI/assets/node_modules/
+Gui/ariesUI/node_modules/
+Gui/ariesUI/dist/
+Gui/ariesUI/build/
+Gui/__pycache__/
+Gui/Pre_aresUI/__pycache__/
 

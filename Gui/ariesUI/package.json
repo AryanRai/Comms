@@ -1,0 +1,31 @@
+{
+  "name": "ariesui",
+  "version": "1.0.0",
+  "description": "UI for Comms Centralized Communications dashboards for multi layered control ground stations",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AryanRai/aries-UI.git"
+  },
+  "keywords": [
+    "UI",
+    "dashboard",
+    "control"
+  ],
+  "author": "Aryan Rai",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AryanRai/aries-UI/issues"
+  },
+  "homepage": "https://github.com/AryanRai/aries-UI#readme",
+  "dependencies": {
+    "daisyui": "^4.12.10",
+    "electron": "^32.0.2",
+    "tailwindcss": "^3.4.10"
+  }
+  
+}

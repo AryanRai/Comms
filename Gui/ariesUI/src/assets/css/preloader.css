@@ -1,0 +1,291 @@
+/* Uncomment any commented line in the CSS to see more cool effects */
+
+/* Increase or decrease the value of contrast and blur for different look */
+
+/* play around with BG colors and shadow colors */
+
+/* Have Fun!! */
+
+* {
+  margin: 0px;
+  padding: 0px;
+  box-sizing: border-box;
+ }
+ 
+ body {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background-color: black;
+ 
+  /* The filter gives the crazy effect - cool shii */
+  filter: blur(10px) contrast(10);
+  will-change: contents;
+  overflow: hidden; /* Add this line to disable scrollbars */
+ }
+ 
+ .circle1 {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  background-color: white;
+ 
+  /* For chromatic Aberration  */
+  box-shadow: 0px 0px 10px red, 0px 0px 20px blue, 0px 0px 21px green;
+ 
+  /* The Gibberish numbers are bezier curve for bounce easing */
+  animation: grow 2s
+    linear(
+     0 0%,
+     0 2.27%,
+     0.02 4.53%,
+     0.04 6.8%,
+     0.06 9.07%,
+     0.1 11.33%,
+     0.14 13.6%,
+     0.25 18.15%,
+     0.39 22.7%,
+     0.56 27.25%,
+     0.77 31.8%,
+     1 36.35%,
+     0.89 40.9%,
+     0.85 43.18%,
+     0.81 45.45%,
+     0.79 47.72%,
+     0.77 50%,
+     0.75 52.27%,
+     0.75 54.55%,
+     0.75 56.82%,
+     0.77 59.1%,
+     0.79 61.38%,
+     0.81 63.65%,
+     0.85 65.93%,
+     0.89 68.2%,
+     1 72.7%,
+     0.97 74.98%,
+     0.95 77.25%,
+     0.94 79.53%,
+     0.94 81.8%,
+     0.94 84.08%,
+     0.95 86.35%,
+     0.97 88.63%,
+     1 90.9%,
+     0.99 93.18%,
+     0.98 95.45%,
+     0.99 97.73%,
+     1 100%
+    );
+
+    animation: infinite alternate,
+   rot 4s ease 1s infinite;
+  will-change: contents;
+ }
+ 
+ .circle2 {
+  width: 180px;
+  height: 180px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  /* border-radius: 50%; */
+  background-color: rgb(0, 0, 0);
+ 
+  /* For chromatic Aberration  */
+  /* box-shadow:
+     0px 0px 10px red,
+     0px 0px 20px blue,
+     0px 0px 21px green; */
+ 
+  /* The Gibberish numbers are bezier curve for bounce easing */
+  animation: grow 4s
+    linear(
+     0 0%,
+     0 2.27%,
+     0.02 4.53%,
+     0.04 6.8%,
+     0.06 9.07%,
+     0.1 11.33%,
+     0.14 13.6%,
+     0.25 18.15%,
+     0.39 22.7%,
+     0.56 27.25%,
+     0.77 31.8%,
+     1 36.35%,
+     0.89 40.9%,
+     0.85 43.18%,
+     0.81 45.45%,
+     0.79 47.72%,
+     0.77 50%,
+     0.75 52.27%,
+     0.75 54.55%,
+     0.75 56.82%,
+     0.77 59.1%,
+     0.79 61.38%,
+     0.81 63.65%,
+     0.85 65.93%,
+     0.89 68.2%,
+     1 72.7%,
+     0.97 74.98%,
+     0.95 77.25%,
+     0.94 79.53%,
+     0.94 81.8%,
+     0.94 84.08%,
+     0.95 86.35%,
+     0.97 88.63%,
+     1 90.9%,
+     0.99 93.18%,
+     0.98 95.45%,
+     0.99 97.73%,
+     1 100%
+    );
+    animation: infinite alternate,
+   rot 3s ease 2s infinite;
+  will-change: contents;
+ }
+ 
+ .circle3 {
+  width: 160px;
+  height: 160px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background-color: rgb(255, 255, 255);
+  /* For chromatic Aberration  */
+  box-shadow: 0px 0px 10px red, 0px 0px 20px blue, 0px 0px 21px green;
+ 
+  /* The Gibberish numbers are bezier curve for bounce easing */
+  animation: grow 4s
+    linear(
+     0 0%,
+     0 2.27%,
+     0.02 4.53%,
+     0.04 6.8%,
+     0.06 9.07%,
+     0.1 11.33%,
+     0.14 13.6%,
+     0.25 18.15%,
+     0.39 22.7%,
+     0.56 27.25%,
+     0.77 31.8%,
+     1 36.35%,
+     0.89 40.9%,
+     0.85 43.18%,
+     0.81 45.45%,
+     0.79 47.72%,
+     0.77 50%,
+     0.75 52.27%,
+     0.75 54.55%,
+     0.75 56.82%,
+     0.77 59.1%,
+     0.79 61.38%,
+     0.81 63.65%,
+     0.85 65.93%,
+     0.89 68.2%,
+     1 72.7%,
+     0.97 74.98%,
+     0.95 77.25%,
+     0.94 79.53%,
+     0.94 81.8%,
+     0.94 84.08%,
+     0.95 86.35%,
+     0.97 88.63%,
+     1 90.9%,
+     0.99 93.18%,
+     0.98 95.45%,
+     0.99 97.73%,
+     1 100%
+    );
+    animation: infinite alternate,
+   rot 2s ease 3s infinite;
+  will-change: contents;
+ }
+ 
+ .circle4 {
+  width: 130px;
+  height: 130px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  /* border-radius: 50%; */
+  background-color: rgb(0, 0, 0);
+  /* For chromatic Aberration  */
+  /* box-shadow:
+     0px 0px 10px red,
+     0px 0px 20px blue,
+     0px 0px 21px green; */
+ 
+  /* The Gibberish numbers are bezier curve for bounce easing */
+  animation: grow 4s
+    linear(
+     0 0%,
+     0 2.27%,
+     0.02 4.53%,
+     0.04 6.8%,
+     0.06 9.07%,
+     0.1 11.33%,
+     0.14 13.6%,
+     0.25 18.15%,
+     0.39 22.7%,
+     0.56 27.25%,
+     0.77 31.8%,
+     1 36.35%,
+     0.89 40.9%,
+     0.85 43.18%,
+     0.81 45.45%,
+     0.79 47.72%,
+     0.77 50%,
+     0.75 52.27%,
+     0.75 54.55%,
+     0.75 56.82%,
+     0.77 59.1%,
+     0.79 61.38%,
+     0.81 63.65%,
+     0.85 65.93%,
+     0.89 68.2%,
+     1 72.7%,
+     0.97 74.98%,
+     0.95 77.25%,
+     0.94 79.53%,
+     0.94 81.8%,
+     0.94 84.08%,
+     0.95 86.35%,
+     0.97 88.63%,
+     1 90.9%,
+     0.99 93.18%,
+     0.98 95.45%,
+     0.99 97.73%,
+     1 100%
+    );
+    animation: infinite alternate,
+   rot 1s ease 4s infinite;
+ }
+ @keyframes grow {
+  0% {
+   /* opacity: 0; */
+   scale: 0.9;
+  }
+ 
+  100% {
+   /* opacity: 1; */
+   scale: 1;
+  }
+ }
+ 
+ @keyframes rot {
+  0% {
+   rotate: 0turn;
+  }
+ 
+  100% {
+   rotate: 0.25turn;
+  }
+ }
+ 
