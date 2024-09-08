@@ -10,9 +10,7 @@
    overflow: hidden;
    position: relative;
    animation: text-line-glow 2s linear infinite;
-   -webkit-app-region: drag; /* Makes this area draggable in Electron */
-   cursor: move;
-   user-select: none;
+   
 }
 @keyframes text-line-glow {
 0% {text-shadow: 0px 0px 0px #29cac8;
