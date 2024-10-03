@@ -28,3 +28,37 @@ app.ws(
 app.any("/", lambda res, req: res.end("Nothing to see here!"))
 app.listen(3000, lambda config: print("Listening on http://localhost:3000"))
 app.run()
+
+
+'''
+
+Negotiation data format:
+
+{
+    "type": "negotiation",
+    "status": "active",
+    "data": {}
+}
+
+
+Stream data format:
+
+{
+    "type": "update",
+    "module": "sensor_module_1",
+    "stream_id": "temperature",
+    "timestamp": 1694803921,
+    "priority": "high",
+    "value": 22.5,
+    "datatype": "float",
+    "unit": "Celsius",
+    "status": "active",
+    "metadata": {
+        "sensor_id": "A1234",
+        "location": "Room 1",
+        "calibration_date": "2024-09-16"
+    }
+}
+
+
+'''

@@ -5,10 +5,9 @@ from datetime import datetime
 
 
 class Stream:
-    def __init__(self, stream_id, name, datatype, unit, status, metadata):
+    def __init__(self, stream_id, datatype, unit, status, metadata):
         self.data = {
             "stream_id": stream_id,
-            "name": name,
             "datatype": datatype,
             "unit": unit,
             "status": status,
@@ -41,60 +40,23 @@ class Stream:
         return self.data
 
 
-class Module:
-    def __init__(self, module_id, name, streams):
-        self.module_id = module_id
-        self.name = name
-        # Streams will be a dictionary of stream_id -> Stream objects
-        self.streams = {stream.stream_id: stream for stream in streams}
-
-    def update_stream_value(self, stream_id, value):
-        if stream_id in self.streams:
-            self.streams[stream_id].update_value(value)
-
-    def to_dict(self):
-        return {
-            "module_id": self.module_id,
-            "name": self.name,
-            "streams": {k: v.to_dict() for k, v in self.streams.items()}
-        }
-
-
 class Engine:
     def __init__(self, Debuglvl=0):
         self.value = 0
         self.Debuglvl = Debuglvl
-        # Engine will now manage multiple modules, each with its own streams
-        self.modules = {
-            "module1": Module(
-                module_id="module1", name="SensorModule1",
-                streams=[
-                    Stream(stream_id="stream1", name="stream1", datatype="float", unit="bar", status="active", metadata={}),
-                    Stream(stream_id="stream2", name="stream2", datatype="float", unit="bar", status="active", metadata={})
-                ]
-            ),
-            "module2": Module(
-                module_id="module2", name="SensorModule2",
-                streams=[
-                    Stream(stream_id="stream3", datatype="int", unit="psi", status="active", metadata={}),
-                    Stream(stream_id="stream4", datatype="int", unit="psi", status="active", metadata={})
-                ]
-            )
+        self.streams = {
+            "stream1": Stream(stream_id="stream1", datatype="float", unit="bar", status="active", metadata={}),
+            "stream2": Stream(stream_id="stream2", datatype="float", unit="bar", status="active", metadata={})
         }
 
     async def test_update_value(self, rate):
         while True:
             self.value += 1  # Increment the value
-
-            # Update stream values for all modules
-            for module in self.modules.values():
-                for stream_id in module.streams:
-                    module.update_stream_value(stream_id, self.value)
+            self.streams["stream1"].update_value(self.value)
+            self.streams["stream2"].update_value(self.value)
 
             if self.Debuglvl > 1:
-                print("Engine: Simulated Data Update:")
-                for module_id, module in self.modules.items():
-                    print(f"Module {module_id}: {module.to_dict()}")
+                print("Engine: Simulated Data Update:", {k: v.to_dict() for k, v in self.streams.items()})
 
             await asyncio.sleep(rate)
 
@@ -124,12 +86,12 @@ class Negotiator:
                     if self.Debuglvl > 0:
                         print("Negotiator: Sending WS message")
 
-                    # Serialize engine's module and stream data for sending
-                    module_data = {module_id: module.to_dict() for module_id, module in self.engine.modules.items()}
+                    # Serialize engine's stream data for sending
+                    stream_data = {k: v.to_dict() for k, v in self.engine.streams.items()}
                     negotiation = {
                         "type": "negotiation",
                         "status": "active",
-                        "data": module_data
+                        "data": stream_data
                     }
 
                     message = json.dumps(negotiation)
@@ -191,7 +153,6 @@ async def main():
         negotiator.ws_pub_sub(0.01),
         module_handler.run()
     )
-
 
 # Run the asyncio event loop
 if __name__ == "__main__":
