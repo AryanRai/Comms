@@ -6,7 +6,8 @@ from datetime import datetime
 
 class Stream:
     def __init__(self, stream_id, name, datatype, unit, status, metadata):
-        self.data = {
+        self.stream_id = stream_id  # Assign stream_id to the object
+        self.data = {  # Initialize data dictionary
             "stream_id": stream_id,
             "name": name,
             "datatype": datatype,
@@ -14,13 +15,13 @@ class Stream:
             "status": status,
             "metadata": metadata,
             "value": 0,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "stream-update-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "priority": "high"
         }
 
     def update_value(self, value):
         self.data["value"] = value
-        self.data["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.data["stream-update-timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def update_metadata(self, metadata):
         self.data["metadata"] = metadata
@@ -76,8 +77,8 @@ class Engine:
             "module2": Module(
                 module_id="module2", name="SensorModule2",
                 streams=[
-                    Stream(stream_id="stream3", datatype="int", unit="psi", status="active", metadata={}),
-                    Stream(stream_id="stream4", datatype="int", unit="psi", status="active", metadata={})
+                    Stream(stream_id="stream3", name="stream3", datatype="int", unit="psi", status="active", metadata={}),
+                    Stream(stream_id="stream4", name="stream4", datatype="int", unit="psi", status="active", metadata={})
                 ]
             )
         }
@@ -129,7 +130,8 @@ class Negotiator:
                     negotiation = {
                         "type": "negotiation",
                         "status": "active",
-                        "data": module_data
+                        "data": module_data,
+                        "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     }
 
                     message = json.dumps(negotiation)

@@ -21,7 +21,7 @@ class Stream:
 
     def update_value(self, value):
         self.data["value"] = value
-        self.data["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.data["stream-update-timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def update_metadata(self, metadata):
         self.data["metadata"] = metadata
@@ -70,8 +70,8 @@ class Engine:
             "module1": Module(
                 module_id="module1", name="SensorModule1",
                 streams=[
-                    Stream(stream_id="stream1", name="stream1", datatype="float", unit="bar", status="active", metadata={}),
-                    Stream(stream_id="stream2", name="stream2", datatype="float", unit="bar", status="active", metadata={})
+                    Stream(stream_id="stream56", name="stream1", datatype="float", unit="bar", status="active", metadata={}),
+                    Stream(stream_id="stream93", name="stream2", datatype="float", unit="bar", status="active", metadata={})
                 ]
             ),
             "module2": Module(

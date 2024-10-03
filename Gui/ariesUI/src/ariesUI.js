@@ -14,13 +14,34 @@ function update_app_live_status_dropdown() {
   // update last updated ms in the live section
 }
 
-function update_app_stream_list() {
-  
+function update_app_stream_list(data) {
+  //document.getElementById("SH-active-streams-dropdown-content")
+  document.getElementById("SH-active-streams-dropdown-content").innerHTML = "<div class='skeleton h-32 w-32'></div>";
+  var active_streams_innerhtml = "";
+  //for each module in data add a heading 
+  for (const module in data) {
+    console.log(module);
+    //add module to list
+    active_streams_innerhtml += "<li><details open><summary>" + module + "</summary><ul>";
+    console.log(data[module]["streams"]);
+    for (const stream in data[module]["streams"]) {
+      console.log(stream);
+      //add stream to list
+      active_streams_innerhtml += "<li><a>" + stream + "</a></li>";
+       
+
+    }
+
+    active_streams_innerhtml += "</ul></details></li>";
+    document.getElementById("SH-active-streams-dropdown-content").innerHTML = active_streams_innerhtml;
+
+  }
+
 }
 
 function update_SH_live_status(update, style) {
   // update last updated ms in the live section
-  if (Debuglvl > 2){
+  if (Debuglvl > 3){
     console.log("AriesUI: SH_live_status Updated to: " + document.getElementById("SH-live-status").textContent)
   }
 
@@ -56,6 +77,7 @@ document.getElementById('Itf-connect-btn').addEventListener('click', () => {
 });
 
 document.getElementById('SH-active-streams-dropdown').addEventListener('click', () => {
+  document.getElementById("SH-active-streams-dropdown-content").innerHTML = "<div class='skeleton h-10 w-32'></div>";
   queryActiveStreams();
 });
 

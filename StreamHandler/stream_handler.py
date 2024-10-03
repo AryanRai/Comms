@@ -1,6 +1,6 @@
 from socketify import App, OpCode, CompressOptions
 import json
-
+#todo rename active_streams to active data
 # Simulated active streams (in a real scenario, this would be dynamically populated)
 active_streams = []
 
@@ -23,7 +23,7 @@ def ws_message(ws, message, opcode):
         if data.get('type') == 'query' and data.get('query_type') == 'active_streams':
             response = {
                 'type': 'active_streams',
-                'streams': active_streams  # Sending the active streams back to the client
+                'data': active_streams  # Sending the active streams back to the client
             }
             ws.send(json.dumps(response), OpCode.TEXT)
             print("Sent active streams to client.")
