@@ -14,29 +14,17 @@ function update_app_live_status_dropdown() {
   // update last updated ms in the live section
 }
 
-function update_app_stream_list(data) {
-  //document.getElementById("SH-active-streams-dropdown-content")
-  document.getElementById("SH-active-streams-dropdown-content").innerHTML = "<div class='skeleton h-32 w-32'></div>";
-  var active_streams_innerhtml = "";
-  //for each module in data add a heading 
-  for (const module in data) {
-    console.log(module);
-    //add module to list
-    active_streams_innerhtml += "<li><details open><summary>" + module + "</summary><ul>";
-    console.log(data[module]["streams"]);
-    for (const stream in data[module]["streams"]) {
-      console.log(stream);
-      //add stream to list
-      active_streams_innerhtml += "<li><a>" + stream + "</a></li>";
-       
-
-    }
-
-    active_streams_innerhtml += "</ul></details></li>";
-    document.getElementById("SH-active-streams-dropdown-content").innerHTML = active_streams_innerhtml;
-
-  }
-
+function select_app_stream(UMSI) {
+  //left click stream list
+  console.log("AriesUI: select stream:", UMSI);
+}
+  
+function preview_app_stream(stream) {
+  //right click stream list
+}
+  
+function subscribe_data() {
+    
 }
 
 function update_SH_live_status(update, style) {
@@ -67,6 +55,46 @@ function update_SH_live_status(update, style) {
 
 }
 
+function update_app_stream_list(data) {
+  //document.getElementById("SH-active-streams-dropdown-content")
+  document.getElementById("SH-active-streams-dropdown-content").innerHTML = "<div class='skeleton h-32 w-32'></div>";
+  document.getElementById("App-Configurator-active-streams-dropdown-content").innerHTML = "<div class='skeleton h-32 w-32'></div>";
+
+
+  var active_streams_innerhtml = "";
+
+  if (data.length == 0) {
+    document.getElementById("SH-active-streams-dropdown-content").innerHTML = "<li><a href='https://www.youtube.com/watch?v=dQw4w9WgXcQ' class='text-danger'>{0 Active}</a></li>";
+    document.getElementById("App-Configurator-active-streams-dropdown-content").innerHTML = "<li><a href='https://www.youtube.com/watch?v=dQw4w9WgXcQ' class='text-danger'>{0 Active}</a></li>";
+  }
+  //for each module in data add a heading 
+  for (const module in data) {
+    if (Debuglvl > 4) {
+      console.log(module);
+    }
+    //add module to list
+    active_streams_innerhtml += "<li><details open><summary>" + module + "</summary><ul>";
+    if (Debuglvl > 4) {
+      console.log(data[module]["streams"]);
+    }
+    for (const stream in data[module]["streams"]) {
+      if (Debuglvl > 4) {
+        console.log(stream);
+      }
+      //add stream to list
+      active_streams_innerhtml += "<li><a onclick='select_app_stream(" + '"' + module + '.' + stream + '"' + ")'>" + stream + "</a></li>";
+       
+
+    }
+
+    active_streams_innerhtml += "</ul></details></li>";
+    document.getElementById("SH-active-streams-dropdown-content").innerHTML = active_streams_innerhtml;
+    document.getElementById("App-Configurator-active-streams-dropdown-content").innerHTML = active_streams_innerhtml;
+  }
+  
+
+}
+
 //websocket close
 document.getElementById('Itf-close-btn').addEventListener('click', () => {
   closeWebSocket();
@@ -81,9 +109,15 @@ document.getElementById('SH-active-streams-dropdown').addEventListener('click', 
   queryActiveStreams();
 });
 
+document.getElementById('App-Configurator-active-streams-dropdown').addEventListener('click', () => {
+  document.getElementById("App-Configurator-active-streams-dropdown-content").innerHTML = "<div class='skeleton h-10'></div>";
+  queryActiveStreams();
+});
+
 document.getElementById('App-live-status-dropdown').addEventListener('click', () => {
   pingServer();
 });
+
 
 
 document.getElementById('Itf-reconnect-btn').addEventListener('click', () => {

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js 3D Model Loader with Labels</title>
+
+    <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1.8.3/dist/es-module-shims.min.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.min.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: white; margin: 0; }
+        canvas { display: block; }
+        #uploadBtn {
+            position: absolute;
+            z-index: 1;
+            margin: 10px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="uploadBtn" accept=".glb,.gltf,.obj,.fbx" />
+
+    <script type="module">
+        import * as THREE from "three";
+        import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+        import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
+        import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
+        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+        let scene, camera, renderer, controls, model, raycaster, mouse;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Lighting
+            const light = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(light);
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(10, 10, 10);
+            scene.add(pointLight);
+
+            // Camera controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            camera.position.set(0, 2, 5);
+            controls.update();
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // Initialize raycaster and mouse for clicking
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Handle canvas click for adding and renaming labels
+            renderer.domElement.addEventListener('click', onCanvasClick);
+        }
+
+        function loadModel(file) {
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+                const contents = event.target.result;
+
+                // Clear previous model from the scene
+                if (model) {
+                    scene.remove(model);
+                }
+
+                let loader;
+
+                // Handle different file formats
+                switch (fileExtension) {
+                    case 'glb':
+                    case 'gltf':
+                        loader = new GLTFLoader();
+                        loader.parse(contents, '', (gltf) => {
+                            model = gltf.scene;
+                            scene.add(model);
+                        });
+                        break;
+                    case 'obj':
+                        loader = new OBJLoader();
+                        model = loader.parse(contents);
+                        scene.add(model);
+                        break;
+                    case 'fbx':
+                        loader = new FBXLoader();
+                        model = loader.parse(contents);
+                        scene.add(model);
+                        break;
+                    default:
+                        alert('Unsupported file format');
+                        return;
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Handle canvas click for adding and renaming labels
+        function onCanvasClick(event) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(scene.children, true);
+
+            if (intersects.length > 0) {
+                const clickedObject = intersects[0].object;
+                // Check if the clicked object is a label
+                if (clickedObject instanceof THREE.Sprite) {
+                    // Prompt to rename the label
+                    const newName = prompt('Enter new label name:', clickedObject.userData.labelText);
+                    if (newName === "") {
+                        // If the name is empty, remove the label
+                        scene.remove(clickedObject);
+                    } else {
+                        // Update the label's name
+                        clickedObject.userData.labelText = newName;
+                        updateSpriteTexture(clickedObject);
+                    }
+                } else {
+                    // If clicked on the model, add a new label
+                    const point = intersects[0].point;
+                    addLabel(point);
+                }
+            }
+        }
+
+        // Function to add a label at a specific point
+        function addLabel(position) {
+            // Create a texture for the label
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.fillStyle = "rgba(255, 255, 255, 1)";
+            context.fillRect(0, 0, 200, 50);
+            context.fillStyle = "black";
+            context.font = "20px Arial";
+            context.fillText('Label', 10, 30);
+
+            const texture = new THREE.Texture(canvas);
+            texture.needsUpdate = true;
+
+            // Create sprite for the label
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.position.copy(position);
+            sprite.scale.set(1, 0.5, 1); // Adjust size as needed
+            sprite.userData.labelText = 'Label'; // Store default text
+
+            scene.add(sprite);
+        }
+
+        // Update sprite texture
+        function updateSpriteTexture(sprite) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.fillStyle = "rgba(255, 255, 255, 1)";
+            context.fillRect(0, 0, 200, 50);
+            context.fillStyle = "black";
+            context.font = "20px Arial";
+            context.fillText(sprite.userData.labelText, 10, 30);
+
+            const texture = new THREE.Texture(canvas);
+            texture.needsUpdate = true;
+            sprite.material.map = texture;
+        }
+
+        // Call animate function on each frame
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+            controls.update();
+        }
+
+        // File upload listener
+        document.getElementById('uploadBtn').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                loadModel(file);
+            }
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
