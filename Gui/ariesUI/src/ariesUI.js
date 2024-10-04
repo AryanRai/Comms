@@ -16,11 +16,14 @@ function update_app_live_status_dropdown() {
 
 function select_app_stream(UMSI) {
   //left click stream list
+  //unique module.stream id
   console.log("AriesUI: select stream:", UMSI);
+  document.getElementById("App-Configurator-select-stream-input").value = UMSI
 }
   
-function preview_app_stream(stream) {
+function preview_app_stream(UMSI) {
   //right click stream list
+  console.log("AriesUI: preview stream:", UMSI);
 }
   
 function subscribe_data() {
@@ -82,7 +85,7 @@ function update_app_stream_list(data) {
         console.log(stream);
       }
       //add stream to list
-      active_streams_innerhtml += "<li><a onclick='select_app_stream(" + '"' + module + '.' + stream + '"' + ")'>" + stream + "</a></li>";
+      active_streams_innerhtml += "<li><a onclick='select_app_stream(" + '"' + module + '.' + stream + '"' + ")'" + "oncontextmenu='preview_app_stream(" + '"' + module + '.' + stream + '"' + ")'" + ">" + stream + "</a></li>";
        
 
     }
