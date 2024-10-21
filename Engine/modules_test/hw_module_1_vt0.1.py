@@ -1,20 +1,22 @@
 # hw_module_1.py
 
 import random
-import time
+import asyncio
 
 class hw_module_1:
     def __init__(self):
         self.streams = {
-            'stream_1': 0,
-            'stream_2': 0
+            'stream1': 0,
+            'stream2': 0
         }
 
-    def update_streams(self):
-        """Simulate the hardware constantly updating its streams with random data."""
-        self.streams['stream1'] = random.uniform(0, 100)
-        self.streams['stream2'] = random.uniform(0, 100)
-        print(f"HWModule1 streams updated: {self.streams}")
+    async def update_streams_forever(self, rate):
+        """Continuously update the streams with random data."""
+        while True:
+            self.streams['stream1'] = random.uniform(0, 100)
+            self.streams['stream2'] = random.uniform(0, 100)
+            print(f"HWModule1 streams updated: {self.streams}")
+            await asyncio.sleep(rate)  # Sleep for the specified rate
 
     def get_streams(self):
         """Return the current values of the streams."""
@@ -31,4 +33,4 @@ class hw_module_1:
     def control_module(self, command):
         """Handle control commands from the external (stream handler)."""
         print(f"Received control command: {command}")
-        # Example: You could implement control logic here
+    

@@ -62,46 +62,13 @@
             <li><div class="sidebar">
               <!-- manually force a drop size of 2x2 for nested size -->
               <div class="grid-stack-item" gs-w="2" gs-h="1" id="">
-                <div class="grid-stack-item-content" id=""> 
-                  <button class="chuncky-btn" onClick="grid.removeWidget(this.parentNode.parentNode)">X</button>
+                <div class="grid-stack-item-content" id=""> <button class="chuncky-btn" onClick="grid.removeWidget(this.parentNode.parentNode)">X</button>
                   <!-- Open the modal using ID.showModal() method -->
-                  <button class="chuncky-btn" onclick="my_modal_2.showModal()">Configurator</button>
+<button class="chuncky-btn" onclick="my_modal_2.showModal()">Configurator</button>
 
-                  <br>
-                  <h3>Sensor Values</h3>
-                  <div class="sensor-value" id="temperature">Temperature: -- °C</div>
-                  <div class="sensor-value" id="humidity">Humidity: -- %</div>
-                  <div class="sensor-value" id="pressure">Pressure: -- hPa</div>
-                </div>
+                  <br></div>
               </div>
-            </div></li>
-
-            <li><div class="sidebar">
-              <!-- manually force a drop size of 2x2 for nested size -->
-              <div class="grid-stack-item" gs-w="2" gs-h="1" id="">
-                <div class="grid-stack-item-content" id=""> 
-                  <button class="chuncky-btn" onClick="grid.removeWidget(this.parentNode.parentNode)">X</button>
-                  <!-- Open the modal using ID.showModal() method -->
-                  <button class="chuncky-btn" onclick="my_modal_2.showModal()">Configurator</button>
-                  <br>
-                  <h3>Sensor Trends</h3>
-                  <canvas id="sensorChart"></canvas>
-                </div>
-              </div>
-            </div></li>
-
-            <li><div class="sidebar">
-              <!-- manually force a drop size of 2x2 for nested size -->
-              <div class="grid-stack-item" gs-w="2" gs-h="1" id="">
-                <div class="grid-stack-item-content" id=""> 
-                  <button class="chuncky-btn" onClick="grid.removeWidget(this.parentNode.parentNode)">X</button>
-                  <!-- Open the modal using ID.showModal() method -->
-                  <button class="chuncky-btn" onclick="my_modal_2.showModal()">Configurator</button>
-                  <br>
-                  <h3>Terrain Overview</h3>
-                  <div id="map" class="map-container"></div>
-                </div>
-              </div>
+              
             </div></li>
 
            
@@ -277,93 +244,93 @@
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                                 d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-                              </svg>
-                              Module 2
-                            </summary>
-                            <ul>
-                              <li>
-                                <a>
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke-width="1.5"
-                                    stroke="currentColor"
-                                    class="h-4 w-4">
-                                    <path
-                                      stroke-linecap="round"
-                                      stroke-linejoin="round"
-                                      d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                  </svg>
-                                  Stream 3
-                                </a>
-                              </li>
-                              <li>
-                                <a>
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke-width="1.5"
-                                    stroke="currentColor"
-                                    class="h-4 w-4">
-                                    <path
-                                      stroke-linecap="round"
-                                      stroke-linejoin="round"
-                                      d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                  </svg>
-                                  Stream 4
-                                </a>
-                              </li>
-                            </ul>
-                          </details>
-                        </li>
-                        <li>
-                          <a>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke-width="1.5"
-                              stroke="currentColor"
-                              class="h-4 w-4">
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                             </svg>
-                            Singlular Stream Module
-                          </a>
-                        </li>
-                      </ul>
+                            Module 2
+                          </summary>
+                          <ul>
+                            <li>
+                              <a>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke-width="1.5"
+                                  stroke="currentColor"
+                                  class="h-4 w-4">
+                                  <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                                Stream 3
+                              </a>
+                            </li>
+                            <li>
+                              <a>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke-width="1.5"
+                                  stroke="currentColor"
+                                  class="h-4 w-4">
+                                  <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                                Stream 4
+                              </a>
+                            </li>
+                          </ul>
+                        </details>
+                      </li>
+                      <li>
+                        <a>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            class="h-4 w-4">
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                          </svg>
+                          Singlular Stream Module
+                        </a>
+                      </li>
+                    </ul>
                 
-                  </details>
-                  <button class="btn btn-primary">Save</button>
-                </div>
-                <form method="dialog" class="modal-backdrop">
-                  <button>close</button>
-                </form>
-              </dialog>
+                </details>
+                <button class="btn btn-primary">Save</button>
+              </div>
+              <form method="dialog" class="modal-backdrop">
+                <button>close</button>
+              </form>
+            </dialog>
 
 
-              <li><div class="trash" id="trash">Drop to remove</div></li>
-            </ul>
-          </details>
-        </li>
-        <li>
-          <details>
-            <summary>Load</summary>
-            <ul>
-              <li><a class="btn btn-ghost" onClick="save(true, false)" href="#">Save list</a></li>
-              <li><a class="btn btn-ghost" onClick="save(false, false)" href="#">Save no content</a></li>
-              <li><a class="btn btn-ghost" onClick="destroy(false)" href="#">Clear</a></li>
-              <li><a class="btn btn-ghost" onClick="load(false)" href="#">Load</a></li>
-            </ul>
-          </details>
-        </li>
-      </ul>
-      </div>
-      </details>
+            <li><div class="trash" id="trash">Drop to remove</div></li>
+          </ul>
+        </details>
+      </li>
+      <li>
+        <details>
+          <summary>Load</summary>
+          <ul>
+            <li><a class="btn btn-ghost" onClick="save(true, false)" href="#">Save list</a></li>
+            <li><a class="btn btn-ghost" onClick="save(false, false)" href="#">Save no content</a></li>
+            <li><a class="btn btn-ghost" onClick="destroy(false)" href="#">Clear</a></li>
+            <li><a class="btn btn-ghost" onClick="load(false)" href="#">Load</a></li>
+          </ul>
+        </details>
+      </li>
+    </ul>
+    </div>
+    </details>
 </div>
 
 
@@ -396,44 +363,6 @@
   <!-- Web fonts -->
   <link rel="stylesheet" href="./assets/fonts/Railway-OpenSans.css">
 
-  <!-- Add these new stylesheets -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css" /> -->
-  
-  <!-- Add this custom CSS -->
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
-    body {
-      background-color: #161616;
-      --color: #64ffda;
-      font-family: 'Roboto Mono', monospace;
-    }
-    .grid-stack-item-content {
-      background-color: #020406;
-      border: 1px solid #333333;
-      border-radius: 5px;
-      padding: 10px;
-    }
-    .map-container {
-      height: 100%;
-      width: 100%;
-    }
-    .sensor-value {
-      font-size: 24px;
-      font-weight: bold;
-    }
-    .status-bar {
-      background-color: #000000;
-      color: #64ffda;
-      padding: 5px 10px;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      display: flex;
-      justify-content: space-between;
-    }
-  </style>
 </head>
 <body>
   <div id="page-container" class="modern-sf">
@@ -755,22 +684,8 @@
   </div>
   <div class="container-fluid">
 
-    <!-- Main map/terrain overview
 
-     -->
-    <!-- Sensor values -->
-
-    
-    <!-- Graphs -->
-
-    
-    <!-- Add more grid items as needed -->
-  </div>
-  
-  <!-- Status bar -->
-  <div class="status-bar">
-    <span id="status-message">System Status: Operational</span>
-    <span id="current-time"></span>
+    <!-- grid will be added here -->
   </div>
 
   <script type="text/javascript">
@@ -904,83 +819,6 @@
   <!-- logic -->
   <script src="./ariesUI.js" defer></script>
   <script src="./stream_interface.js"></script>
-
-  <!-- Add these new scripts -->
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-  
-  <script>
-
-   
-    // Initialize map
-    var map = L.map('map').setView([51.505, -0.09], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Initialize chart
-    var ctx = document.getElementById('sensorChart').getContext('2d');
-    var chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [{
-          label: 'Temperature',
-          data: [],
-          borderColor: 'rgb(255, 99, 132)',
-          tension: 0.1
-        }, {
-          label: 'Humidity',
-          data: [],
-          borderColor: 'rgb(54, 162, 235)',
-          tension: 0.1
-        }, {
-          label: 'Pressure',
-          data: [],
-          borderColor: 'rgb(75, 192, 192)',
-          tension: 0.1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    });
-   
-
-    // Update sensor values and chart (simulate real-time data)
-    function updateSensorData() {
-      var temp = Math.random() * 30 + 10;
-      var humidity = Math.random() * 50 + 30;
-      var pressure = Math.random() * 100 + 900;
-      
-      document.getElementById('temperature').textContent = `Temperature: ${temp.toFixed(1)} °C`;
-      document.getElementById('humidity').textContent = `Humidity: ${humidity.toFixed(1)} %`;
-      document.getElementById('pressure').textContent = `Pressure: ${pressure.toFixed(1)} hPa`;
-      
-      var time = new Date().toLocaleTimeString();
-      chart.data.labels.push(time);
-      chart.data.datasets[0].data.push(temp);
-      chart.data.datasets[1].data.push(humidity);
-      chart.data.datasets[2].data.push(pressure);
-      
-      if (chart.data.labels.length > 10) {
-        chart.data.labels.shift();
-        chart.data.datasets.forEach(dataset => dataset.data.shift());
-      }
-      
-      chart.update();
-    }
-
-    setInterval(updateSensorData, 2000);
-
-    // Update current time in status bar
-    function updateTime() {
-      document.getElementById('current-time').textContent = new Date().toLocaleString();
-    }
-
-    setInterval(updateTime, 1000);
-  </script>
 
 </body>
 </html>
