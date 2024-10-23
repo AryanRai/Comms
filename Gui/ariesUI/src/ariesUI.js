@@ -1,5 +1,5 @@
 // src/ariesUI.js
-
+let GlobalData;
 let Debuglvl = 1;
 
 function update_app_scoll_status(update, style) {
@@ -17,7 +17,12 @@ function update_app_live_status_dropdown() {
 function select_app_stream(UMSI) {
   //left click stream list
   //unique module.stream id
+  const UMSI_raw = UMSI.split(".");
+  let module_id = UMSI_raw[0];
+  let stream_id = UMSI_raw[1];
   console.log("AriesUI: select stream:", UMSI);
+  console.log(GlobalData.data[module_id].streams[stream_id].value);
+  console.log(module_id, stream_id)
   document.getElementById("App-Configurator-select-stream-input").value = UMSI
 }
   

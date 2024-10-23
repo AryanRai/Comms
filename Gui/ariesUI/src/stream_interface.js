@@ -3,6 +3,7 @@ let reconnectInterval = 5000; // Time to wait before reconnecting
 let isConnected = false;
 let ReconnBool = true;
 
+
 // Start function to initialize WebSocket
 function startWebSocket() {
   ws = new WebSocket('ws://localhost:3000');
@@ -89,16 +90,17 @@ function handleReceivedData(data) {
     update_app_stream_list(data.data);
   } 
   
-  else if (data.type === "update") {
+  else if (data.type === "negotiation") {
     // Handle stream update data
     if (Debuglvl > 2) {
       console.log("ITF: Stream update received:", data);
     }
     update_app_scoll_status("ITF: Recieved Broadcast", NaN);
+    GlobalData = data;
     // Update the UI with new stream values
   }
 
-  else if (data.type === "negotiation") {
+  else if (data.type === "update") {
     // Handle stream update data
     if (Debuglvl > 2) {
       console.log("ITF: Stream update received:", data);

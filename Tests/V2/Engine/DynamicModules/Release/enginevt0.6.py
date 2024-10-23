@@ -39,7 +39,7 @@ class Module:
         self.streams: Dict[str, Stream] = {}
         self.config: Dict[str, Any] = {}
         self.status = "inactive"
-        self.module_update_timestamp = datetime.now()
+        self.last_update = datetime.now()
         
     async def initialize(self):
         """Initialize the module and its streams"""
@@ -53,7 +53,7 @@ class Module:
         """Run the module's update cycle"""
         if hasattr(self.instance, 'update_streams_forever'):
             await self.instance.update_streams_forever()
-            self.module_update_timestamp = datetime.now()
+            self.last_update = datetime.now()
             
     def get_stream_data(self) -> dict:
         """Get all stream data from the module"""
@@ -61,7 +61,7 @@ class Module:
             "module_id": self.module_id,
             "name": self.name,
             "status": self.status,
-            "module-update-timestamp": self.module_update_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "last_update": self.last_update.strftime("%Y-%m-%d %H:%M:%S"),
             "config": self.config,
             "streams": {k: v.to_dict() for k, v in self.streams.items()}
         }

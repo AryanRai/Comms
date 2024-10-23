@@ -5,7 +5,7 @@ import os
 import importlib
 import sys
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 
 class Stream:
@@ -32,58 +32,31 @@ class Stream:
 
 
 class Module:
-    def __init__(self, module_id: str, name: str, instance: Any):
+    def __init__(self, module_id: str, name: str, streams: list):
         self.module_id = module_id
         self.name = name
-        self.instance = instance
-        self.streams: Dict[str, Stream] = {}
-        self.config: Dict[str, Any] = {}
-        self.status = "inactive"
-        self.module_update_timestamp = datetime.now()
-        
-    async def initialize(self):
-        """Initialize the module and its streams"""
-        if hasattr(self.instance, 'streams'):
-            self.streams = self.instance.streams
-        if hasattr(self.instance, 'config'):
-            self.config = self.instance.config
-        self.status = "active"
-        
-    async def update(self):
-        """Run the module's update cycle"""
-        if hasattr(self.instance, 'update_streams_forever'):
-            await self.instance.update_streams_forever()
-            self.module_update_timestamp = datetime.now()
-            
-    def get_stream_data(self) -> dict:
-        """Get all stream data from the module"""
+        self.streams = {stream.stream_id: stream for stream in streams}
+
+    def update_stream_value(self, stream_id, value):
+        if stream_id in self.streams:
+            self.streams[stream_id].update_value(value)
+
+    def to_dict(self):
         return {
             "module_id": self.module_id,
             "name": self.name,
-            "status": self.status,
-            "module-update-timestamp": self.module_update_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-            "config": self.config,
             "streams": {k: v.to_dict() for k, v in self.streams.items()}
         }
-    
-    def update_config(self, config_updates: dict):
-        """Update module configuration"""
-        if hasattr(self.instance, 'update_multiple_configs'):
-            self.instance.update_multiple_configs(config_updates)
-            self.config.update(config_updates)
-    
-    def control(self, command: str):
-        """Send control command to module"""
-        if hasattr(self.instance, 'control_module'):
-            self.instance.control_module(command)
+
 
 class ModuleHandler:
     def __init__(self, folder_path: str = "./DynamicModules", Debuglvl: int = 0):
         self.folder_path = folder_path
         self.Debuglvl = Debuglvl
-        self.modules: Dict[str, Module] = {}
+        self.modules: Dict[str, Any] = {}
+        self.module_instances: Dict[str, Any] = {}
 
-    async def load_modules(self):
+    def load_modules(self):
         """Dynamically load all hardware modules from the 'modules' folder."""
         if not os.path.isdir(self.folder_path):
             print(f"Folder '{self.folder_path}' does not exist.")
@@ -95,31 +68,17 @@ class ModuleHandler:
             if file_name.endswith(".py") and file_name != "__init__.py":
                 module_name = file_name[:-3]
                 try:
-                    # Import the module
                     imported_module = importlib.import_module(module_name)
+                    self.modules[module_name] = imported_module
                     
                     if self.Debuglvl > 0:
                         print(f"Module '{module_name}' imported successfully.")
 
                     # Initialize module instance
                     if hasattr(imported_module, module_name):
-                        instance = getattr(imported_module, module_name)()
-                        
-                        # Create Module wrapper
-                        module = Module(
-                            module_id=module_name,
-                            name=module_name.replace('_', ' ').title(),
-                            instance=instance
-                        )
-                        
-                        # Initialize the module
-                        await module.initialize()
-                        
-                        # Store the module
-                        self.modules[module_name] = module
-                        
+                        self.module_instances[module_name] = getattr(imported_module, module_name)()
                         if self.Debuglvl > 0:
-                            print(f"Module '{module_name}' initialized and registered.")
+                            print(f"Instance of '{module_name}' created.")
                     else:
                         print(f"Failed to find class '{module_name}' in the module.")
 
@@ -129,33 +88,33 @@ class ModuleHandler:
     async def run(self):
         """Run all loaded modules' update loops."""
         tasks = []
-        for module in self.modules.values():
-            tasks.append(asyncio.create_task(module.update()))
+        for module_name, module_instance in self.module_instances.items():
+            if hasattr(module_instance, 'update_streams_forever'):
+                if self.Debuglvl > 0:
+                    print(f"Starting update loop for module '{module_name}'")
+                tasks.append(asyncio.create_task(module_instance.update_streams_forever()))
+
         await asyncio.gather(*tasks)
 
     def get_all_stream_data(self) -> Dict[str, dict]:
         """Get current stream data from all modules."""
-        return {module_id: module.get_stream_data() 
-                for module_id, module in self.modules.items()}
-
-    def get_module(self, module_id: str) -> Optional[Module]:
-        """Get a specific module by ID."""
-        return self.modules.get(module_id)
+        stream_data = {}
+        for module_name, module_instance in self.module_instances.items():
+            if hasattr(module_instance, 'get_streams'):
+                stream_data[module_name] = module_instance.get_streams()
+        return stream_data
 
     async def cleanup(self):
         """Cleanup resources."""
-        for module in self.modules.values():
-            if hasattr(module.instance, 'cleanup'):
-                await module.instance.cleanup()
+        # Add any cleanup code here if needed
+        pass
+
 
 class Engine:
     def __init__(self, Debuglvl=0):
         self.Debuglvl = Debuglvl
         self.module_handler = ModuleHandler(Debuglvl=Debuglvl)
-        
-    async def initialize(self):
-        """Initialize the engine and load modules."""
-        await self.module_handler.load_modules()
+        self.module_handler.load_modules()
         
     async def update_values(self, rate):
         """Update values from all dynamic modules."""
@@ -217,8 +176,6 @@ class Negotiator:
 
 async def main():
     engine = Engine(Debuglvl=1)
-    await engine.initialize()  # Initialize engine and load modules
-    
     negotiator = Negotiator(engine, ws_url='ws://localhost:3000', Debuglvl=1)
 
     # Run all tasks concurrently
@@ -231,29 +188,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

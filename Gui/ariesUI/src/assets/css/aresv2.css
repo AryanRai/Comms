@@ -542,5 +542,9 @@ label {
     z-index: 2;
 }
 
+.width-inherit {
+    width: inherit;
+}
+
 
   
