@@ -35,6 +35,13 @@ function subscribe_data() {
     
 }
 
+// Mock vanilla JavaScript function to provide sensor data
+window.getSensorData = (sensorId) => {
+  // Simulate sensor value (can be dynamic in a real project)
+  return Math.random() * 100;
+};
+
+
 function update_SH_live_status(update, style) {
   // update last updated ms in the live section
   if (Debuglvl > 3){

@@ -4,19 +4,25 @@
 */
 
 /* Bootstrap Overwrite/Extend */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+
 html, body {
     height: 100%;
 }
 
 body {
     color: #e8f4ff;
-    background-color: #111111;
+    --background-color: #111111;
     font-size: 90%;
     letter-spacing: 3px;
     text-transform: uppercase;
     font-weight: 500;
-    font-family: 'Open Sans', sans-serif;
+    --font-family: 'Open Sans', sans-serif;
     line-height: normal;
+    background-color: #161616;
+    --color: #64ffda;
+    font-family: 'Roboto Mono', monospace;
 }
 
 
@@ -535,6 +541,26 @@ label {
     padding-bottom: initial;
     cursor: pointer;
 
+}
+
+.map-container {
+  height: 100%;
+  width: 100%;
+}
+.sensor-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+.status-bar {
+  background-color: #000000;
+  color: #64ffda;
+  padding: 5px 10px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
 }
  
 

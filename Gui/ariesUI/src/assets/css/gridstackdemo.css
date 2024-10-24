@@ -17,9 +17,13 @@
   box-shadow: 0 5px 5px 0 #4582954b;
   backdrop-filter: blur( 4px );
   -webkit-backdrop-filter: blur( 4px );
-  border-radius: 10px;
-  border: 1px dashed #d6ebf12c;
+  ---border-radius: 10px;
+  ---border: 1px dashed #d6ebf12c;
   padding: auto;
+  background-color: #020406;
+  border: 1px solid #333333;
+  border-radius: 5px;
+  padding: 10px;
   
 }
 

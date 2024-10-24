@@ -36,7 +36,7 @@ function createWindow() {
       preload: path.join(__dirname, 'renderer.js'), // Optional: preload script for secure node integration
       nodeIntegration: true, // Allow Node.js in frontend
       contextIsolation: false,
-      webSecurity: false,
+      webSecurity: true,
       // Make sure you don't have any settings here that might disable animations
     },
     show: false,
