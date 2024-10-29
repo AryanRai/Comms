@@ -7,6 +7,11 @@ Units:
 2. Stream Handler + Stream Transformers (Python + WebSocket)
 3. AriesUI + SW Modules (NodeJS + Electron + TailwindCSS + DaisyUI)
 
+
+Current Sample DynamicModules
+RandomNumberGenerator (Testing Template)
+SerialReaderChyappy (read from Lora using esp32 send over serial)
+
 #Images
 Preloader
 ![image](https://github.com/user-attachments/assets/7c4ef414-1c9a-4a61-9ce4-4b4fedfc6127)
