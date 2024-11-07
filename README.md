@@ -120,10 +120,10 @@ Each software module can operate independently across different devices.
     Includes pages, elements, and profile examples.
 
 
+----------
 
 
-
-#Current Sample 
+##Current Sample 
 The current sample tests end to end conectivity of from data being sent over the DynamicModules -> Engine -> Stream Handler (Websockets) -> AriesUI
 
 ##Testing Modules
