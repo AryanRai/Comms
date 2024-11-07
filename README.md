@@ -1,172 +1,230 @@
+
+---
+
 # Comms
-Centralized Communications dashboards for multi layered control Ground Stations/all in one DAQ solutions or just tinkering around with hardware.
 
-The motivation for this project came when I was working with a lot of different kinds of hardware and embedded systems projects with each project having various kinds of senors, motors, actuators, all connected to different central processors from arduinos to STM32s or labjacks and these processors communicated over different mediums to their respective groundstations or data acquisition systems or even logging systems. This project aims to make it such that, all these dynamics can be taken into account and more attention can be shifted towards making the hardware without worrying about the software.
+A centralized communications dashboard for multi-layered control in ground stations, all-in-one DAQ solutions, or tinkering with hardware.
 
+This project was motivated by working on various hardware and embedded systems with multiple sensors, motors, and actuators, each connected to different processors (e.g., Arduinos, STM32s, Labjacks). These processors often communicate with ground stations, data acquisition, or logging systems over different media. The goal here is to allow more focus on hardware development without worrying about software.
+
+---
 
 ## Project Overview
 
 ### Main Components
 
-This project involves three main components:
+This project includes three main components:
 
-Units:
+1. **Engine + Dynamic Modules (Python)**
+2. **Stream Handler + Stream Transformers (Python + WebSocket)**
+3. **AriesUI + SW Modules (NodeJS + Electron + TailwindCSS + DaisyUI)**
 
-1. Engine +  DynamicModules (Python)
-2. Stream Handler + Stream Transformers (Python + WebSocket)
-3. AriesUI + SW Modules (NodeJS + Electron + TailwindCSS + DaisyUI)
+Each component is modular and can be built using various frameworks and languages.
 
-Each component is modular and can be built using different frameworks and languages.
-
-----------
+---
 
 ### Component Breakdown
 
 #### 1. Engine
+- **Functionality**: Manages hardware-specific modules, such as sensors, which communicate via serial or other methods.
+- **DynamicModules**: Custom code modules for hardware communication. See [Serial Chyappy Module](https://github.com/AryanRai/Comms/blob/main/Engine/DynamicModules/hw_win_serial_chyappy.py) as an example.
+- **Streams**: Each module creates streams for its hardware variables, updating these values through the engine within the stream handler.
 
--   **Functionality**:  
-    The engine manages modules installed for specific hardware types, such as sensors. It can communicate via serial or other methods.
--   **DynamicModules**:
-    DynamicModules refers to custom code that can be written to communicate with any hardware that people what to use
+Example data structure:
+~~~python
+streams = {
+    '1': Stream(
+        stream_id=1,
+        name="Temperature",
+        datatype="float",
+        unit="Celsius",
+        status="active",
+        metadata={"sensor": "TMP36", "precision": 0.1, "location": "main_chamber", "calibration_date": datetime.now().strftime("%Y-%m-%d")}
+    ),
+    '2': Stream(
+        stream_id=2,
+        name="Pressure",
+        datatype="float",
+        unit="hPa",
+        status="active",
+        metadata={"sensor": "BMP180", "precision": 0.5, "location": "main_chamber", "calibration_date": datetime.now().strftime("%Y-%m-%d")}
+    )
+}
+~~~
+Each module has a `run()` function to execute the module in an async loop.
 
-    The following is the code for a module that read data using my custom protocal called [Chyappy](https://github.com/AryanRai/chyappy) over serial [Serial Chyappy Module](https://github.com/AryanRai/Comms/blob/main/Engine/DynamicModules/hw_win_serial_chyappy.py)
-
-    The following is the code for a module that simply works as a sample number generator simulating sensor values this can be used as a format to be adapted to make a new module [DynamicModules Format](https://github.com/AryanRai/Comms/blob/main/Engine/DynamicModules/hw_win_serial_chyappy.py)
-  
-    Each module creates streams for its hardware variables, updating these values through the engine within the stream handler.
--   **Name**:
--   Example:
-    hw_win_serial_chyappy class contains all about a class and all the data is stored and updated here. data is stored in a dict within the class called
-    ~~~
-    streams = {
-            '1': Stream(
-                stream_id=1,
-                name="Temperature",
-                datatype="float",
-                unit="Celsius",
-                status="active",
-                metadata={
-                    "sensor": "TMP36",
-                    "precision": 0.1,
-                    "location": "main_chamber",
-                    "calibration_date": datetime.now().strftime("%Y-%m-%d")
-                }
-            ),
-            '2': Stream(
-                stream_id=2,
-                name="Pressure",
-                datatype="float",
-                unit="hPa",
-                status="active",
-                metadata={
-                    "sensor": "BMP180",
-                    "precision": 0.5,
-                    "location": "main_chamber",
-                    "calibration_date": datetime.now().strftime("%Y-%m-%d")
-                }
-            )
-        }
-    ~~~
-    
-    each module has a run()
-
-    function that is used to run the module infinitely in an async loop 
-
-    A class that connects the engine to the stream handler, responsible for publishing data from hardware modules to the stream handler and vice versa.
-
-
-    
 #### 2. Stream Handler
-
--   **Role**:  
-    A shared space managing stream creation, deletion, and updating. It handles multiple streams across all modules and stores them for later access, this is built in python using socketify which is a very high performance websockets library, it handles a getting     
-    messages from the engine and broadcasting to AriesUI and has memory so it keeps track of all streams currently active
--   **Stream Processor (TBD) **:  
-    It includes transforms streams by applying protocols or message format conversions.
+- **Role**: Acts as a shared space managing stream creation, deletion, and updating. Built in Python using Socketify for WebSocket management, it receives messages from the engine and broadcasts them to AriesUI.
 
 #### 3. Aries UI (User Interface)
+- **Configurable**: Fully configurable dashboard grid UI, where users subscribe to streams for real-time data access or modification.
+- **Technologies**: Built with React, Tailwind CSS, and DaisyUI.
+- **Example Layouts**: [Gridstack Demo](https://gridstackjs.com/demo/float.html#) demonstrates dynamic grid capabilities.
 
--   **Configurable**:  
-    Fully configurable dashboard grid UI, allowing users to subscribe to streams to access or modify values based on their setup.
--   **Technologies**:  
-    Built with React Tailwind CSS and DaisyUI for a streamlined, responsive design.
--   **Example Layouts**:  
-    [Gridstack Demo](https://gridstackjs.com/demo/float.html#) provides examples of the UI's dynamic grid capabilities.
+---
 
-----------
+# Comms Documentation
+
+## Installation & Setup
+
+### Prerequisites
+- Python 3.8+
+- Node.js 14+
+- npm or yarn
+
+### Installation Steps
+
+Clone the repository:
+```bash
+git clone https://github.com/AryanRai/Comms.git
+cd Comms
+```
+
+Install Python dependencies:
+```bash
+pip install socketify
+```
+
+Install UI dependencies:
+```bash
+cd Gui/ariesUI
+npm install
+```
+
+### Running the System
+
+1. Start the Stream Handler:
+   ```bash
+   cd StreamHandler
+   python stream_handlerv2.3.py
+   ```
+
+2. Start the Engine:
+   ```bash
+   cd Engine
+   python engine.py
+   ```
+
+3. Launch AriesUI:
+   ```bash
+   cd Gui/ariesUI
+   npm start
+   ```
+
+---
+
+## Component Details
+
+### Stream Handler (stream_handlerv2.3.py)
+The Stream Handler manages WebSocket connections, broadcasts messages, and compresses data. 
+
+### Stream Interface (stream_interface.js)
+Manages WebSocket connections from the UI side and supports active stream querying, status updates, and connection management.
+
+### AriesUI Dashboard (dashv1.9.html)
+Provides a flexible grid-based interface:
+- Draggable/resizable widgets
+- Nested grid support
+- Real-time data visualization
+- Status bar with system information
+
+---
+
+## Creating Custom Modules
+
+### Dynamic Module Template
+
+Example structure:
+~~~python
+class MyCustomModule:
+    def __init__(self):
+        self.streams = {
+            '1': Stream(
+                stream_id=1,
+                name="SensorName",
+                datatype="float",
+                unit="Units",
+                status="active",
+                metadata={"sensor": "SensorModel", "precision": 0.1, "location": "sensor_location", "calibration_date": datetime.now().strftime("%Y-%m-%d")}
+            )
+        }
+
+    async def run(self):
+        # Implementation for data collection/processing
+        pass
+~~~
+
+---
+
+### UI Widget Development
+Add widgets using the grid system:
+~~~html
+<div class="grid-stack-item" gs-w="2" gs-h="1">
+    <div class="grid-stack-item-content">
+        <!-- Widget content -->
+        <button class="chunky-btn" onClick="grid.removeWidget(this.parentNode.parentNode)">X</button>
+        <button class="chunky-btn" onclick="my_modal_2.showModal()">Configurator</button>
+        <!-- Custom widget content here -->
+    </div>
+</div>
+~~~
+
+---
 
 ### Key Concepts and Terms
 
-#### Actions, Procedures, Conditions, and Readings
-
--   **Actions**:  
-    User-triggered operations.
--   **Procedures**:  
-    Collections of actions.
--   **Conditions**:  
-    Actions that execute based on real-time readings.
+- **Actions**: User-triggered operations.
+- **Procedures**: Collections of actions.
+- **Conditions**: Actions based on real-time readings.
 
 #### Logger
-
--   **Purpose**:  
-    Logs only activated readings and actions to the active module.
+Logs activated readings and actions to the active module.
 
 #### Streams
-
--   **Definition**:  
-    Each data exchange is referred to as a stream, encompassing both actions and readings.
--   **Syncing**:  
-    A list of streams syncs between the front end and back end and can be configured to be one-sided if needed.
+Each data exchange is a stream, encompassing both actions and readings. They sync between the front and back ends.
 
 #### Profiles _(to be renamed)_
+Profiles store dashboard layouts, streams, and hardware configurations. They can be saved locally and contain multiple dashboard layouts.
 
--   **Purpose**:  
-    Store the dashboard layout, streams, and associated hardware configurations.
--   **Local Storage**:  
-    Profiles can be saved locally and can contain multiple dashboard layouts.
+#### Modules and Extensions
+Modules are categorized into:
+1. Engine Modules
+2. Stream Handler Modules (Conditions, Actions, Procedures)
+3. UI Modules (Aries UI and Aries Modules)
 
-----------
-
-### Modules and Extensions
-
-#### Types of Modules
-
--   **JavaScript Extensions**:  
-    Enhance functionality.
--   **UI Extensions**:  
-    Add or beautify the UI.
--   **Backend Hardware Extensions**:  
-    Allow new hardware interfaces or combinations of features.
-
-#### Module Types
-
-1.  **Engine Modules**
-2.  **Stream Handler Modules**
-    -   **Conditions, Actions, Procedures**
-    -   **Stream Processor**
-3.  **UI Modules**:  
-    **Aries UI and Aries Modules**
-
-Each software module can operate independently across different devices.
-
-#### Comms/Hardware Modules
-
--   **Hardware Wrappers**:  
-    Modules act as wrappers for physical hardware, interfacing with the engine and informing the system about available streams and actions.
--   **Customizable UI**:  
-    UI can be customized based on the active modules.
-
-----------
+---
 
 ### AriesUI & AriesMods
+- **AriesUI**: Built with Tailwind and DaisyUI.
+- **AriesMods**: Adds elements and profile examples.
 
--   **AriesUI**:  
-    Built with Tailwind and DaisyUI for streamlined, adaptable design.
--   **AriesMods**:  
-    Includes pages, elements, and profile examples.
+---
 
+## Current Sample
+Testing end-to-end connectivity from DynamicModules → Engine → Stream Handler (Websockets) → AriesUI.
 
-----------
+### Sample Message
+Example message received by Aries UI from a sensor:
+```json
+{
+  "type": "negotiation",
+  "status": "active",
+  "data": {
+    "hw_module_1": {
+      "module_id": "hw_module_1",
+      "name": "Hw Module 1",
+      "status": "active",
+      ...
+    }
+  },
+  "msg-sent-timestamp": "2024-10-30 00:09:54"
+}
+```
+
+---
+
+### TODO 
+Implement GUI for displaying customizable unique sensor data within each grid
 
 
 ## Current Sample 
