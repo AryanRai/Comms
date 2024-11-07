@@ -219,7 +219,10 @@ Images
 
 ### Sample Msg
 A sample message recieved by the Aries UI from a sensor 
+
+```
 Received message: {"type": "negotiation", "status": "active", "data": {"hw_module_1": {"module_id": "hw_module_1", "name": "Hw Module 1", "status": "active", "module-update-timestamp": "2024-10-30 00:09:32", "config": {"update_rate": 1.0, "temperature_range": {"min": -50, "max": 150}, "pressure_range": {"min": 800, "max": 1200}, "enabled_streams": ["stream1", "stream2"], "debug_mode": false}, "streams": {"stream1": {"stream_id": 1, "name": "Temperature", "datatype": "float", "unit": "Celsius", "status": "active", "metadata": {"sensor": "TMP36", "precision": 0.1, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 120.2127922110659, "stream-update-timestamp": "2024-10-30 00:09:53", "priority": "high"}, "stream2": {"stream_id": 2, "name": "Pressure", "datatype": "float", "unit": "hPa", "status": "active", "metadata": {"sensor": "BMP180", "precision": 0.5, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 888.8849471853615, "stream-update-timestamp": "2024-10-30 00:09:53", "priority": "high"}}}, "hw_win_serial_chyappy": {"module_id": "hw_win_serial_chyappy", "name": "Hw Win Serial Chyappy", "status": "active", "module-update-timestamp": "2024-10-30 00:09:32", "config": {}, "streams": {"1": {"stream_id": 1, "name": "Temperature", "datatype": "float", "unit": "Celsius", "status": "active", "metadata": {"sensor": "TMP36", "precision": 0.1, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 0, "stream-update-timestamp": "2024-10-30 00:09:32", "priority": "high"}, "2": {"stream_id": 2, "name": "Pressure", "datatype": "float", "unit": "hPa", "status": "active", "metadata": {"sensor": "BMP180", "precision": 0.5, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 0, "stream-update-timestamp": "2024-10-30 00:09:32", "priority": "high"}}}}, "msg-sent-timestamp": "2024-10-30 00:09:54"}
+```
 
 ### Stream Selection Gui
 ![image](https://github.com/user-attachments/assets/ba7ecb42-1fba-4d65-bc28-8477beaca852)
@@ -232,13 +235,55 @@ Received message: {"type": "negotiation", "status": "active", "data": {"hw_modul
 
 ![image](https://github.com/user-attachments/assets/f79ef7a3-3876-4168-949f-1ed639d7f01a)
 
+Working sample on top of page; this is currently just a single senor value being displayed. data is being read from and esp32 over serial chyappy and the esp32 itself is recieving data over lora from another esp32 transmitting over lora
+
+![image](https://github.com/user-attachments/assets/4869b3b4-6613-471d-94e8-281d80b6f76d)
 
 # TODO 
 TODO need to implement GUI displaying customizable unique sensor data within each grid 
 
-Working sample on top of page
 
-![image](https://github.com/user-attachments/assets/4869b3b4-6613-471d-94e8-281d80b6f76d)
+# TODO
+
+- [x]  Dashboard position
+- [x]  Toggles to stop overflow
+- [x]  Disable Navbar
+- [x]  Message Queue as a log terminal in GUI with time
+- [x]  timestamp-based CSV naming
+- [x]  Download css local
+- [x]  log live
+- [x]  disable differential pair
+- [ ]  
+
+- [x]  fix stream_handler disconnect problem
+- [ ]  Add Priority Strem handler
+- [ ]  MultiPub Stream Handler
+- [x]  websocket Reconnect AriesUI
+- [x]  Look into other websocket librarys
+- [ ]  Implement Port, Uri, refresh speed, selection on UI with soft limiter on speed
+- [x]  implement status bar
+- [x]  use async and combine with current engine implementation
+- [ ]  add refresh rate to the msg format for both gui and engine to understand and use automatically dynamicrefresh
+- [ ]  implement controling each unit SH, ITF, Engine from AriesUI Live dropdown
+- [ ]  Seperate SH and ITF and implement run and kill for each module
+- [ ]  add one way or two way and write permissions to stream format
+- [ ]  check server live status every couple seconds when link bar open
+- [ ]  add heatbeat that send periodic refreshsignals for data such as activestream querys and online status and sync this with top moving bar
+- [ ]  add grid box ids and a dict of box ids to corresponding stream ids
+- [ ]  copy sensor data ui from v0
+- [x]  copy esploraserial module from chatgpt
+- [x]  fix dynamic import
+- [ ]  fix hw_module_update_forever random values enable thing within hw_module_1
+- [ ]  fix stream format where stream id is referenced twice
+- [ ]  fix the structure of hw_win_serial_chyappy to have a config dict and more similar to hw_module_1
+- [ ]  migrate to node gridstack module from cdn
+- [ ]  fix grid iding system for drag drop specially for configurBLE BOXES
+
+# Long Term Todo
+
+- [ ]  Add a 3d mode where 3js render 3d models with sensor readings
+- [ ]  a local hosting capabilities so that the webpage can be accessed via a mobile
+- [ ]  host stream handler online such that the web page can be accessed from anywhere via unique codes
 
 
 # Side Quests:
@@ -248,7 +293,134 @@ Labjack Valve testing UI:
 
 ![Demo](https://github.com/user-attachments/assets/8e359429-59c5-40ae-935f-43ecbb8c98da)
 
+---
 
+# File Struc
+
+
+Comms/
+
+├── Engine/
+
+│ ├── engine.py # Main engine process
+
+│ └── DynamicModules/ # Hardware interface modules
+
+│ ├──  init.py
+
+│ ├── hw_module_1.py # Sample module template
+
+│ └── hw_win_serial_chyappy.py # Serial communication module
+
+│
+
+├── StreamHandler/
+
+│ └── stream_handlerv2.3.py # WebSocket server for data streaming
+
+│
+
+└── Gui/
+
+└── ariesUI/ # Electron-based UI
+
+├── src/
+
+│ ├── App.js # Main React application
+
+│ ├── index.js # Entry point
+
+│ ├── components/ # React components
+
+│ │ ├── GridContainer.jsx
+
+│ │ └── SensorDisplay.jsx
+
+│ ├── assets/
+
+│ │ ├── css/
+
+│ │ │ ├── aresv2.css
+
+│ │ │ └── gridstackdemo.css
+
+│ │ └── js/
+
+│ │ ├── core/
+
+│ │ │ └── bundle.js
+
+│ │ └── logic/
+
+│ │ └── stream_interface.js
+
+│ ├── archive/
+
+│ │ └── dashv1.9.html # Previous dashboard version
+
+│ └── preloader.html # Loading screen
+
+├── main.js # Electron main process
+
+├── .babelrc # Babel configuration
+
+├── webpack.config.js # Webpack configuration
+
+├── package.json # Node dependencies
+
+└── package-lock.json
+
+### Key Components
+
+1. **Engine/**
+
+- Core engine process managing hardware modules
+
+- DynamicModules for hardware interfaces
+
+- Extensible module system for different hardware types
+
+2. **StreamHandler/**
+
+- WebSocket server handling data streams
+
+- Manages communication between Engine and UI
+
+- Broadcasts updates to connected clients
+
+3. **Gui/ariesUI/**
+
+- Electron-based desktop application
+
+- React components for UI elements
+
+- Grid-based dashboard system
+
+- Asset management (CSS, JS, images)
+
+- Build configuration files
+
+### Configuration Files
+
+- `.babelrc`: JavaScript transpilation settings
+
+- `webpack.config.js`: Module bundling configuration
+
+- `package.json`: Node.js dependencies and scripts
+
+### Development Files
+
+- Source code in `src/`
+
+- Component definitions in `components/`
+
+- Styling in `assets/css/`
+
+- Logic handlers in `assets/js/`
+
+- Archive of previous versions
+
+This structure shows how the project is organized into distinct components while maintaining modularity and separation of concerns.
 
 # Potential Ideas
 
