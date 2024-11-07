@@ -169,37 +169,6 @@ Add widgets using the grid system:
 </div>
 ~~~
 
----
-
-### Key Concepts and Terms
-
-- **Actions**: User-triggered operations.
-- **Procedures**: Collections of actions.
-- **Conditions**: Actions based on real-time readings.
-
-#### Logger
-Logs activated readings and actions to the active module.
-
-#### Streams
-Each data exchange is a stream, encompassing both actions and readings. They sync between the front and back ends.
-
-#### Profiles _(to be renamed)_
-Profiles store dashboard layouts, streams, and hardware configurations. They can be saved locally and contain multiple dashboard layouts.
-
-#### Modules and Extensions
-Modules are categorized into:
-1. Engine Modules
-2. Stream Handler Modules (Conditions, Actions, Procedures)
-3. UI Modules (Aries UI and Aries Modules)
-
----
-
-### AriesUI & AriesMods
-- **AriesUI**: Built with Tailwind and DaisyUI.
-- **AriesMods**: Adds elements and profile examples.
-
----
-
 ## Current Sample
 Testing end-to-end connectivity from DynamicModules → Engine → Stream Handler (Websockets) → AriesUI.
 
@@ -281,7 +250,38 @@ Labjack Valve testing UI:
 
 
 
-#Ideas
+# Potential Ideas
+
+---
+
+### Key Concepts and Terms
+
+- **Actions**: User-triggered operations.
+- **Procedures**: Collections of actions.
+- **Conditions**: Actions based on real-time readings.
+
+#### Logger
+Logs activated readings and actions to the active module.
+
+#### Streams
+Each data exchange is a stream, encompassing both actions and readings. They sync between the front and back ends.
+
+#### Profiles _(to be renamed)_
+Profiles store dashboard layouts, streams, and hardware configurations. They can be saved locally and contain multiple dashboard layouts.
+
+#### Modules and Extensions
+Modules are categorized into:
+1. Engine Modules
+2. Stream Handler Modules (Conditions, Actions, Procedures)
+3. UI Modules (Aries UI and Aries Modules)
+
+---
+
+### AriesUI & AriesMods
+- **AriesUI**: Built with Tailwind and DaisyUI.
+- **AriesMods**: Adds elements and profile examples.
+
+---
 
 conditions, actions, and procedures 
 
