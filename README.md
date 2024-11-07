@@ -1,7 +1,7 @@
 # Comms
 Centralized Communications dashboards for multi layered control Ground Stations/all in one DAQ solutions or just tinkering around with hardware.
 
-
+The motivation for this project came when I was working with a lot of different kinds of hardware and embedded systems projects with each project having various kinds of senors, motors, actuators, all connected to different central processors from arduinos to STM32s or labjacks and these processors communicated over different mediums to their respective groundstations or data acquisition systems or even logging systems. This project aims to make it such that, all these dynamics can be taken into account and more attention can be shifted towards making the hardware without worrying about the software.
 
 
 ## Project Overview
@@ -12,7 +12,7 @@ This project involves three main components:
 
 Units:
 
-1. Engine + HW Modules (Python)
+1. Engine +  DynamicModules (Python)
 2. Stream Handler + Stream Transformers (Python + WebSocket)
 3. AriesUI + SW Modules (NodeJS + Electron + TailwindCSS + DaisyUI)
 
@@ -26,7 +26,11 @@ Each component is modular and can be built using different frameworks and langua
 
 -   **Functionality**:  
     The engine manages modules installed for specific hardware types, such as sensors. It can communicate via serial or other methods.
--   **Modules**:  
+-   **DynamicModules**:
+    DynamicModules refers to custom code that can be written to communicate with any hardware that people what to use
+
+    The following is the code for a module that read data using my custom protocal called Chyappy over serial [DynamicModules Format](https://github.com/AryanRai/Comms/blob/main/Engine/DynamicModules/hw_win_serial_chyappy.py)
+  
     Each module creates streams for its hardware variables, updating these values through the engine within the stream handler.
 -   **Negotiator**:  
     A class that connects the engine to the stream handler, responsible for publishing data from hardware modules to the stream handler and vice versa.
@@ -41,9 +45,9 @@ Each component is modular and can be built using different frameworks and langua
 #### 3. Aries UI (User Interface)
 
 -   **Configurable**:  
-    Fully configurable UI, allowing users to subscribe to streams to access or modify values based on their setup.
+    Fully configurable dashboard grid UI, allowing users to subscribe to streams to access or modify values based on their setup.
 -   **Technologies**:  
-    Built with Tailwind CSS and DaisyUI for a streamlined, responsive design.
+    Built with React Tailwind CSS and DaisyUI for a streamlined, responsive design.
 -   **Example Layouts**:  
     [Gridstack Demo](https://gridstackjs.com/demo/float.html#) provides examples of the UI's dynamic grid capabilities.
 
