@@ -29,18 +29,60 @@ Each component is modular and can be built using different frameworks and langua
 -   **DynamicModules**:
     DynamicModules refers to custom code that can be written to communicate with any hardware that people what to use
 
-    The following is the code for a module that read data using my custom protocal called Chyappy over serial [DynamicModules Format](https://github.com/AryanRai/Comms/blob/main/Engine/DynamicModules/hw_win_serial_chyappy.py)
+    The following is the code for a module that read data using my custom protocal called [Chyappy](https://github.com/AryanRai/chyappy) over serial [Serial Chyappy Module](https://github.com/AryanRai/Comms/blob/main/Engine/DynamicModules/hw_win_serial_chyappy.py)
+
+    The following is the code for a module that simply works as a sample number generator simulating sensor values this can be used as a format to be adapted to make a new module [DynamicModules Format](https://github.com/AryanRai/Comms/blob/main/Engine/DynamicModules/hw_win_serial_chyappy.py)
   
     Each module creates streams for its hardware variables, updating these values through the engine within the stream handler.
--   **Negotiator**:  
+-   **Name**:
+-   Example:
+    hw_win_serial_chyappy class contains all about a class and all the data is stored and updated here. data is stored in a dict within the class called
+    ~~~
+    streams = {
+            '1': Stream(
+                stream_id=1,
+                name="Temperature",
+                datatype="float",
+                unit="Celsius",
+                status="active",
+                metadata={
+                    "sensor": "TMP36",
+                    "precision": 0.1,
+                    "location": "main_chamber",
+                    "calibration_date": datetime.now().strftime("%Y-%m-%d")
+                }
+            ),
+            '2': Stream(
+                stream_id=2,
+                name="Pressure",
+                datatype="float",
+                unit="hPa",
+                status="active",
+                metadata={
+                    "sensor": "BMP180",
+                    "precision": 0.5,
+                    "location": "main_chamber",
+                    "calibration_date": datetime.now().strftime("%Y-%m-%d")
+                }
+            )
+        }
+    ~~~
+    
+    each module has a run()
+
+    function that is used to run the module infinitely in an async loop 
+
     A class that connects the engine to the stream handler, responsible for publishing data from hardware modules to the stream handler and vice versa.
 
+
+    
 #### 2. Stream Handler
 
 -   **Role**:  
-    A shared space managing stream creation, deletion, and updating. It handles multiple streams across all modules and stores them for later access.
--   **Stream Processor**:  
-    It includes conditions, actions, and procedures and transforms streams by applying protocols or message format conversions.
+    A shared space managing stream creation, deletion, and updating. It handles multiple streams across all modules and stores them for later access, this is built in python using socketify which is a very high performance websockets library, it handles a getting     
+    messages from the engine and broadcasting to AriesUI and has memory so it keeps track of all streams currently active
+-   **Stream Processor (TBD) **:  
+    It includes transforms streams by applying protocols or message format conversions.
 
 #### 3. Aries UI (User Interface)
 
@@ -178,4 +220,10 @@ This was the first prototype that inspired it all. Labjack is a very precise dat
 Labjack Valve testing UI: 
 
 ![Demo](https://github.com/user-attachments/assets/8e359429-59c5-40ae-935f-43ecbb8c98da)
+
+
+
+#Ideas
+
+conditions, actions, and procedures 
 
