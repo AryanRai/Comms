@@ -1,25 +1,30 @@
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
+import { app, BrowserWindow } from 'electron';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+// Replace __dirname with ES module equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-/// create a global var, wich will keep a reference to out loadingScreen window
+// Global variable for the loading screen
 let loadingScreen;
+
+// Function to create the loading screen
 const createLoadingScreen = () => {
-  /// create a browser window
   loadingScreen = new BrowserWindow({
     width: 300,
     height: 375,
     frame: false,
     alwaysOnTop: true,
-    //disable scrollbars
     icon: path.join(__dirname, 'src', 'assets', 'branding', 'Comms.png'),
     scrollbars: false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: true,
       webSecurity: false,
-    }
+    },
   });
+
   loadingScreen.loadFile(path.join(__dirname, 'src', 'preloader.html'));
   loadingScreen.on('closed', () => (loadingScreen = null));
   loadingScreen.webContents.on('did-finish-load', () => {
@@ -27,17 +32,16 @@ const createLoadingScreen = () => {
   });
 };
 
-
+// Function to create the main window
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1300,
     height: 900,
     webPreferences: {
-      preload: path.join(__dirname, 'renderer.js'), // Optional: preload script for secure node integration
-      nodeIntegration: true, // Allow Node.js in frontend
+      preload: path.join(__dirname, 'renderer.cjs'), // Optional: preload script for secure node integration
+      nodeIntegration: true,
       contextIsolation: false,
       webSecurity: true,
-      // Make sure you don't have any settings here that might disable animations
     },
     show: false,
     alwaysOnTop: true, // Make the window always on top initially
@@ -47,25 +51,21 @@ function createWindow() {
       symbolColor: 'white',
       height: 22,
     },
-
   });
 
   mainWindow.setBackgroundMaterial("acrylic");
   mainWindow.loadFile('src/dashv1.html');
 
-  // Add event listener for 'enter-full-screen' event
+  // Add event listeners for full-screen mode
   mainWindow.on('enter-full-screen', () => {
     mainWindow.TitleBarStyle('hidden');
     console.log("Entering full screen mode");
   });
 
-  // Add event listener for 'leave-full-screen' event to revert the change
   mainWindow.on('leave-full-screen', () => {
     mainWindow.TitleBarStyle('default');
     console.log("Leaving full screen mode");
   });
-
-
 
   mainWindow.webContents.on('did-finish-load', () => {
     setTimeout(() => {
@@ -74,19 +74,20 @@ function createWindow() {
       }
       mainWindow.show();
       mainWindow.focus();
-      
+
       // Disable alwaysOnTop after a short delay
       setTimeout(() => {
         mainWindow.setAlwaysOnTop(false);
       }, 1000);
-    }, 10000); // Adjust this value (in milliseconds) to set a minimum display time for the loading screen
+    }, 10000); // Adjust this value as needed
   });
 }
 
+// Electron app lifecycle hooks
 app.on('ready', () => {
   createLoadingScreen();
   createWindow();
-})
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

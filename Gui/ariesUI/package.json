@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "UI for Comms Centralized Communications dashboards for multi layered control ground stations",
   "main": "main.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron ."
@@ -25,6 +26,8 @@
   "dependencies": {
     "daisyui": "^4.12.10",
     "electron": "^32.0.2",
+    "gridstack": "^11.1.2",
+    "nanoid": "^5.0.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.10"
