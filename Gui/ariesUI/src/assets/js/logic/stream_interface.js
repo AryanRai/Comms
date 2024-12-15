@@ -3,6 +3,10 @@ let reconnectInterval = 5000; // Time to wait before reconnecting
 let isConnected = false;
 let ReconnBool = true;
 
+// Add GlobalData to window object so it's accessible everywhere
+window.GlobalData = {
+  data: {} // Initialize with empty data object
+};
 
 // Start function to initialize WebSocket
 function startWebSocket() {
@@ -96,7 +100,7 @@ function handleReceivedData(data) {
       console.log("ITF: Stream update received:", data);
     }
     update_app_scoll_status("ITF: Recieved Broadcast", NaN);
-    GlobalData = data;
+    window.GlobalData = data; // Update the global reference
     // Update the UI with new stream values
   }
 

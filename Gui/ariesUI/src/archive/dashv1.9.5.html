@@ -567,10 +567,7 @@
                       </ul>
                 
                   </details>
-                  <button class="btn" onclick="AttachStreamView(
-                    document.getElementById('App-Configurator-select-grid-select').value,
-                    document.getElementById('App-Configurator-select-stream-input').value
-                  )">Save</button>
+                  <button class="btn" onclick="AttachStreamView(document.getElementById('App-Configurator-select-grid-select'), document.getElementById('App-Configurator-select-stream-input'))">Save</button>
                 </div>
                 <form method="dialog" class="modal-backdrop">
                   <button type="submit">close</button>
@@ -973,7 +970,7 @@
   </div>
 
   <script type="module">
-    import { initializeGrid, addWidget, addNested, setupDragIn } from './assets/js/custom/gridManager.js';
+    import { initializeGrid, addWidget, addNested, setupDragIn } from './gridManager.js';
   
     const grid = initializeGrid('.container-fluid');
   
@@ -990,7 +987,7 @@
   <script src="./assets/js/logic/stream_interface.js" defer></script>
 
   <!-- vanilla reacivity -->
-  <script src="./assets/js/custom/ariesUI.js" type="module"></script>
+  <script src="./assets/js/custom/ariesUI.js"></script>
       
   <!-- Load React Bundle -->
   <script src="./assets/js/core/bundle.js"></script>

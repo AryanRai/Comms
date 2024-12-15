@@ -1,6 +1,15 @@
 // Global variables
 let count = 0;
 let gridItemCounter = 0;
+// Add a list to store all widget IDs
+let widgetIds = [];
+
+// Add function to generate unique IDs
+function generateUniqueId(prefix = 'widget') {
+  const uniqueId = `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
+  widgetIds.push(uniqueId);
+  return uniqueId;
+}
 
 // Sub-grid data
 const sub1 = [
@@ -64,13 +73,47 @@ const options = {
 // Initialize the main grid
 export function initializeGrid(containerSelector) {
   const grid = GridStack.addGrid(document.querySelector(containerSelector), options);
-
+  setupEventListeners(grid);
   return grid;
+}
+
+function setupEventListeners(grid) {
+  const saveBtn = document.getElementById('save-btn');
+  const destroyBtn = document.getElementById('destroy-btn');
+  const createBtn = document.getElementById('create-btn');
+
+  const saveListBtn = document.getElementById('save-list-btn');
+  const saveNoContentBtn = document.getElementById('save-no-content-btn');
+  const clearBtn = document.getElementById('clear-btn');
+  const loadBtn = document.getElementById('load-btn');
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => save(grid));
+  }
+  if (destroyBtn) {
+    destroyBtn.addEventListener('click', () => destroy(grid));
+  }
+  if (createBtn) {
+    createBtn.addEventListener('click', () => load(grid));
+  }
+
+  if (saveListBtn) {
+    saveListBtn.addEventListener('click', () => save(grid, true, false));
+  }
+  if (saveNoContentBtn) {
+    saveNoContentBtn.addEventListener('click', () => save(grid, false, false));
+  }
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => destroy(grid, false));
+  }
+  if (loadBtn) {
+    loadBtn.addEventListener('click', () => load(grid, false));
+  }
 }
 
 // Add a widget to the main grid
 export function addWidget(grid) {
-  const uniqueId = `widget-${gridItemCounter++}`;
+  const uniqueId = generateUniqueId();
   grid.addWidget({
     x: Math.floor(Math.random() * 10),
     y: Math.floor(Math.random() * 10),
@@ -85,7 +128,7 @@ export function addWidget(grid) {
 
 // Add a nested widget
 export function addNested(grid) {
-  const uniqueId = `nested-widget-${gridItemCounter++}`;
+  const uniqueId = generateUniqueId('nested');
   grid.addWidget({
     x: Math.floor(Math.random() * 10),
     y: Math.floor(Math.random() * 10),
@@ -106,7 +149,7 @@ export function addNested(grid) {
 // Add a widget to a sub-grid
 export function addNewWidget(subGridSelector) {
   const subGrid = document.querySelector(subGridSelector).gridstack;
-  const uniqueId = `sub-widget-${gridItemCounter++}`;
+  const uniqueId = generateUniqueId('sub');
   subGrid.addWidget({
     x: Math.round(6 * Math.random()),
     y: Math.round(5 * Math.random()),
@@ -133,8 +176,10 @@ export function destroy(grid, full = true) {
   if (full) {
     grid.off('dropped');
     grid.destroy();
+    widgetIds = []; // Clear all IDs when grid is destroyed
   } else {
     grid.removeAll();
+    widgetIds = []; // Clear all IDs when all widgets are removed
   }
 }
 
@@ -152,14 +197,13 @@ export function setupDragIn(selector) {
   GridStack.setupDragIn(selector, {
     appendTo: 'body',
     helper: function (event) {
-      const uniqueId = `id-${Math.random().toString(36).substr(2, 9)}`;
+      const uniqueId = generateUniqueId('drag');
       const target = event.target;
       const correctTarget = target.parentElement.classList.contains('grid-stack-item-content')
         ? target.parentElement.parentElement
         : target.parentElement;
       correctTarget.setAttribute('gs-id', uniqueId);
       
-      // Add ID display to the content
       const content = correctTarget.querySelector('.grid-stack-item-content');
       if (content) {
         const originalContent = content.innerHTML;
@@ -174,4 +218,17 @@ export function setupDragIn(selector) {
       return clone;
     },
   });
+}
+
+// Add function to remove ID from list when widget is removed
+function removeWidgetId(id) {
+  const index = widgetIds.indexOf(id);
+  if (index > -1) {
+    widgetIds.splice(index, 1);
+  }
+}
+
+// Export the widget IDs list if needed
+export function getWidgetIds() {
+  return widgetIds;
 }

@@ -225,7 +225,8 @@ async def main():
     await asyncio.gather(
         engine.update_values(0.01),
         engine.module_handler.run(),
-        negotiator.ws_pub_sub(0.01)
+        negotiator.ws_pub_sub(0.01),
+        
     )
 
 

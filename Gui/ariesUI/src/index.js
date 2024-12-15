@@ -1,11 +1,10 @@
 // src/index.js
 import React from 'react';
-import ReactDOM from 'react-dom';
-import App from './App';
-import GridContainer from './components/GridContainer';
+import { createRoot } from 'react-dom/client';
+import GridContainer from './components/GridContainer.jsx';
 
-
-
-// Render React into the 'app' div in index.html
-ReactDOM.render(<App />, document.getElementById('app'));
+// Create root and render using the new API
+const container = document.getElementById('app');
+const root = createRoot(container);
+root.render(<GridContainer />);
 

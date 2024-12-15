@@ -30,7 +30,7 @@ class hw_module_1:
                 'max': 1200
             },
             'enabled_streams': ['stream1', 'stream2'],
-            'debug_mode': False
+            'debug_mode': True
         }
         
         # Module state

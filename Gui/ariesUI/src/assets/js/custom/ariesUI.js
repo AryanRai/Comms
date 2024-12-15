@@ -1,8 +1,10 @@
 // src/ariesUI.js
-let GlobalData;
-let Debuglvl = 1;
+import { getWidgetIds } from '../custom/gridManager.js';
 
-function update_app_scoll_status(update, style) {
+// Make Debuglvl global by adding it to window object
+window.Debuglvl = 1;
+
+window.update_app_scoll_status = function(update, style) {
   if (Debuglvl > 2){
     console.log("AriesUI: App Scroll Status Updated to: " + document.getElementById("AriesUI-app-scroll-status").textContent)
   }
@@ -14,23 +16,34 @@ function update_app_live_status_dropdown() {
   // update last updated ms in the live section
 }
 
-function select_app_stream(UMSI) {
+// Move select_app_stream outside of any module scope and add it to window
+window.select_app_stream = function(UMSI) {
   //left click stream list
   //unique module.stream id
   const UMSI_raw = UMSI.split(".");
   let module_id = UMSI_raw[0];
   let stream_id = UMSI_raw[1];
   console.log("AriesUI: select stream:", UMSI);
-  console.log(GlobalData.data[module_id].streams[stream_id].value);
-  console.log(module_id, stream_id)
-  document.getElementById("App-Configurator-select-stream-input").value = UMSI
-}
   
-function preview_app_stream(UMSI) {
+  // Add null check before accessing data
+  if (window.GlobalData && window.GlobalData.data && 
+      window.GlobalData.data[module_id] && 
+      window.GlobalData.data[module_id].streams[stream_id]) {
+    console.log(window.GlobalData.data[module_id].streams[stream_id].value);
+  } else {
+    console.log("Stream data not yet available");
+  }
+  
+  console.log(module_id, stream_id);
+  document.getElementById("App-Configurator-select-stream-input").value = UMSI;
+}
+
+// Move preview_app_stream to window as well since it's used in oncontextmenu
+window.preview_app_stream = function(UMSI) {
   //right click stream list
   console.log("AriesUI: preview stream:", UMSI);
 }
-  
+
 function subscribe_data() {
     
 }
@@ -42,7 +55,7 @@ window.getSensorData = (sensorId) => {
 };
 
 
-function update_SH_live_status(update, style) {
+window.update_SH_live_status = function(update, style) {
   // update last updated ms in the live section
   if (Debuglvl > 3){
     console.log("AriesUI: SH_live_status Updated to: " + document.getElementById("SH-live-status").textContent)
@@ -70,7 +83,7 @@ function update_SH_live_status(update, style) {
 
 }
 
-function update_app_stream_list(data) {
+window.update_app_stream_list = function(data) {
   //document.getElementById("SH-active-streams-dropdown-content")
   document.getElementById("SH-active-streams-dropdown-content").innerHTML = "<div class='skeleton h-32 w-32'></div>";
   document.getElementById("App-Configurator-active-streams-dropdown-content").innerHTML = "<div class='skeleton h-32 w-32'></div>";
@@ -110,6 +123,28 @@ function update_app_stream_list(data) {
 
 }
 
+function update_app_grid_list(data) {
+  document.getElementById("App-Configurator-active-grids-dropdown-content").innerHTML = "<div class='skeleton h-32 w-32'></div>";
+
+  var active_grids_innerhtml = "";
+
+  if (data.length == 0) {
+    document.getElementById("App-Configurator-active-grids-dropdown-content").innerHTML = "<li><a href='#' class='text-danger'>{0 Active}</a></li>";
+    return;
+  }
+
+  // For each grid in data add a heading
+  for (const grid of data) {
+    if (Debuglvl > 4) {
+      console.log(grid);
+    }
+    // Add grid to list - using window.select_app_grid
+    active_grids_innerhtml += `<li><a onclick="window.select_app_grid('${grid}')">${grid}</a></li>`;
+  }
+
+  document.getElementById("App-Configurator-active-grids-dropdown-content").innerHTML = active_grids_innerhtml;
+}
+
 //websocket close
 document.getElementById('Itf-close-btn').addEventListener('click', () => {
   closeWebSocket();
@@ -127,6 +162,12 @@ document.getElementById('SH-active-streams-dropdown').addEventListener('click', 
 document.getElementById('App-Configurator-active-streams-dropdown').addEventListener('click', () => {
   document.getElementById("App-Configurator-active-streams-dropdown-content").innerHTML = "<div class='skeleton h-10'></div>";
   queryActiveStreams();
+});
+
+document.getElementById('App-Configurator-active-grids-dropdown').addEventListener('click', () => {
+  document.getElementById("App-Configurator-active-grids-dropdown-content").innerHTML = "<div class='skeleton h-10'></div>";
+  const gridIds = getWidgetIds();
+  update_app_grid_list(gridIds);
 });
 
 document.getElementById('App-live-status-dropdown').addEventListener('click', () => {
@@ -153,4 +194,10 @@ document.getElementById('Itf-reconnect-btn').addEventListener('click', () => {
 
 
 update_app_scoll_status("AriesUI: GUI initialized", NaN);
+
+// Add select_app_grid to window object to make it globally accessible
+window.select_app_grid = function(grid_id) {
+  console.log("AriesUI: select grid:", grid_id);
+  document.getElementById("App-Configurator-select-grid-select").value = grid_id;
+}
 
