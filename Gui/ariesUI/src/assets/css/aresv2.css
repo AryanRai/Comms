@@ -573,4 +573,22 @@ label {
 }
 
 
+.terminal-input-line {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
   
+  .terminal-prompt {
+    color: #4ade80;
+  }
+  
+  .terminal-message {
+    margin: 4px 0;
+    word-wrap: break-word;
+  }
+  
+  .terminal-timestamp {
+    color: #64748b;
+    margin-right: 8px;
+  }
