@@ -24,6 +24,9 @@ const GridContainer = () => {
         return;
       }
 
+      // Clear existing content
+      //contentDiv.innerHTML = '';
+
       // Create a new div to hold the SensorDisplay component
       const sensorContainer = document.createElement('div');
       sensorContainer.className = 'sensor-container';
@@ -32,6 +35,12 @@ const GridContainer = () => {
       // Create root and render using the new API
       const root = createRoot(sensorContainer);
       root.render(<SensorDisplay streamId={streamIdValue} />);
+
+      // Subscribe to the stream if needed
+      if (window.subscribeToStream) {
+        const [moduleId, streamName] = streamIdValue.split('.');
+        window.subscribeToStream(moduleId, streamName);
+      }
     } else {
       console.error(`Grid with gs-id "${gridIdValue}" not found`);
     }

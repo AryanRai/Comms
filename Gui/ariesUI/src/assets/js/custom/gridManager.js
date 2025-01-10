@@ -8,6 +8,7 @@ let widgetIds = [];
 function generateUniqueId(prefix = 'widget') {
   const uniqueId = `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
   widgetIds.push(uniqueId);
+  
   return uniqueId;
 }
 
@@ -74,6 +75,24 @@ const options = {
 export function initializeGrid(containerSelector) {
   const grid = GridStack.addGrid(document.querySelector(containerSelector), options);
   setupEventListeners(grid);
+  
+  // Add dropped event listener
+  grid.on('dropped', function(event, previousWidget, newWidget) {
+    console.log('Item dropped into grid');
+    const gridItemId = newWidget.el.getAttribute('gs-id');
+    console.log('New widget ID:', gridItemId);
+
+    // Find the sidebar element
+    const sidebarElement = document.querySelector('.sidebar .grid-stack-item[gs-id="' + gridItemId + '"]');
+    console.log('Sidebar element found:', sidebarElement);
+
+    if (sidebarElement) {
+      // Only modify the sidebar element
+      sidebarElement.setAttribute('gs-id', 'random');
+      console.log('Modified sidebar element gs-id to random');
+    }
+  });
+
   return grid;
 }
 
@@ -192,34 +211,6 @@ export function load(grid, full = true) {
   }
 }
 
-// Setup drag-in behavior
-export function setupDragIn(selector) {
-  GridStack.setupDragIn(selector, {
-    appendTo: 'body',
-    helper: function (event) {
-      const uniqueId = generateUniqueId('drag');
-      const target = event.target;
-      const correctTarget = target.parentElement.classList.contains('grid-stack-item-content')
-        ? target.parentElement.parentElement
-        : target.parentElement;
-      correctTarget.setAttribute('gs-id', uniqueId);
-      
-      const content = correctTarget.querySelector('.grid-stack-item-content');
-      if (content) {
-        const originalContent = content.innerHTML;
-        content.innerHTML = `
-          <button class="chuncky-btn" onClick="grid.removeWidget(this.parentNode.parentNode)">X</button>
-          <button class="chuncky-btn">id: ${uniqueId}</button>
-          ${originalContent}
-        `;
-      }
-      
-      const clone = GridStack.Utils.cloneNode(correctTarget);
-      return clone;
-    },
-  });
-}
-
 // Add function to remove ID from list when widget is removed
 function removeWidgetId(id) {
   const index = widgetIds.indexOf(id);
@@ -231,4 +222,48 @@ function removeWidgetId(id) {
 // Export the widget IDs list if needed
 export function getWidgetIds() {
   return widgetIds;
+}
+
+// Add this new function near the top with other utility functions
+function handleDragComplete(event) {
+  console.log('handledragcomplete');
+  const gridItem = event.target;
+  const gridItemId = gridItem.getAttribute('gs-id');
+  console.log('Grid item ID:', gridItemId);
+
+  // Find the sidebar element
+  const sidebarElement = document.querySelector('.sidebar .grid-stack-item[gs-id="' + gridItemId + '"]');
+  console.log('Sidebar element found:', sidebarElement);
+
+  if (sidebarElement) {
+    // Only modify the sidebar element
+    sidebarElement.setAttribute('gs-id', 'random');
+    console.log('Modified sidebar element gs-id to random');
+  }
+}
+
+// Modify the setupDragIn function
+export function setupDragIn(selector) {
+  console.log('setupdragin');
+  GridStack.setupDragIn(selector, {
+    appendTo: 'body',
+    helper: function (event) {
+      const uniqueId = generateUniqueId('drag');
+      const target = event.target;
+      const correctTarget = target.parentElement.classList.contains('grid-stack-item-content')
+        ? target.parentElement.parentElement
+        : target.parentElement;
+      correctTarget.setAttribute('gs-id', uniqueId);
+      
+      const content = correctTarget.querySelector('.grid-stack-item-content');
+      const id_box = correctTarget.querySelector('.grid-stack-item-id');
+      
+      const originalContent = content.innerHTML;
+      
+      id_box.innerHTML = `id: ${uniqueId}`
+      
+      const clone = GridStack.Utils.cloneNode(correctTarget);
+      return clone;
+    },
+  });
 }

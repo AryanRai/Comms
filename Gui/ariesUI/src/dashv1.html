@@ -59,22 +59,6 @@
               
             </div></li>
 
-            <li><div class="sidebar">
-              <!-- manually force a drop size of 2x2 for nested size -->
-              <div class="grid-stack-item" gs-w="2" gs-h="1" id="">
-                <div class="grid-stack-item-content" id=""> 
-                  <button class="chuncky-btn" onClick="grid.removeWidget(this.parentNode.parentNode)">X</button>
-                  <!-- Open the modal using ID.showModal() method -->
-                  <button class="chuncky-btn" onclick="my_modal_2.showModal()">Configurator</button>
-
-                  <br>
-                  <h3>Sensor Values</h3>
-                  <div class="sensor-value" id="temperature">Temperature: -- °C</div>
-                  <div class="sensor-value" id="humidity">Humidity: -- %</div>
-                  <div class="sensor-value" id="pressure">Pressure: -- hPa</div>
-                </div>
-              </div>
-            </div></li>
 
             <li><div class="sidebar">
               <!-- manually force a drop size of 2x2 for nested size -->
@@ -82,24 +66,10 @@
                 <div class="grid-stack-item-content" id=""> 
                   <button class="chuncky-btn" onClick="grid.removeWidget(this.parentNode.parentNode)">X</button>
                   <!-- Open the modal using ID.showModal() method -->
+                  <button class="grid-stack-item-id chuncky-btn" onClick="console.log('self id is:')">id:</button>
                   <button class="chuncky-btn" onclick="my_modal_2.showModal()">Configurator</button>
                   <br>
-                  <h3>Sensor Trends</h3>
-                  <canvas id="sensorChart"></canvas>
-                </div>
-              </div>
-            </div></li>
-
-            <li><div class="sidebar">
-              <!-- manually force a drop size of 2x2 for nested size -->
-              <div class="grid-stack-item" gs-w="2" gs-h="1" id="">
-                <div class="grid-stack-item-content" id=""> 
-                  <button class="chuncky-btn" onClick="grid.removeWidget(this.parentNode.parentNode)">X</button>
-                  <!-- Open the modal using ID.showModal() method -->
-                  <button class="chuncky-btn" onclick="my_modal_2.showModal()">Configurator</button>
-                  <br>
-                  <h3>Terrain Overview</h3>
-                  <div id="map" class="map-container"></div>
+                  
                 </div>
               </div>
             </div></li>
