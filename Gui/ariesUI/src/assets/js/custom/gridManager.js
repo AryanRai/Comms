@@ -226,7 +226,7 @@ export function getWidgetIds() {
 
 // Add this new function near the top with other utility functions
 function handleDragComplete(event) {
-  console.log('handledragcomplete');
+  //console.log('handledragcomplete');
   const gridItem = event.target;
   const gridItemId = gridItem.getAttribute('gs-id');
   console.log('Grid item ID:', gridItemId);
@@ -244,7 +244,7 @@ function handleDragComplete(event) {
 
 // Modify the setupDragIn function
 export function setupDragIn(selector) {
-  console.log('setupdragin');
+  //console.log('setupdragin');
   GridStack.setupDragIn(selector, {
     appendTo: 'body',
     helper: function (event) {
