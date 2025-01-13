@@ -29,6 +29,8 @@
     "electron": "^32.0.2",
     "gridstack": "^11.1.2",
     "nanoid": "^5.0.9",
+    "plotly": "^1.0.6",
+    "plotly.js-dist": "^2.35.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.10"
