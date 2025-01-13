@@ -1,5 +1,6 @@
 // src/ariesUI.js
 import { getWidgetIds } from '../custom/gridManager.js';
+import modManager from './modManager.js';
 
 // Make Debuglvl global by adding it to window object
 window.Debuglvl = 1;
@@ -210,4 +211,64 @@ window.select_app_grid = function(grid_id) {
   console.log("AriesUI: select grid:", grid_id);
   document.getElementById("App-Configurator-select-grid-select").value = grid_id;
 }
+
+async function updateWidgetTypesList() {
+  const dropdown = document.getElementById('App-Configurator-active-WidgetType-dropdown-content');
+  dropdown.innerHTML = "<div class='skeleton h-10 w-32'></div>";
+
+  try {
+    const widgets = await modManager();
+    
+    if (widgets.length === 0) {
+      dropdown.innerHTML = "<li><a class='text-danger'>{No Widgets Available}</a></li>";
+      return;
+    }
+
+    // Group widgets by mod name
+    const groupedWidgets = widgets.reduce((acc, widget) => {
+      if (!acc[widget.modName]) {
+        acc[widget.modName] = [];
+      }
+      acc[widget.modName].push(widget);
+      return acc;
+    }, {});
+
+    let widgetListHtml = '';
+    
+    // For each mod, create a collapsible section with its widgets
+    for (const modName in groupedWidgets) {
+      widgetListHtml += `
+        <li>
+          <details open>
+            <summary>${modName}</summary>
+            <ul>`;
+      
+      // Add each widget under its mod section
+      groupedWidgets[modName].forEach(widget => {
+        widgetListHtml += `
+          <li>
+            <a onclick="document.getElementById('App-Configurator-select-WidgetType-input').value='${widget.name}'">
+              ${widget.name}
+              ${widget.description ? `<span class="text-xs opacity-50"> - ${widget.description}</span>` : ''}
+            </a>
+          </li>`;
+      });
+
+      widgetListHtml += `
+            </ul>
+          </details>
+        </li>`;
+    }
+
+    dropdown.innerHTML = widgetListHtml;
+
+  } catch (error) {
+    console.error('Error loading widget types:', error);
+    dropdown.innerHTML = "<li><a class='text-danger'>Error loading widgets</a></li>";
+  }
+}
+
+document.getElementById('App-Configurator-active-WidgetType-dropdown').addEventListener('click', () => {
+  updateWidgetTypesList();
+});
 
