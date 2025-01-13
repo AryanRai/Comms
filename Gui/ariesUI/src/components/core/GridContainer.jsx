@@ -6,12 +6,13 @@ import SensorDisplay from './SensorDisplay';
 const GridContainer = () => {
   // Your existing grid setup and state management
 
-  const attachStreamView = (gridId, streamId) => {
+  const attachStreamView = (gridId, streamId, widgetType) => {
     // Get the values from the input elements if they are passed
     const gridIdValue = gridId?.value || gridId;
     const streamIdValue = streamId?.value || streamId;
+    const widgetTypeValue = widgetType?.value || widgetType;
 
-    console.log("Attaching stream view:", {gridId: gridIdValue, streamId: streamIdValue});
+    console.log("Attaching stream view:", {gridId: gridIdValue, streamId: streamIdValue, widgetType: widgetTypeValue});
 
     // Find the grid element by gs-id attribute
     const gridElement = document.querySelector(`[gs-id="${gridIdValue}"]`);

@@ -170,6 +170,16 @@ document.getElementById('App-Configurator-active-grids-dropdown').addEventListen
   update_app_grid_list(gridIds);
 });
 
+
+document.getElementById('App-Configurator-save-btn').addEventListener('click', () => {
+  AttachStreamView(
+  document.getElementById('App-Configurator-select-grid-select').value,
+  document.getElementById('App-Configurator-select-stream-input').value,
+  document.getElementById('App-Configurator-select-WidgetType-input').value
+)
+  
+});
+
 document.getElementById('App-live-status-dropdown').addEventListener('click', () => {
   pingServer();
 });

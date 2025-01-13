@@ -71,6 +71,17 @@
                     </ul>
                 
                   </details>
+                  
+                  <p class="py-4">Select Widget Type</p>
+                  {<input id="App-Configurator-select-WidgetType-input"></input>}
+                  <details>
+                    <summary id="App-Configurator-active-WidgetType-dropdown">Type</summary>
+                    
+                      <ul class="menu menu-xs bg-base-200 rounded-lg " id="App-Configurator-active-WidgetType-dropdown-content">
+                      </ul>
+                  
+                  </details>
+              
                 <p class="py-4">Current Stream {}</p>
                 
                 <input id="App-Configurator-select-stream-input" class="width-inherit">
@@ -81,10 +92,7 @@
                     </ul>
                 
                   </details>
-                  <button class="btn" onclick="AttachStreamView(
-                    document.getElementById('App-Configurator-select-grid-select').value,
-                    document.getElementById('App-Configurator-select-stream-input').value
-                  )">Save</button>
+                  <button class="btn" id="App-Configurator-save-btn">Save</button>
                 </div>
                 <form method="dialog" class="modal-backdrop">
                   <button type="submit">close</button>
