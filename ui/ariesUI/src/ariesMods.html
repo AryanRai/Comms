@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AriesMods Marketplace</title>
+  
+  <!-- Include the same styles as main dashboard -->
+  <link href="../node_modules/daisyui/dist/full.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="./assets/css/toolbar.css" rel="stylesheet" type="text/css" />
+  <link href="./assets/css/aresv2.css" rel="stylesheet" type="text/css" />
+  <link href="./assets/css/electron.css" rel="stylesheet" type="text/css" />
+  <link href="./assets/fonts/Railway-OpenSans.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="assets/css/sidebar.css">
+  <link rel="stylesheet" href="assets/css/animate.min.css">
+  <script src="./assets/js/custom/sidebar.js" defer></script>
+</head>
+<body>
+  <div id="page-container" class="modern-sf">
+    <!-- Header with search -->
+    <div class="navbar bg-base-100 shadow-lg">
+      <div class="flex-1">
+        <div class="flex-1 text-3xl main-title">
+          <span>// </span><a class="link-sf" id="title-main" onclick="openNav()">AriesMods Marketplace</a>
+        </div>
+      </div>
+      <div class="flex-none gap-2">
+        <div class="form-control">
+          <input type="text" placeholder="Search mods..." class="input input-bordered w-24 md:w-auto" id="search-mods" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="container mx-auto px-4 py-8">
+      <!-- Featured Mods -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-bold mb-6">Featured Mods</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="featured-mods">
+          <!-- Featured mods will be dynamically added here -->
+        </div>
+      </section>
+
+      <!-- Categories -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-bold mb-6">Categories</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <button class="btn btn-outline" data-category="visualization">Data Visualization</button>
+          <button class="btn btn-outline" data-category="analysis">Data Analysis</button>
+          <button class="btn btn-outline" data-category="communication">Communication</button>
+          <button class="btn btn-outline" data-category="utility">Utility</button>
+          <button class="btn btn-outline" data-category="integration">Integration</button>
+          <button class="btn btn-outline" data-category="custom">Custom Widgets</button>
+        </div>
+      </section>
+
+      <!-- All Mods -->
+      <section>
+        <h2 class="text-2xl font-bold mb-6">All Mods</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="all-mods">
+          <!-- Mods will be dynamically added here -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Mod Details Modal -->
+    <dialog id="mod-details-modal" class="modal">
+      <div class="modal-box w-11/12 max-w-5xl">
+        <h3 class="font-bold text-lg" id="mod-title">Mod Title</h3>
+        <div class="py-4">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="avatar">
+              <div class="w-16 rounded">
+                <img id="mod-author-avatar" src="" alt="Author" />
+              </div>
+            </div>
+            <div>
+              <p class="font-bold" id="mod-author">Author Name</p>
+              <p class="text-sm" id="mod-date">Published Date</p>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <p id="mod-description" class="mb-4">Mod description</p>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class="badge badge-outline" id="mod-version">v1.0.0</span>
+            <span class="badge badge-outline" id="mod-downloads">1000+ downloads</span>
+            <span class="badge badge-outline" id="mod-rating">4.5★</span>
+          </div>
+          <div class="divider"></div>
+          <div class="flex justify-between items-center">
+            <button class="btn btn-primary" id="install-mod-btn">Install Mod</button>
+            <a href="#" class="link" id="mod-docs-link">View Documentation</a>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button>close</button>
+        </form>
+      </div>
+    </dialog>
+  </div>
+
+  <!-- Include navigation -->
+  <div id="mySidenav" class="sidenav" onmouseleave="closeNav()" style="left: 0%; width: 0px;">
+    <a href="ariesUI.html" class="nav-link">Dashboard</a>
+    <a href="#" class="nav-link">Config</a>
+    <a href="#" class="nav-link">Logs</a>
+    <a href="#" class="nav-link" onclick="openTerminal()">Terminal</a>
+    <a href="#" class="nav-link">Comms</a>
+    <a href="DAQ.html" class="nav-link">DAQ</a>
+    <a href="ariesMods.html" class="nav-link">AriesMods</a>
+  </div>
+
+  <script>
+    // Sample data structure for mods
+    const sampleMods = [
+      {
+        id: 1,
+        title: "Data Visualizer Pro",
+        description: "Advanced data visualization widget with real-time plotting capabilities",
+        author: "John Doe",
+        authorAvatar: "https://api.dicebear.com/7.x/avatars/svg?seed=John",
+        version: "1.0.0",
+        downloads: "1.2k",
+        rating: 4.5,
+        category: "visualization",
+        featured: true,
+        publishDate: "2024-03-15",
+        documentation: "#"
+      },
+      // Add more sample mods here
+    ];
+
+    // Function to create a mod card
+    function createModCard(mod) {
+      return `
+        <div class="card bg-base-100 shadow-xl" data-mod-id="${mod.id}">
+          <div class="card-body">
+            <h2 class="card-title">${mod.title}</h2>
+            <p>${mod.description}</p>
+            <div class="flex gap-2 mt-2">
+              <span class="badge badge-outline">${mod.version}</span>
+              <span class="badge badge-outline">${mod.downloads} downloads</span>
+            </div>
+            <div class="card-actions justify-end mt-4">
+              <button class="btn btn-primary btn-sm" onclick="showModDetails(${mod.id})">View Details</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Function to show mod details
+    function showModDetails(modId) {
+      const mod = sampleMods.find(m => m.id === modId);
+      if (!mod) return;
+
+      document.getElementById('mod-title').textContent = mod.title;
+      document.getElementById('mod-author').textContent = mod.author;
+      document.getElementById('mod-author-avatar').src = mod.authorAvatar;
+      document.getElementById('mod-date').textContent = `Published on ${mod.publishDate}`;
+      document.getElementById('mod-description').textContent = mod.description;
+      document.getElementById('mod-version').textContent = `v${mod.version}`;
+      document.getElementById('mod-downloads').textContent = `${mod.downloads} downloads`;
+      document.getElementById('mod-rating').textContent = `${mod.rating}★`;
+      document.getElementById('mod-docs-link').href = mod.documentation;
+
+      document.getElementById('mod-details-modal').showModal();
+    }
+
+    // Function to filter mods by category
+    function filterByCategory(category) {
+      const filteredMods = sampleMods.filter(mod => mod.category === category);
+      document.getElementById('all-mods').innerHTML = filteredMods.map(createModCard).join('');
+    }
+
+    // Function to search mods
+    function searchMods(query) {
+      const filteredMods = sampleMods.filter(mod => 
+        mod.title.toLowerCase().includes(query.toLowerCase()) ||
+        mod.description.toLowerCase().includes(query.toLowerCase())
+      );
+      document.getElementById('all-mods').innerHTML = filteredMods.map(createModCard).join('');
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      // Populate featured mods
+      const featuredMods = sampleMods.filter(mod => mod.featured);
+      document.getElementById('featured-mods').innerHTML = featuredMods.map(createModCard).join('');
+
+      // Populate all mods
+      document.getElementById('all-mods').innerHTML = sampleMods.map(createModCard).join('');
+
+      // Add search functionality
+      document.getElementById('search-mods').addEventListener('input', (e) => {
+        searchMods(e.target.value);
+      });
+
+      // Add category filter functionality
+      document.querySelectorAll('[data-category]').forEach(button => {
+        button.addEventListener('click', () => {
+          filterByCategory(button.dataset.category);
+        });
+      });
+    });
+
+    // Navigation functions
+    function openNav() {
+      document.getElementById("mySidenav").style.width = "250px";
+    }
+
+    function closeNav() {
+      document.getElementById("mySidenav").style.width = "0";
+    }
+  </script>
+</body>
+</html> 

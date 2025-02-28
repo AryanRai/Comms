@@ -1,2 +1,0 @@
-~real time grapher, using create draft function and timer_nonblocking
-~ui in js
