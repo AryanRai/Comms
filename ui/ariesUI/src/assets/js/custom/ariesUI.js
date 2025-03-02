@@ -2,7 +2,7 @@
 import { getWidgetIds } from '../custom/gridManager.js';
 
 // Make Debuglvl global by adding it to window object
-window.Debuglvl = 1;
+window.Debuglvl = 0;
 
 window.update_app_scoll_status = function(update, style) {
   if (Debuglvl > 2){
@@ -143,6 +143,47 @@ function update_app_grid_list(data) {
   }
 
   document.getElementById("App-Configurator-active-grids-dropdown-content").innerHTML = active_grids_innerhtml;
+}
+
+window.update_app_widget_type_list = function update_app_widget_type_list(modsList, modName) {
+  document.getElementById("App-Configurator-active-WidgetType-dropdown-content").innerHTML = "<div class='skeleton h-32 w-32'></div>";
+
+  var active_grids_innerhtml = "";
+
+  if (modsList.length == 0) {
+    document.getElementById("App-Configurator-active-WidgetType-dropdown-content").innerHTML = "<li><a href='#' class='text-danger'>{0 Active}</a></li>";
+    document.getElementById('ariesModsList').innerHTML = "<li><a href='#' class='text-danger'>{0 Active}</a></li>";
+    return;
+  }
+
+  if (Debuglvl > 4) {
+    console.log("widget types");
+    console.log(modsList);
+  }
+  // For each grid in data add a heading
+  
+  /*
+  for (const grid of data) {
+    if (Debuglvl > 4) {
+      console.log(grid);
+    }
+    // Add grid to list - using window.select_app_grid
+    active_grids_innerhtml += `<li><a onclick="window.select_app_grid('${grid}')">${grid}</a></li>`;
+  }
+ */
+  const modsListElem = document.getElementById('ariesModsList');
+  const modsListElemConfig = document.getElementById("App-Configurator-active-WidgetType-dropdown-content");
+  var modsListContent = '';
+
+  for (let index = 0; index < modsList.length; index++) {
+    var modName = modsList[index];
+    var data = `<li><span>${modName}</span><button class="btn btn-xs btn-ghost" onclick="RemoveModToList('${modName}')">×</button><li>`;
+    modsListContent += data;
+  }
+
+  modsListElem.innerHTML = modsListContent;
+  modsListElemConfig.innerHTML = modsListContent;
+
 }
 
 //websocket close

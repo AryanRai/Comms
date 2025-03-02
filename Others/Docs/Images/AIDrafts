@@ -1,0 +1,7 @@
+I am trying to implement a system where I can make a market place sort of thing where users can code their own widgets for grids for the data to be show in a certain visual representation or any other kind of widget, these are called ariesMods and need to be installed dynamically on the nodejs/react/electron hui either by dragging and dropping J's file or whatever way u suggest, but they need to be user customisable like libraries in Arduino
+
+ive already made the drag drop ui and a new page in the sidebar for a areismods marketplace 
+
+now its time to implement logic, we have the parse logic for drag and drop of the custom ariesmods to define custom reactive widgets
+
+we need to implement listing widgets in the configurator

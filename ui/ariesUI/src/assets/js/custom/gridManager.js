@@ -4,6 +4,8 @@ let gridItemCounter = 0;
 // Add a list to store all widget IDs
 let widgetIds = [];
 
+const availableWidgets = []; // Array to hold the available widgets
+
 // Add function to generate unique IDs
 function generateUniqueId(prefix = 'widget') {
   const uniqueId = `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
@@ -267,3 +269,161 @@ export function setupDragIn(selector) {
     },
   });
 }
+
+function createWidget(widgetDefinition) {
+  const grid = initializeGrid('.container-fluid'); // Ensure you have the grid initialized
+  const uniqueId = generateUniqueId(); // Function to generate a unique ID for the widget
+
+  // Create a new grid item
+  const widgetContent = `
+    <div id="${uniqueId}" class="widget-content">
+      <canvas id="chart-${uniqueId}"></canvas>
+    </div>
+  `;
+
+  grid.addWidget({
+    x: Math.floor(Math.random() * 10),
+    y: Math.floor(Math.random() * 10),
+    content: widgetContent,
+  });
+
+  // Initialize the chart with the widget definition
+  const ctx = document.getElementById(`chart-${uniqueId}`).getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [], // Populate with your data
+      datasets: [{
+        label: 'My Dataset',
+        data: [], // Populate with your data
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1,
+      }],
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+
+  // Subscribe to data updates if needed
+  if (widgetDefinition.subscribe) {
+    widgetDefinition.subscribe(data => {
+      // Update the chart data here
+      chart.data.labels.push(data.label);
+      chart.data.datasets[0].data.push(data.value);
+      chart.update();
+    });
+  }
+}
+
+// Example of a user-defined AriesMod (lineChart.js)
+function lineChart() {
+  return {
+    subscribe: function(callback) {
+      // Simulate data subscription
+      setInterval(() => {
+        const data = {
+          label: new Date().toLocaleTimeString(),
+          value: Math.random() * 100, // Random data for demonstration
+        };
+        callback(data);
+      }, 1000);
+    },
+  };
+}
+
+function updateConfiguratorUI() {
+  const configuratorContainer = document.getElementById('widget-configurator'); // Ensure this ID matches your configurator's container
+  configuratorContainer.innerHTML = ''; // Clear existing content
+
+  availableWidgets.forEach(widgetName => {
+    const widgetItem = document.createElement('div');
+    widgetItem.className = 'widget-item';
+    widgetItem.innerHTML = `
+      <h3>${widgetName}</h3>
+      <button class="add-widget-btn" onclick="addWidgetToGrid('${widgetName}')">Add to Grid</button>
+    `;
+    configuratorContainer.appendChild(widgetItem);
+  });
+}
+
+function addWidgetToGrid(widgetName) {
+  // Assuming the widget definition is stored in a global object or can be retrieved
+  const widgetDefinition = getWidgetDefinition(widgetName); // Implement this function to retrieve the widget definition
+  createWidget(widgetDefinition);
+}
+
+const widgetDefinitions = {
+  lineChart: lineChart, // Assuming lineChart is defined elsewhere
+  // Add more widgets as needed
+};
+
+function getWidgetDefinition(widgetName) {
+  return widgetDefinitions[widgetName] || null;
+}
+
+
+console.log('GridManager loaded');
+
+function AttachStreamView(gridId, streamId, widgetType) {
+    const gridIdValue = typeof gridId === 'object' ? gridId.value : gridId;
+    const streamIdValue = typeof streamId === 'object' ? streamId.value : streamId;
+    const widgetTypeValue = widgetType?.value || widgetType || "GraphDisplay";
+
+    console.log("Attaching stream view:", { gridId: gridIdValue, streamId: streamIdValue, widgetType: widgetTypeValue });
+
+    const gridElement = document.querySelector(`[gs-id="${gridIdValue}"]`);
+    if (!gridElement) {
+        console.error(`Grid with gs-id "${gridIdValue}" not found`);
+        return;
+    }
+
+    const contentDiv = gridElement.querySelector('.grid-stack-item-content');
+    if (!contentDiv) {
+        console.error('Grid item content div not found');
+        return;
+    }
+
+    // Clear existing content
+    contentDiv.innerHTML = '';
+    const componentContainer = document.createElement('div');
+    componentContainer.className = 'component-container';
+    contentDiv.appendChild(componentContainer);
+
+    // Mount React component dynamically
+    const root = ReactDOM.createRoot(componentContainer);
+
+    function renderComponent(Component) {
+        root.render(React.createElement(Component, { streamId: streamIdValue }));
+    }
+
+    if (widgetTypeValue === "SensorDisplay") {
+        renderComponent(window.SensorDisplay);
+    } else if (widgetTypeValue === "GraphDisplay") {
+        if (window.GraphDisplay) {
+            renderComponent(window.GraphDisplay);
+        } else {
+            root.render(React.createElement('div', null, 'Loading graph component...'));
+            const checkInterval = setInterval(() => {
+                if (window.GraphDisplay) {
+                    clearInterval(checkInterval);
+                    renderComponent(window.GraphDisplay);
+                }
+            }, 100);
+        }
+    } else {
+        root.render(React.createElement('div', null, `Unknown widget type: ${widgetTypeValue}`));
+    }
+
+    if (window.subscribeToStream) {
+        const [moduleId, streamName] = streamIdValue.split('.');
+        window.subscribeToStream(moduleId, streamName);
+    }
+}
+
+window.AttachStreamView = AttachStreamView;

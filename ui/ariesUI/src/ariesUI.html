@@ -150,6 +150,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'blob:' 'unsafe-eval'">
   <title>dash</title>
   <link rel="stylesheet" href="./assets/css/gridstackdemo.css"/>
   <link href="./assets/node_modules/gridstack/dist/gridstack-extra.min.css" rel="stylesheet"/>
@@ -343,6 +344,12 @@
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 
+  <!-- // You'd need to include Rollup and/or babel in your HTML -->
+  <script src="https://unpkg.com/rollup@3.0.0-2/dist/rollup.browser.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="../node_modules/react/umd/react.development.js"></script>
+  <script src="../node_modules/react-dom/umd/react-dom.development.js"></script>
+
   <script>
     // Override console.log
     const originalConsoleLog = console.log;
@@ -461,7 +468,7 @@
     const dropZone = document.getElementById('ariesModsDropZone');
     const dropZoneInner = dropZone.querySelector('.drop-zone-inner');
     const fileInput = document.getElementById('ariesModFileInput');
-    const modsList = document.getElementById('ariesModsList');
+    var modsList = [];
 
     // Prevent default drag behaviors
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -506,28 +513,83 @@
       handleFiles(files);
     }
 
+    /*
+    
+  
     function handleFiles(files) {
-      [...files].forEach(file => {
-        if (file.name.endsWith('.js')) {
-          // Here you would typically process the file
-          // For now, we'll just add it to the list
-          addModToList(file.name);
-          console.log(`Processing AriesMod: ${file.name}`);
-        } else {
-          console.warn('Only .js files are supported for AriesMods');
+  [...files].forEach(file => {
+    if (file.name.endsWith('.js')) {
+      const reader = new FileReader();
+      reader.onload = async function(event) {
+  const code = event.target.result;
+  console.log('File content:', code); // Debug: See what’s actually being read
+  window.code = code;
+  
+  try {
+    const blob = new Blob([code], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    const module = await import(url);
+    window.GraphDisplay = module.default;
+    console.log('AriesMod: Evaluated');
+    AddModToList(file.name);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error importing the widget code:', error);
+  }
+};
+  reader.readAsText(file);
+    } else {
+      console.warn('Only .js files are supported for AriesMods');
+    }
+  });
+}
+
+*/
+
+function handleFiles(files) {
+  [...files].forEach(file => {
+    if (file.name.endsWith('.js')) {
+      const reader = new FileReader();
+      reader.onload = async function(event) {
+        const code = event.target.result;
+        try {
+          const blob = new Blob([code], { type: 'application/javascript' });
+          const url = URL.createObjectURL(blob);
+          const module = await import(url);
+          window.GraphDisplay = module.default;
+          console.log('AriesMod: Evaluated');
+          AddModToList(file.name);
+          
+          // Render the component
+          ReactDOM.render(
+            React.createElement(window.GraphDisplay, { streamId: 'test.stream' }),
+            document.getElementById('app')
+          );
+          
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error('Error importing the widget code:', error);
         }
-      });
+      };
+      reader.readAsText(file);
+    } else {
+      console.warn('Only .js files are supported for AriesMods');
+    }
+  });
+}
+
+
+    function AddModToList(modName) {
+      modsList.push(modName);
+      update_app_widget_type_list(modsList);
     }
 
-    function addModToList(modName) {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <span>${modName}</span>
-        <button class="btn btn-xs btn-ghost" onclick="this.parentElement.remove()">×</button>
-      `;
-      modsList.appendChild(li);
+    window.RemoveModToList = function RemoveModToList(modName) {
+      modsList.pop(modName);
+      update_app_widget_type_list(modsList);
     }
   </script>
+
 
 </body>
 </html>

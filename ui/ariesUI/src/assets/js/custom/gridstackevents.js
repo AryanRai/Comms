@@ -57,3 +57,39 @@ function addEvents(grid, id) {
     console.log(`${g} resizestop ${n.content || ''} size: (${n.w}x${n.h}) = (${Math.round(rec.width)}x${Math.round(rec.height)})px`);
   });
 }
+
+/*
+
+function handleDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  handleFiles(files);
+}
+
+
+function handleFiles(files) {
+  [...files].forEach(file => {
+    if (file.name.endsWith('.js')) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const code = event.target.result;
+        window.code = code;
+        try {
+          // Evaluate the code to define the widget
+          const widgetDefinition = eval(code);
+          console.log(widgetDefinition);
+          console.log('AriesMod: Evaluated')
+          // Assuming widgetDefinition is a function that returns a widget
+          addModToList(file.name);
+          createWidget(widgetDefinition);
+        } catch (error) {
+          console.error('Error evaluating the widget code:', error);
+        }
+      };
+      reader.readAsText(file);
+    } else {
+      console.warn('Only .js files are supported for AriesMods');
+    }
+  });
+}
+  */

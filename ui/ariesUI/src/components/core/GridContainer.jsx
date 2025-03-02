@@ -1,58 +1,63 @@
-// GridContainer.jsx (or wherever your main grid logic is)
+// GridContainer.jsx
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import SensorDisplay from './SensorDisplay';
 
 const GridContainer = () => {
-  // Your existing grid setup and state management
-
-  const attachStreamView = (gridId, streamId, widgetType) => {
-    // Get the values from the input elements if they are passed
+  const AttachStreamView = (gridId, streamId, widgetType) => {
     const gridIdValue = gridId?.value || gridId;
     const streamIdValue = streamId?.value || streamId;
-    const widgetTypeValue = widgetType?.value || widgetType;
+    const widgetTypeValue = widgetType?.value || widgetType || "GraphDisplay";
 
-    console.log("Attaching stream view:", {gridId: gridIdValue, streamId: streamIdValue, widgetType: widgetTypeValue});
+    console.log("Attaching stream view:", { gridId: gridIdValue, streamId: streamIdValue, widgetType: widgetTypeValue });
 
-    // Find the grid element by gs-id attribute
     const gridElement = document.querySelector(`[gs-id="${gridIdValue}"]`);
+    if (!gridElement) {
+      console.error(`Grid with gs-id "${gridIdValue}" not found`);
+      return;
+    }
 
-    if (gridElement) {
-      // Find the content div within the grid item
-      const contentDiv = gridElement.querySelector('.grid-stack-item-content');
-      if (!contentDiv) {
-        console.error('Grid item content div not found');
-        return;
-      }
+    const contentDiv = gridElement.querySelector('.grid-stack-item-content');
+    if (!contentDiv) {
+      console.error('Grid item content div not found');
+      return;
+    }
 
-      // Clear existing content
-      //contentDiv.innerHTML = '';
+    const componentContainer = document.createElement('div');
+    componentContainer.className = 'component-container';
+    contentDiv.appendChild(componentContainer);
 
-      // Create a new div to hold the SensorDisplay component
-      const sensorContainer = document.createElement('div');
-      sensorContainer.className = 'sensor-container';
-      contentDiv.appendChild(sensorContainer);
+    const root = createRoot(componentContainer);
 
-      // Create root and render using the new API
-      const root = createRoot(sensorContainer);
+    if (widgetTypeValue === "SensorDisplay") {
       root.render(<SensorDisplay streamId={streamIdValue} />);
-
-      // Subscribe to the stream if needed
-      if (window.subscribeToStream) {
-        const [moduleId, streamName] = streamIdValue.split('.');
-        window.subscribeToStream(moduleId, streamName);
+    } else if (widgetTypeValue === "GraphDisplay") {
+      if (window.GraphDisplay) {
+        root.render(<window.GraphDisplay streamId={streamIdValue} />);
+      } else {
+        root.render(<div>Loading graph component...</div>);
+        const checkInterval = setInterval(() => {
+          if (window.GraphDisplay) {
+            root.render(<window.GraphDisplay streamId={streamIdValue} />);
+            clearInterval(checkInterval);
+          }
+        }, 100);
       }
     } else {
-      console.error(`Grid with gs-id "${gridIdValue}" not found`);
+      root.render(<div>Unknown widget type: {widgetTypeValue}</div>);
+    }
+
+    if (window.subscribeToStream) {
+      const [moduleId, streamName] = streamIdValue.split('.');
+      window.subscribeToStream(moduleId, streamName);
     }
   };
 
-  // Attach the function to the window object for global access
-  window.AttachStreamView = attachStreamView;
+  window.AttachStreamView = AttachStreamView;
 
   return (
     <div className="grid-stack">
-      {/* Your existing grid items and rendering logic */}
+      {/* Your existing grid items */}
     </div>
   );
 };
