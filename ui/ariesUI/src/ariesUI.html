@@ -241,6 +241,8 @@
             <details>
               <summary>Device</summary>
               <ul>
+                <li><button id="clickButton" class="button btn-primary">Click Me</button></li>
+                <li><button id="successButton" class="button btn-success">Success</button></li>
                 <li><a>Submenu 1</a></li>
                 <li><a>Submenu 2</a></li>
                 <li>
@@ -350,6 +352,61 @@
   <script src="../node_modules/react/umd/react.development.js"></script>
   <script src="../node_modules/react-dom/umd/react-dom.development.js"></script>
 
+  <!-- Audio elements (can be hidden) -->
+
+
+  <audio id="startupSound" preload="auto"></audio>
+  <audio id="clickSound" preload="auto"></audio>
+  <audio id="successSound" preload="auto"></audio>
+
+  <script type="module">
+    const { ipcRenderer } = require('electron');
+    const { playSound } = require('../renderer.cjs');
+    
+    let audioFiles = {};
+    
+    // Configure audio sources
+    ipcRenderer.on('audio-config', (event, files) => {
+      audioFiles = files;
+      document.getElementById('startupSound').src = files.startup;
+      document.getElementById('clickSound').src = files.click;
+      document.getElementById('successSound').src = files.success;
+      document.getElementById('negativeSound').src = files.negative;
+    });
+
+    // Handle main process audio triggers
+    ipcRenderer.on('play-audio', (event, soundKey) => {
+      playSound(soundKey);
+    });
+
+    document.addEventListener('click', () => {
+      playSound('click');
+    });
+    // Add button event listeners
+    document.getElementById('clickButton').addEventListener('click', () => {
+      playSound('click');
+    });
+
+    document.getElementById('successButton').addEventListener('click', () => {
+      playSound('success');
+    });
+
+    window.playsound = function playsound(name){
+      playSound(name);
+    }
+
+    // Optional: Add hover effects
+    const buttons = document.querySelectorAll('.button');
+    buttons.forEach(button => {
+      button.addEventListener('mouseenter', () => {
+        playSound('hover'); // Assumes you add a hover.mp3
+      });
+    });
+  </script>
+
+  
+
+  <div id="root"></div>
   <script>
     // Override console.log
     const originalConsoleLog = console.log;
@@ -522,7 +579,7 @@
       const reader = new FileReader();
       reader.onload = async function(event) {
   const code = event.target.result;
-  console.log('File content:', code); // Debug: See what’s actually being read
+  console.log('File content:', code); // Debug: See what's actually being read
   window.code = code;
   
   try {
@@ -559,13 +616,15 @@ function handleFiles(files) {
           window.GraphDisplay = module.default;
           console.log('AriesMod: Evaluated');
           AddModToList(file.name);
-          
+         
+          /*
           // Render the component
           ReactDOM.render(
             React.createElement(window.GraphDisplay, { streamId: 'test.stream' }),
             document.getElementById('app')
           );
-          
+          */
+
           URL.revokeObjectURL(url);
         } catch (error) {
           console.error('Error importing the widget code:', error);
@@ -588,7 +647,21 @@ function handleFiles(files) {
       modsList.pop(modName);
       update_app_widget_type_list(modsList);
     }
+
+    // Mock data for testing
+    window.GlobalData = {
+      data: {
+        test: {
+          streams: {
+            stream: { value: Math.random() * 100 }
+          }
+        }
+      }
+    };
+
   </script>
+
+  <!-- Add event listener for any click to play a sound effect -->
 
 
 </body>

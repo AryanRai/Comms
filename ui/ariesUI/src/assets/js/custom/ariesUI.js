@@ -67,18 +67,22 @@ window.update_SH_live_status = function(update, style) {
     document.getElementById("SH-live-status").classList.remove("text-danger");
     document.getElementById("SH-live-status").classList.remove("text-warning");
     document.getElementById("SH-live-status").classList.add("text-success");
+    window.playsound('success');
+    
   }
 
   if (style == "danger") {
     document.getElementById("SH-live-status").classList.remove("text-warning");
     document.getElementById("SH-live-status").classList.remove("text-success");
     document.getElementById("SH-live-status").classList.add("text-danger");
+    window.playsound('negative');
   }
   
   if (style == "warning") {
     document.getElementById("SH-live-status").classList.remove("text-danger");
     document.getElementById("SH-live-status").classList.remove("text-success");
     document.getElementById("SH-live-status").classList.add("text-warning");
+    window.playsound('negative');
   }
 
 }

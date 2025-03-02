@@ -102,7 +102,7 @@
      0px 0px 21px green; */
  
   /* The Gibberish numbers are bezier curve for bounce easing */
-  animation: grow 4s
+  animation: grow 1s
     linear(
      0 0%,
      0 2.27%,
@@ -144,7 +144,7 @@
      1 100%
     );
     animation: infinite alternate,
-   rot 3s ease 2s infinite;
+   rot 1s ease 2s infinite;
   will-change: contents;
  }
  
@@ -161,7 +161,7 @@
   box-shadow: 0px 0px 10px red, 0px 0px 20px blue, 0px 0px 21px green;
  
   /* The Gibberish numbers are bezier curve for bounce easing */
-  animation: grow 4s
+  animation: grow 1s
     linear(
      0 0%,
      0 2.27%,
@@ -265,7 +265,7 @@
      1 100%
     );
     animation: infinite alternate,
-   rot 1s ease 4s infinite;
+   rot 1s ease 2s infinite;
  }
  @keyframes grow {
   0% {
