@@ -1,0 +1,18 @@
+[
+  {
+    "name": "GraphDisplay",
+    "version": "1.0.0",
+    "author": "Yanyan",
+    "description": "Real-time plotting widget",
+    "gitUrl": "https://raw.githubusercontent.com/AryanRai/Comms/refs/heads/main/ui/ariesMods/GraphDisplay.js",
+    "category": "visualization"
+  },
+  {
+    "name": "SensorDisplay",
+    "version": "1.0.0",
+    "author": "Yanyan",
+    "description": "Simple sensor monitor",
+    "gitUrl": "https://raw.githubusercontent.com/AryanRai/Comms/refs/heads/main/ui/ariesMods/SensorDisplay.js",
+    "category": "utility"
+  }
+]
