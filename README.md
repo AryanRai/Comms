@@ -1,6 +1,6 @@
-# Comms v1.0 Documentation
+# Comms Alpha v0.9 -> v1.0 Documentation (Unreleased yet)
 
-#First Official Stable Release
+#First Official Stable Release Scheduled
 
 A centralized communications dashboard for multi-layered control in ground stations, all-in-one DAQ solutions, and hardware interfaces. Comms provides a modular, extensible platform for hardware development and monitoring.
 
