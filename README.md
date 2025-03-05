@@ -4,6 +4,8 @@
 
 A centralized communications dashboard for multi-layered control in ground stations, all-in-one DAQ solutions, and hardware interfaces. Comms provides a modular, extensible platform for hardware development and monitoring.
 
+![Comms](https://github.com/user-attachments/assets/7de95c4d-412d-469c-b0d5-79d940087ebe)
+
 ## Core Features
 
 ### Currently Implemented ✓
