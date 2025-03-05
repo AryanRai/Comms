@@ -1,3 +1,187 @@
+# Comms v1.0 Documentation
+
+#First Official Stable Release
+
+A centralized communications dashboard for multi-layered control in ground stations, all-in-one DAQ solutions, and hardware interfaces. Comms provides a modular, extensible platform for hardware development and monitoring.
+
+## Core Features
+
+### Currently Implemented ✓
+- Fully 1 way end-end communication, data aquasation and visualization
+- Engine: Fully implemented backend with custom plugins 
+- DynamicModules: Modular hardware interface system, Custom Modules + Temples
+- StreamHandler: Real-time data recieving and streaming via WebSocket
+- AriesUI: Dynamic complex customizable dashboards grid layout system
+- AriesMods: Drag-and-drop customizable widgets, Live data visualization, Community git marketplace + templete
+- HyperThreader: All in one solution for running debugging and managing instances of sh, en and ui
+
+
+## Architecture
+
+### 1. Engine Layer
+The core processing layer managing hardware communications.
+
+#### Features
+- Dynamic module loading
+- Async operation support
+- Hardware interface abstraction
+- Configurable update rates
+- Error handling and recovery
+
+#### Module Types
+- Serial Communication
+- Random Number Generator (test module)
+- Custom Hardware Modules (template)
+
+### 2. Stream Handler Layer
+Manages data flow between Engine and UI layers.
+
+#### Features
+- WebSocket-based communication
+- Message queuing
+- Priority-based routing
+- Connection management
+- Data compression
+- Timestamp synchronization
+
+### 3. AriesUI Layer
+User interface built with Electron, React, and TailwindCSS.
+
+#### Features
+- Customizable grid layout
+- Real-time data visualization
+- Module configuration interface
+- Status monitoring
+- Logging controls
+- Stream selection interface
+
+## Stream Format
+
+### Standard Message Format
+```json
+{
+  "type": "negotiation",
+  "status": "active",
+  "data": {
+    "module_id": {
+      "name": "Module Name",
+      "status": "active",
+      "config": {
+        "update_rate": 1.0,
+        "enabled_streams": ["stream1"],
+        "debug_mode": false
+      },
+      "streams": {
+        "stream1": {
+          "stream_id": 1,
+          "name": "Temperature",
+          "datatype": "float",
+          "unit": "Celsius",
+          "status": "active",
+          "metadata": {
+            "sensor": "TMP36",
+            "precision": 0.1,
+            "location": "main_chamber"
+          },
+          "value": 25.4,
+          "priority": "high"
+        }
+      }
+    }
+  }
+}
+```
+
+## Installation
+
+### Prerequisites
+- Python 3.8+
+- Node.js 14+
+- npm or yarn
+
+### Setup Steps
+```bash
+# Clone repository
+git clone https://github.com/AryanRai/Comms.git
+cd Comms
+
+# Install Python dependencies
+pip install socketify
+
+# Install UI dependencies
+cd Gui/ariesUI
+npm install
+```
+
+### Running the System HyperThreader
+```bash
+# Start HyperThreader
+conda comms
+python HyperThreader.py
+
+```
+
+### Running the System Seperately
+```bash
+# Start Stream Handler
+cd StreamHandler
+python stream_handlerv2.3.py
+
+# Start Engine
+cd Engine
+python engine.py
+
+# Launch AriesUI
+cd Gui/ariesUI
+npm start
+```
+
+## Development Guide
+
+### Creating Custom Modules
+
+#### Engine Module Template
+```python
+class CustomModule:
+    def __init__(self):
+        self.streams = {
+            '1': Stream(
+                stream_id=1,
+                name="SensorName",
+                datatype="float",
+                unit="Units",
+                status="active",
+                metadata={
+                    "sensor": "Model",
+                    "precision": 0.1
+                }
+            )
+        }
+
+    async def run(self):
+        # Implementation
+        pass
+```
+
+#### UI Widget Development
+```html
+<div class="grid-stack-item" gs-w="2" gs-h="1">
+    <div class="grid-stack-item-content">
+        <!-- Widget content -->
+    </div>
+</div>
+```
+
+
+
+## Contributing
+Contributions are welcome! Please read our contributing guidelines and submit pull requests to our GitHub repository.
+
+## License
+[Add License Information]
+
+## Contact
+[Add Contact Information]
 
 ---
 

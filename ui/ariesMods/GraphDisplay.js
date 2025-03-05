@@ -1,150 +1,137 @@
 // ui/ariesMods/GraphDisplay.js
-console.log('importing GraphDisplay');
+// Simple logging utility
+const LogLevels = {
+  DEBUG: 0,
+  INFO: 1,
+  WARN: 2,
+  ERROR: 3
+};
+
+const log = (level, message, ...args) => {
+  const currentLevel = window.DEBUG_LEVEL || LogLevels.INFO; // Default to INFO
+  if (level >= currentLevel) {
+    const prefix = `[${Object.keys(LogLevels)[level]}]`;
+    switch (level) {
+      case LogLevels.DEBUG:
+        console.debug(prefix, message, ...args);
+        break;
+      case LogLevels.INFO:
+        console.info(prefix, message, ...args);
+        break;
+      case LogLevels.WARN:
+        console.warn(prefix, message, ...args);
+        break;
+      case LogLevels.ERROR:
+        console.error(prefix, message, ...args);
+        break;
+    }
+  }
+};
+
+log(LogLevels.INFO, 'importing GraphDisplay');
+
 const GraphDisplay = ({ streamId }) => {
   const [dataPoints, setDataPoints] = React.useState([]);
+  const plotDivRef = React.useRef(null);
 
-  const loadChartJs = () => {
+  const loadPlotly = () => {
     return new Promise((resolve, reject) => {
-      if (window.Chart) {
-        console.log('Chart.js already loaded');
-        resolve(window.Chart);
+      if (window.Plotly) {
+        log(LogLevels.DEBUG, 'Plotly already loaded');
+        resolve(window.Plotly);
         return;
       }
-
-      console.log('Fetching Chart.js...');
-      fetch('https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js')
-        .then(response => {
-          if (!response.ok) throw new Error(`Failed to fetch Chart.js: ${response.status}`);
-          return response.text();
-        })
+      log(LogLevels.INFO, 'Fetching Plotly...');
+      fetch('https://cdn.plot.ly/plotly-latest.min.js')
+        .then(response => response.text())
         .then(scriptText => {
           const script = document.createElement('script');
           script.text = scriptText;
           document.head.appendChild(script);
-          console.log('Chart.js script injected');
-          const checkInterval = setInterval(() => {
-            if (window.Chart) {
-              console.log('Chart.js detected');
-              clearInterval(checkInterval);
-              resolve(window.Chart);
+          log(LogLevels.DEBUG, 'Plotly injected');
+          const check = setInterval(() => {
+            if (window.Plotly) {
+              log(LogLevels.DEBUG, 'Plotly ready');
+              clearInterval(check);
+              resolve(window.Plotly);
             }
           }, 50);
         })
         .catch(error => {
-          console.error('Failed to load Chart.js:', error);
+          log(LogLevels.ERROR, 'Plotly load failed:', error);
           reject(error);
         });
     });
   };
 
-  let chartInstance = null;
-  let chartContainer;
-
   React.useEffect(() => {
-    if (!streamId) {
-      console.log('No streamId provided');
+    if (!streamId || !plotDivRef.current) {
+      log(LogLevels.WARN, 'Missing streamId or plotDivRef');
       return;
     }
     const [moduleId, streamName] = streamId.split('.');
-    console.log('Stream ID:', { moduleId, streamName });
+    log(LogLevels.DEBUG, 'Stream:', { moduleId, streamName });
 
-    // Create chart container
-    chartContainer = document.createElement('div');
-    chartContainer.id = `chart-${streamId.replace('.', '-')}`;
-    chartContainer.style.width = '100%';
-    chartContainer.style.height = '300px';
-    chartContainer.style.background = '#f0f0f0'; // Debugging visibility
-    const canvas = document.createElement('canvas');
-    chartContainer.appendChild(canvas);
-    console.log('Chart container created:', chartContainer.id);
+    const plotDiv = plotDivRef.current;
+    plotDiv.style.width = '100%';
+    plotDiv.style.height = '300px';
 
-    const initChart = async () => {
+    const initPlot = async () => {
       try {
-        const Chart = await loadChartJs();
-        console.log('Chart.js loaded');
+        const Plotly = await loadPlotly();
+        const initialData = [{
+          x: [],
+          y: [],
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: streamId
+        }];
+        const layout = {
+          title: `Stream: ${streamId}`,
+          xaxis: { title: 'Time' },
+          yaxis: { title: 'Value' }
+        };
+        Plotly.newPlot(plotDiv, initialData, layout);
+        log(LogLevels.INFO, 'Plot initialized');
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Failed to get 2D context');
-        chartInstance = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: [],
-            datasets: [{
-              label: `Stream: ${streamId}`,
-              data: [],
-              borderColor: 'rgba(75, 192, 192, 1)',
-              backgroundColor: 'rgba(75, 192, 192, 0.2)',
-              fill: false
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: { title: { display: true, text: 'Time' } },
-              y: { title: { display: true, text: 'Value' } }
-            }
-          }
-        });
-        console.log('Chart initialized');
-
-        // Test with static data
-        chartInstance.data.labels = ['Test1', 'Test2', 'Test3'];
-        chartInstance.data.datasets[0].data = [10, 20, 30];
-        chartInstance.update();
-        console.log('Test data added');
+        Plotly.update(plotDiv, { x: [['Start']], y: [[0]] }, [0]);
 
         const updateInterval = setInterval(() => {
-          const streamData = window.GlobalData?.data?.[moduleId]?.streams?.[streamName];
-          if (streamData) {
-            const newValue = streamData.value;
-            console.log(`New value for ${streamId}:`, newValue);
+          const value = window.GlobalData?.data?.[moduleId]?.streams?.[streamName]?.value;
+          if (value !== undefined) {
+            log(LogLevels.DEBUG, `Value for ${streamId}:`, value);
             setDataPoints(prev => {
               const now = new Date().toLocaleTimeString();
-              const updatedPoints = [...prev, { x: now, y: newValue }].slice(-50);
-              chartInstance.data.labels = updatedPoints.map(p => p.x);
-              chartInstance.data.datasets[0].data = updatedPoints.map(p => p.y);
-              chartInstance.update();
-              console.log('Chart updated:', updatedPoints.length);
-              return updatedPoints;
+              const updated = [...prev, { x: now, y: value }].slice(-50);
+              Plotly.update(plotDiv, {
+                x: [updated.map(p => p.x)],
+                y: [updated.map(p => p.y)]
+              }, [0]);
+              log(LogLevels.DEBUG, 'Plot updated');
+              return updated;
             });
           } else {
-            console.log(`No data for ${streamId}`);
+            log(LogLevels.WARN, `No data for ${streamId}`);
           }
         }, 100);
 
         return () => {
           clearInterval(updateInterval);
-          if (chartInstance) chartInstance.destroy();
-          console.log('Cleanup complete');
+          log(LogLevels.DEBUG, 'Update interval cleared');
         };
       } catch (error) {
-        console.error('Chart init error:', error);
-        chartContainer.textContent = 'Chart failed to load';
+        log(LogLevels.ERROR, 'Plot init error:', error);
+        plotDiv.textContent = 'Plot error';
       }
     };
 
-    initChart();
-    // Explicitly append to DOM
-    const root = document.getElementById('root');
-    if (root) {
-      root.appendChild(chartContainer);
-      console.log('Container appended to #root');
-    } else {
-      console.error('Root element not found');
-    }
-
-    return () => {
-      if (chartContainer && chartContainer.parentNode) {
-        chartContainer.parentNode.removeChild(chartContainer);
-      }
-    };
+    initPlot();
   }, [streamId]);
 
   return React.createElement(
     'div',
     { className: 'graph-display' },
-    chartContainer || React.createElement('div', null, 'Loading...')
+    React.createElement('div', { ref: plotDivRef, id: `plot-${streamId ? streamId.replace('.', '-') : 'default'}` })
   );
 };
 

@@ -11,6 +11,7 @@ html, body {
     height: 100%;
 }
 
+
 body {
     color: #e8f4ff;
     --background-color: #111111;
@@ -24,6 +25,175 @@ body {
     --color: #64ffda;
     font-family: 'Roboto Mono', monospace;
 }
+/* Dark & Light Theme Support */
+body {
+    color: #e8f4ff;
+    --background-color: #111111;
+    font-size: 90%;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 500;
+    --font-family: 'Open Sans', sans-serif;
+    line-height: normal;
+    background-color: var(--background-color);
+    --color: #64ffda;
+    font-family: 'Roboto Mono', monospace;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+body.light {
+    --background-color: #ffffff;
+    --color: #111111;
+    color: var(--color);
+}
+
+body.light h1, 
+body.light h2, 
+body.light h3, 
+body.light .h1, 
+body.light .h2, 
+body.light .h3, 
+body.light .heading {
+    color: #111111;
+}
+
+body.light a {
+    color: #007acc;
+}
+
+body.light a:hover, 
+body.light a:focus {
+    color: #005a99;
+}
+
+body.light .block {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-left: 4px solid rgba(0, 0, 0, 0.2);
+}
+
+body.light .btn.btn-sf {
+    color: #333;
+    border: 2px solid rgba(0, 0, 0, 0.25);
+    background: transparent;
+}
+
+body.light .btn.btn-sf:hover,
+body.light .btn.btn-sf:focus {
+    color: #000;
+    border-color: rgba(0, 0, 0, 1);
+}
+
+body.light .progress {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+body.light .progress-bar-sf {
+    background-color: rgba(0, 122, 204, 0.1);
+}
+
+/* Dark Theme (Default) */
+body.dark .grid-stack {
+    background-color: rgba(8, 20, 26, 255);
+  }
+  
+  body.dark .grid-stack-item-content {
+    background-color: #020406;
+    border: 1px solid #333333;
+    box-shadow: 0 5px 5px 0 #4582954b;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 5px;
+    padding: 10px;
+  }
+  
+  body.dark .trash {
+    background: rgba(255, 0, 0, 0.1);
+  }
+  
+  body.dark .sidebar {
+    background: rgba(0, 255, 213, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  body.dark .sidebar .grid-stack-item {
+    border: 2px dashed rgb(0, 124, 128);
+    background: rgba(0, 204, 255, 0.1);
+  }
+  
+  /* Light Theme */
+  body.light .grid-stack {
+    background-color: #f5f5f5; /* Light grey background */
+  }
+  
+  body.light .grid-stack-item-content {
+    background-color: #ffffff; /* White cards */
+    border: 1px solid #cccccc; /* Light border */
+    box-shadow: 0 5px 5px 0 rgba(0, 0, 0, 0.1); /* Softer shadow */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 5px;
+    padding: 10px;
+  }
+  
+  body.light .trash {
+    background: rgba(255, 0, 0, 0.1);
+  }
+  
+  body.light .sidebar {
+    background: rgba(0, 128, 255, 0.1); /* Softer blue */
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  body.light .sidebar .grid-stack-item {
+    border: 2px dashed rgb(0, 102, 204);
+    background: rgba(0, 128, 255, 0.1);
+  }
+  
+  /* Make nested grid more readable */
+  body.light .grid-stack > .grid-stack-item.grid-stack-sub-grid > .grid-stack-item-content {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  
+  body.light .container-fluid {
+    border: dashed 1px rgba(0, 0, 0, 0.2);
+  }
+body.light #mydiv .dropdown #cssmenu .menu {
+    background-color: white;
+}  
+
+/* Toggle Button */
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--color);
+    color: var(--background-color);
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+body.light .theme-toggle {
+    background: var(--color);
+    color: var(--background-color);
+}
+
+
+body.light {
+    background-color: white;
+    color: black;
+  }
+  body.dark {
+    background-color: black;
+    color: white;
+  }
+  .modal-box {
+    background: inherit;
+    color: inherit;
+  }
 
 
 h1, h2, h3, .h1, .h2, .h3, .heading {

@@ -150,6 +150,8 @@ function update_app_grid_list(data) {
 }
 
 window.update_app_widget_type_list = function update_app_widget_type_list(modsList, modName) {
+  console.log("update_app_widget_type_list");
+  console.log(modsList, modName);
   document.getElementById("App-Configurator-active-WidgetType-dropdown-content").innerHTML = "<div class='skeleton h-32 w-32'></div>";
 
   var active_grids_innerhtml = "";

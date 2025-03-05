@@ -14,23 +14,8 @@ function generateUniqueId(prefix = 'widget') {
   return uniqueId;
 }
 
-// Sub-grid data
-const sub1 = [
-  { x: 0, y: 0 },
-  { x: 1, y: 0 },
-  { x: 2, y: 0 },
-  { x: 3, y: 0 },
-  { x: 0, y: 1 },
-  { x: 1, y: 1 },
-];
-const sub2 = [
-  { x: 0, y: 0, h: 2 },
-  { x: 1, y: 1, w: 2 },
-];
 
-// Initialize sub-grid options
-sub1.forEach((d) => (d.content = String(count++)));
-sub2.forEach((d) => (d.content = String(count++)));
+
 
 const subOptions = {
   cellHeight: 50,
@@ -53,24 +38,7 @@ const options = {
   id: 'main',
   removable: '.trash',
   subGridOpts: subOptions,
-  children: [
-    { x: 0, y: 0, content: 'regular item' },
-    {
-      x: 1,
-      y: 0,
-      w: 4,
-      h: 4,
-      sizeToContent: true,
-      subGridOpts: { children: sub1, id: 'sub1_grid', class: 'sub1' },
-    },
-    {
-      x: 5,
-      y: 0,
-      w: 3,
-      h: 4,
-      subGridOpts: { children: sub2, id: 'sub2_grid', class: 'sub2' },
-    },
-  ],
+  children: [],
 };
 
 // Initialize the main grid
@@ -368,62 +336,67 @@ function getWidgetDefinition(widgetName) {
 }
 
 
-console.log('GridManager loaded');
-
 function AttachStreamView(gridId, streamId, widgetType) {
-    const gridIdValue = typeof gridId === 'object' ? gridId.value : gridId;
-    const streamIdValue = typeof streamId === 'object' ? streamId.value : streamId;
-    const widgetTypeValue = widgetType?.value || widgetType || "GraphDisplay";
+  const gridIdValue = typeof gridId === 'object' ? gridId.value : gridId;
+  const streamIdValue = typeof streamId === 'object' ? streamId.value : streamId;
+  const widgetTypeValue = widgetType?.value || widgetType || "GraphDisplay";
 
-    console.log("Attaching stream view:", { gridId: gridIdValue, streamId: streamIdValue, widgetType: widgetTypeValue });
+  console.log("Attaching stream view:", { gridId: gridIdValue, streamId: streamIdValue, widgetType: widgetTypeValue });
 
-    const gridElement = document.querySelector(`[gs-id="${gridIdValue}"]`);
-    if (!gridElement) {
-        console.error(`Grid with gs-id "${gridIdValue}" not found`);
-        return;
-    }
+  const gridElement = document.querySelector(`[gs-id="${gridIdValue}"]`);
+  if (!gridElement) {
+    console.error(`Grid with gs-id "${gridIdValue}" not found`);
+    return;
+  }
 
-    const contentDiv = gridElement.querySelector('.grid-stack-item-content');
-    if (!contentDiv) {
-        console.error('Grid item content div not found');
-        return;
-    }
+  const contentDiv = gridElement.querySelector('.grid-stack-item-content');
+  if (!contentDiv) {
+    console.error('Grid item content div not found');
+    return;
+  }
 
-    // Clear existing content
-    contentDiv.innerHTML = '';
-    const componentContainer = document.createElement('div');
-    componentContainer.className = 'component-container';
-    contentDiv.appendChild(componentContainer);
+  contentDiv.innerHTML = '';
+  const componentContainer = document.createElement('div');
+  componentContainer.className = 'component-container';
+  contentDiv.appendChild(componentContainer);
 
-    // Mount React component dynamically
-    const root = ReactDOM.createRoot(componentContainer);
+  const root = ReactDOM.createRoot(componentContainer);
 
-    function renderComponent(Component) {
-        root.render(React.createElement(Component, { streamId: streamIdValue }));
-    }
+  function renderComponent(Component) {
+    root.render(React.createElement(Component, { streamId: streamIdValue }));
+    console.log(`Mounted ${widgetTypeValue} to ${gridIdValue}`);
+  }
 
-    if (widgetTypeValue === "SensorDisplay") {
-        renderComponent(window.SensorDisplay);
-    } else if (widgetTypeValue === "GraphDisplay") {
-        if (window.GraphDisplay) {
-            renderComponent(window.GraphDisplay);
-        } else {
-            root.render(React.createElement('div', null, 'Loading graph component...'));
-            const checkInterval = setInterval(() => {
-                if (window.GraphDisplay) {
-                    clearInterval(checkInterval);
-                    renderComponent(window.GraphDisplay);
-                }
-            }, 100);
-        }
-    } else {
-        root.render(React.createElement('div', null, `Unknown widget type: ${widgetTypeValue}`));
-    }
+  const widgetComponent = window[widgetTypeValue];
+  if (widgetComponent) {
+    renderComponent(widgetComponent);
+  } else {
+    root.render(React.createElement('div', null, `Loading ${widgetTypeValue} component...`));
+    const checkInterval = setInterval(() => {
+      if (window[widgetTypeValue]) {
+        clearInterval(checkInterval);
+        renderComponent(window[widgetTypeValue]);
+      }
+    }, 100);
+    setTimeout(() => {
+      if (!window[widgetTypeValue]) {
+        clearInterval(checkInterval);
+        root.render(React.createElement('div', null, `Widget type "${widgetTypeValue}" not found`));
+        console.warn(`Widget type "${widgetTypeValue}" not loaded after timeout`);
+      }
+    }, 5000);
+  }
 
-    if (window.subscribeToStream) {
-        const [moduleId, streamName] = streamIdValue.split('.');
-        window.subscribeToStream(moduleId, streamName);
-    }
+  if (window.subscribeToStream) {
+    const [moduleId, streamName] = streamIdValue.split('.');
+    window.subscribeToStream(moduleId, streamName);
+  }
 }
 
 window.AttachStreamView = AttachStreamView;
+
+
+// Rest of the original GridManager.js functions remain unchanged
+// (initializeGrid, setupEventListeners, addWidget, addNested, addNewWidget, save, destroy, load, etc.)
+
+console.log('GridManager loaded');

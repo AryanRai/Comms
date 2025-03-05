@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'; // Add ipcMain to imports
+import { app, BrowserWindow, ipcMain } from 'electron'; // ipcMain already included in your imports
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -16,7 +16,6 @@ const audioFiles = {
   click: path.join(__dirname, 'sounds', 'click.wav'),
   success: path.join(__dirname, 'sounds', 'success.wav'),
   negative: path.join(__dirname, 'sounds', 'negative.wav')
-
 };
 
 // Function to create the loading screen
@@ -83,20 +82,16 @@ function createWindow() {
     // Send audio configuration to renderer
     mainWindow.webContents.send('audio-config', audioFiles);
     setTimeout(() => {
-        // Play startup sound when main window loads
-        mainWindow.webContents.send('play-audio', 'startup');
+      // Play startup sound when main window loads
+      mainWindow.webContents.send('play-audio', 'startup');
     }, 900);
-    
-    
 
     setTimeout(() => {
       if (loadingScreen) {
         loadingScreen.close();
-
       }
       mainWindow.show();
       mainWindow.focus();
-
       // Disable alwaysOnTop after a short delay
       setTimeout(() => {
         mainWindow.setAlwaysOnTop(false);
@@ -110,15 +105,25 @@ function setupAudioIPC() {
   ipcMain.on('play-audio', (event, soundKey) => {
     console.log(`Requested to play: ${soundKey}`);
   });
-  
+
   ipcMain.on('audio-error', (event, error) => {
     console.error('Audio error:', error);
   });
 }
 
+function setupPerformaceIPC() {
+  // Handle IPC request for performance metrics
+  ipcMain.on('get-performance-metrics', (event) => {
+    const cpuUsage = process.getCPUUsage().percentCPUUsage * 100; // Percentage
+    const memoryUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2); // MB
+    event.reply('performance-metrics', { cpuUsage, memoryUsage });
+  });
+  }
+
 // Electron app lifecycle hooks
 app.on('ready', () => {
   setupAudioIPC();
+  setupPerformaceIPC(); // Fixed typo from 'setupPerformaceIPC' to 'setupPerformanceIPC'
   createLoadingScreen();
   createWindow();
 });
