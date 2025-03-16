@@ -1,12 +1,17 @@
-# Comms Alpha v0.9 -> v1.0 Documentation (Unreleased yet)
+# Comms Alpha v1.5 -> v2.0 Documentation (Unreleased yet)
 
+![Comms2.0](https://github.com/user-attachments/assets/02e70432-e6f7-4664-9f17-b6b0acd60a67)
+
+![Demo D 2.0](https://github.com/user-attachments/assets/18b8ee39-91ae-4da7-9e41-55d9d223c02a)
+
+# Comms Alpha v1.0 
 #First Official Stable Release Scheduled
 
 A centralized communications dashboard for multi-layered control in ground stations, all-in-one DAQ solutions, and hardware interfaces. Comms provides a modular, extensible platform for hardware development and monitoring.
 
-![Comms](https://github.com/user-attachments/assets/7de95c4d-412d-469c-b0d5-79d940087ebe)
+![Comms1.0](https://github.com/user-attachments/assets/7de95c4d-412d-469c-b0d5-79d940087ebe)
 
-![Demo D](https://github.com/user-attachments/assets/1940eeb6-21f9-4bb1-915e-4e18014a87e3)
+![Demo D 1.0](https://github.com/user-attachments/assets/1940eeb6-21f9-4bb1-915e-4e18014a87e3)
 
 
 [Notion Tracker](https://green-croissant-260.notion.site/2bd3cc2581c94ca6b16c0f801b337208?v=1adeb3eb3974800d985f000ca6a61924)
