@@ -113,6 +113,16 @@ function handleReceivedData(data) {
     update_app_scoll_status("ITF: Recieved Broadcast", NaN);
     // Update the UI with new stream values
   }
+
+  else if (data.type === "control_response") {
+    console.log("ITF: Control response received:", data);
+    update_app_scoll_status(`ITF: Control response from ${data.module_id}: ${data.status}`, NaN);
+  }
+
+  else if (data.type === "config_response") {
+    console.log("ITF: Config update response received:", data);
+    update_app_scoll_status(`ITF: Config response from ${data.module_id}: ${data.status}`, NaN);
+  }
 }
 
 // Function to check if the WebSocket server is alive without connecting
@@ -156,5 +166,37 @@ function closeWebSocket() {
 
 // Start the WebSocket connection initially
 //startWebSocket();
+
+// Function to send control command to a module
+function sendModuleControl(moduleId, command) {
+  if (ws.readyState === WebSocket.OPEN) {
+    const controlMessage = JSON.stringify({
+      type: "control",
+      module_id: moduleId,
+      command: command
+    });
+    ws.send(controlMessage);
+    console.log('ITF: Sent control command to module:', moduleId, command);
+    update_app_scoll_status(`ITF: Sent control command to ${moduleId}`, NaN);
+  }
+}
+
+// Function to update module configuration
+function updateModuleConfig(moduleId, configUpdates) {
+  if (ws.readyState === WebSocket.OPEN) {
+    const configMessage = JSON.stringify({
+      type: "config_update",
+      module_id: moduleId,
+      config: configUpdates
+    });
+    ws.send(configMessage);
+    console.log('ITF: Sent config update to module:', moduleId, configUpdates);
+    update_app_scoll_status(`ITF: Sent config update to ${moduleId}`, NaN);
+  }
+}
+
+// Add to window object for global access
+window.sendModuleControl = sendModuleControl;
+window.updateModuleConfig = updateModuleConfig;
 
 

@@ -1,67 +1,138 @@
-// lineChart.js - Sample AriesMod for a Line Chart
+// ui/ariesMods/templete.js
+// Simple logging utility
+const LogLevels = {
+  DEBUG: 0,
+  INFO: 1,
+  WARN: 2,
+  ERROR: 3
+};
 
-function lineChart() {
-    // Create a unique ID for the chart
-    const uniqueId = `chart-${Date.now()}`;
-  
-    // Create the HTML structure for the chart
-    const chartContainer = document.createElement('div');
-    chartContainer.className = 'line-chart-container';
-    chartContainer.innerHTML = `
-      <h3>Dynamic Line Chart</h3>
-      <canvas id="${uniqueId}"></canvas>
-    `;
-  
-    // Append the chart container to the body or a specific grid item
-    document.body.appendChild(chartContainer);
-  
-    // Initialize the chart
-    const ctx = document.getElementById(uniqueId).getContext('2d');
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: [], // Labels for the x-axis
-        datasets: [{
-          label: 'Sample Data',
-          data: [], // Data points for the y-axis
-          borderColor: 'rgba(75, 192, 192, 1)',
-          borderWidth: 2,
-          fill: false,
-        }],
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-          },
-        },
-      },
-    });
-  
-    // Simulate data updates
-    let count = 0;
-    const updateInterval = setInterval(() => {
-      if (count < 10) { // Limit to 10 updates for demonstration
-        const newLabel = `Point ${count + 1}`;
-        const newValue = Math.floor(Math.random() * 100); // Random value for demonstration
-  
-        // Update the chart data
-        chart.data.labels.push(newLabel);
-        chart.data.datasets[0].data.push(newValue);
-        chart.update();
-  
-        count++;
-      } else {
-        clearInterval(updateInterval); // Stop updating after 10 points
-      }
-    }, 1000); // Update every second
-  
-    // Return the widget definition
-    return {
-      // Optional: Define a subscribe method if needed
-      subscribe: function(callback) {
-        // This can be used to subscribe to external data sources
-      },
-    };
+const log = (level, message, ...args) => {
+  const currentLevel = window.DEBUG_LEVEL || LogLevels.INFO; // Default to INFO
+  if (level >= currentLevel) {
+    const prefix = `[${Object.keys(LogLevels)[level]}]`;
+    switch (level) {
+      case LogLevels.DEBUG:
+        console.debug(prefix, message, ...args);
+        break;
+      case LogLevels.INFO:
+        console.info(prefix, message, ...args);
+        break;
+      case LogLevels.WARN:
+        console.warn(prefix, message, ...args);
+        break;
+      case LogLevels.ERROR:
+        console.error(prefix, message, ...args);
+        break;
+    }
   }
+};
+
+log(LogLevels.INFO, 'importing GraphDisplay');
+
+const GraphDisplay = ({ streamId }) => {
+  const [dataPoints, setDataPoints] = React.useState([]);
+  const plotDivRef = React.useRef(null);
+
+  const loadPlotly = () => {
+    return new Promise((resolve, reject) => {
+      if (window.Plotly) {
+        log(LogLevels.DEBUG, 'Plotly already loaded');
+        resolve(window.Plotly);
+        return;
+      }
+      log(LogLevels.INFO, 'Fetching Plotly...');
+      fetch('https://cdn.plot.ly/plotly-latest.min.js')
+        .then(response => response.text())
+        .then(scriptText => {
+          const script = document.createElement('script');
+          script.text = scriptText;
+          document.head.appendChild(script);
+          log(LogLevels.DEBUG, 'Plotly injected');
+          const check = setInterval(() => {
+            if (window.Plotly) {
+              log(LogLevels.DEBUG, 'Plotly ready');
+              clearInterval(check);
+              resolve(window.Plotly);
+            }
+          }, 50);
+        })
+        .catch(error => {
+          log(LogLevels.ERROR, 'Plotly load failed:', error);
+          reject(error);
+        });
+    });
+  };
+
+  React.useEffect(() => {
+    if (!streamId || !plotDivRef.current) {
+      log(LogLevels.WARN, 'Missing streamId or plotDivRef');
+      return;
+    }
+    const [moduleId, streamName] = streamId.split('.');
+    log(LogLevels.DEBUG, 'Stream:', { moduleId, streamName });
+
+    const plotDiv = plotDivRef.current;
+    plotDiv.style.width = '100%';
+    plotDiv.style.height = '300px';
+
+    const initPlot = async () => {
+      try {
+        const Plotly = await loadPlotly();
+        const initialData = [{
+          x: [],
+          y: [],
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: streamId
+        }];
+        const layout = {
+          title: `Stream: ${streamId}`,
+          xaxis: { title: 'Time' },
+          yaxis: { title: 'Value' }
+        };
+        Plotly.newPlot(plotDiv, initialData, layout);
+        log(LogLevels.INFO, 'Plot initialized');
+
+        Plotly.update(plotDiv, { x: [['Start']], y: [[0]] }, [0]);
+
+        const updateInterval = setInterval(() => {
+          const value = window.GlobalData?.data?.[moduleId]?.streams?.[streamName]?.value;
+          if (value !== undefined) {
+            log(LogLevels.DEBUG, `Value for ${streamId}:`, value);
+            setDataPoints(prev => {
+              const now = new Date().toLocaleTimeString();
+              const updated = [...prev, { x: now, y: value }].slice(-50);
+              Plotly.update(plotDiv, {
+                x: [updated.map(p => p.x)],
+                y: [updated.map(p => p.y)]
+              }, [0]);
+              log(LogLevels.DEBUG, 'Plot updated');
+              return updated;
+            });
+          } else {
+            log(LogLevels.WARN, `No data for ${streamId}`);
+          }
+        }, 100);
+
+        return () => {
+          clearInterval(updateInterval);
+          log(LogLevels.DEBUG, 'Update interval cleared');
+        };
+      } catch (error) {
+        log(LogLevels.ERROR, 'Plot init error:', error);
+        plotDiv.textContent = 'Plot error';
+      }
+    };
+
+    initPlot();
+  }, [streamId]);
+
+  return React.createElement(
+    'div',
+    { className: 'graph-display' },
+    React.createElement('div', { ref: plotDivRef, id: `plot-${streamId ? streamId.replace('.', '-') : 'default'}` })
+  );
+};
+
+export default GraphDisplay;

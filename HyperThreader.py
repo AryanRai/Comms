@@ -41,31 +41,57 @@ class ProcessManager:
         sh_frame = Frame(control_frame)
         sh_frame.pack(pady=5)
         Label(sh_frame, text="Stream Handler").pack()
-        Button(sh_frame, text="Start SH", command=self.start_sh).pack(side="left")
-        Button(sh_frame, text="Stop SH", command=self.stop_sh).pack(side="left")
-        Button(sh_frame, text="Debug SH", command=self.debug_sh).pack(side="left")
+        button_frame = Frame(sh_frame)
+        button_frame.pack()
+        Button(button_frame, text="Start SH", command=self.start_sh).pack(side="left", padx=2)
+        Button(button_frame, text="Stop SH", command=self.stop_sh).pack(side="left", padx=2)
+        Button(button_frame, text="Debug SH", command=self.debug_sh).pack(side="left", padx=2)
+        Button(button_frame, text="Configure SH", command=self.configure_sh).pack(side="left", padx=2)
         self.sh_status = Label(sh_frame, text="Not Running")
         self.sh_status.pack()
         
         en_frame = Frame(control_frame)
         en_frame.pack(pady=5)
         Label(en_frame, text="Engine").pack()
-        Button(en_frame, text="Start EN", command=self.start_en).pack(side="left")
-        Button(en_frame, text="Stop EN", command=self.stop_en).pack(side="left")
-        Button(en_frame, text="Debug EN", command=self.debug_en).pack(side="left")
+        button_frame = Frame(en_frame)
+        button_frame.pack()
+        Button(button_frame, text="Start EN", command=self.start_en).pack(side="left", padx=2)
+        Button(button_frame, text="Stop EN", command=self.stop_en).pack(side="left", padx=2)
+        Button(button_frame, text="Debug EN", command=self.debug_en).pack(side="left", padx=2)
+        Button(button_frame, text="Configure EN", command=self.configure_en).pack(side="left", padx=2)
         self.en_status = Label(en_frame, text="Not Running")
         self.en_status.pack()
         
         ui_frame = Frame(control_frame)
         ui_frame.pack(pady=5)
         Label(ui_frame, text="Aries UI").pack()
-        Button(ui_frame, text="Start UI", command=self.start_ui).pack(side="left")
-        Button(ui_frame, text="Stop UI", command=self.stop_ui).pack(side="left")
-        Button(ui_frame, text="Build UI", command=self.build_ui).pack(side="left")  # New Build UI button
+        button_frame = Frame(ui_frame)
+        button_frame.pack()
+        Button(button_frame, text="Start UI", command=self.start_ui).pack(side="left", padx=2)
+        Button(button_frame, text="Stop UI", command=self.stop_ui).pack(side="left", padx=2)
+        Button(button_frame, text="Build UI", command=self.build_ui).pack(side="left", padx=2)
         self.ui_status = Label(ui_frame, text="Not Running")
         self.ui_status.pack()
         
-        Button(control_frame, text="Minimize to Tray", command=self.minimize_to_tray).pack(pady=5)
+        # Add control buttons for terminal output
+        terminal_control_frame = Frame(control_frame)
+        terminal_control_frame.pack(pady=5)
+        Label(terminal_control_frame, text="Terminal Controls").pack()
+        button_frame = Frame(terminal_control_frame)
+        button_frame.pack()
+        self.terminal_paused = False
+        Button(button_frame, text="Clear Terminal", command=self.clear_terminal).pack(side="left", padx=2)
+        self.pause_button = Button(button_frame, text="Pause Terminal", command=self.toggle_terminal_pause)
+        self.pause_button.pack(side="left", padx=2)
+        
+        # System controls at the bottom
+        system_frame = Frame(control_frame)
+        system_frame.pack(pady=5)
+        Label(system_frame, text="System Controls").pack()
+        button_frame = Frame(system_frame)
+        button_frame.pack()
+        Button(button_frame, text="Minimize to Tray", command=self.minimize_to_tray).pack(side="left", padx=2)
+        Button(button_frame, text="Safely Quit", command=self.safely_quit).pack(side="left", padx=2)
         
         display_frame = Frame(self.root)
         display_frame.pack(pady=10, fill="both", expand=True)
@@ -87,7 +113,6 @@ class ProcessManager:
         self.output_text.configure(yscrollcommand=output_scrollbar.set)
         self.output_text.pack(side="left", fill="both", expand=True)
         output_scrollbar.pack(side="right", fill="y")
-        Button(control_frame, text="Safely Quit", command=self.safely_quit).pack(pady=5)
 
     def setup_tray(self):
         image = Image.new('RGB', (64, 64), (255, 0, 0))
@@ -127,7 +152,25 @@ class ProcessManager:
             return None
 
     def format_metrics(self, name, metrics):
-        return f"{name}: ..."  # Placeholder
+        if not metrics:
+            return f"{name}: No metrics available\n"
+            
+        result = f"=== {name} ===\n"
+        result += f"PID: {metrics['pid']}\n"
+        result += f"CPU: {metrics['cpu_percent']:.1f}%\n"
+        result += f"Memory: {metrics['memory_rss']:.1f} MB\n"
+        
+        # Add visual bar for CPU usage
+        cpu_bar = "█" * int(metrics['cpu_percent'] / 5)  # Each block represents 5%
+        result += f"CPU Usage: [{cpu_bar:<20}] {metrics['cpu_percent']:.1f}%\n"
+        
+        # Add visual bar for memory usage (assuming 1GB scale)
+        mem_percent = min(100, (metrics['memory_rss'] / 1024) * 100)  # Scale to 1GB max
+        mem_bar = "█" * int(mem_percent / 5)  # Each block represents 5%
+        result += f"Memory Usage: [{mem_bar:<20}] {metrics['memory_rss']:.1f}MB\n"
+        
+        result += "-" * 40 + "\n"
+        return result
 
     def read_output(self, pipe, name):
         while True:
@@ -137,10 +180,11 @@ class ProcessManager:
             self.output_queue.put(f"{name}: {line.strip()}")
 
     def update_output(self):
-        while not self.output_queue.empty():
-            line = self.output_queue.get()
-            self.output_text.insert("end", line + "\n")
-            self.output_text.see("end")
+        if not self.terminal_paused:
+            while not self.output_queue.empty():
+                line = self.output_queue.get()
+                self.output_text.insert("end", line + "\n")
+                self.output_text.see("end")
         self.root.after(100, self.update_output)
 
     def start_process(self, name, command, cwd=None):
@@ -301,8 +345,7 @@ class ProcessManager:
             for name, process in list(self.processes.items()):
                 metrics = self.get_detailed_metrics(process, name)
                 self.perf_text.insert("end", self.format_metrics(name, metrics))
-                self.perf_text.insert("end", "-" * 50 + "\n")
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.1)
 
     def run_monitor(self):
         asyncio.run(self.monitor_performance())
@@ -356,6 +399,34 @@ class ProcessManager:
                     self.cleanup_process(name, force=True)
         
         self.on_closing()
+
+    def clear_terminal(self):
+        self.output_text.delete(1.0, "end")
+        
+    def toggle_terminal_pause(self):
+        self.terminal_paused = not self.terminal_paused
+        self.pause_button.config(text="Resume Terminal" if self.terminal_paused else "Pause Terminal")
+        
+    def configure_sh(self):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(("localhost", 5001))
+                s.sendall("config".encode())
+                s.close()  # Explicitly close the socket
+            logging.info("Sent config signal to Stream Handler")
+        except ConnectionRefusedError:
+            messagebox.showerror("Error", "Stream Handler is not running")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to open SH config: {str(e)}")
+            
+    def configure_en(self):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(("localhost", 5002))
+                s.sendall("config".encode())
+            logging.info("Sent config signal to Engine")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to open EN config: {str(e)}")
 
 if __name__ == "__main__":
     manager = ProcessManager()

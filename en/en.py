@@ -45,10 +45,16 @@ class Module:
         self.module_update_timestamp = datetime.now()
         
     async def initialize(self):
-        if hasattr(self.instance, 'streams'):
-            self.streams = self.instance.streams
+        """Initialize module attributes safely"""
+        # First get config if available
         if hasattr(self.instance, 'config'):
             self.config = self.instance.config
+        
+        # Then get streams if available
+        if hasattr(self.instance, 'streams'):
+            self.streams = self.instance.streams
+            
+        # Mark as active only after successful initialization
         self.status = "active"
         
     async def update(self):
@@ -68,11 +74,24 @@ class Module:
     
     def update_config(self, config_updates: dict):
         if hasattr(self.instance, 'update_multiple_configs'):
+            # Check for stream value updates and log them
+            for key, value in config_updates.items():
+                if key.endswith('_value'):
+                    stream_id = key.replace('_value', '')
+                    if stream_id in self.streams:
+                        print(f"Engine: Stream update for {self.module_id}.{stream_id}: {value}")
+                        if hasattr(self.instance, 'log_stream_update'):
+                            self.instance.log_stream_update(stream_id, value)
+            
+            # Update the configs
             self.instance.update_multiple_configs(config_updates)
             self.config.update(config_updates)
     
     def control(self, command: str):
         if hasattr(self.instance, 'control_module'):
+            print(f"Engine: Control command for {self.module_id}: {command}")
+            if hasattr(self.instance, 'log_control_command'):
+                self.instance.log_control_command(command)
             self.instance.control_module(command)
 
 class ModuleHandler:
@@ -131,7 +150,7 @@ class Engine:
     def __init__(self, Debuglvl=0):
         self.Debuglvl = Debuglvl
         self.module_handler = ModuleHandler(Debuglvl=Debuglvl)
-        self.update_rate = 0.01
+        self.update_rate = 0.1  # 100ms update rate
         
     async def initialize(self):
         await self.module_handler.load_modules()
@@ -142,7 +161,7 @@ class Engine:
             if self.Debuglvl > 1:
                 print("Engine: Module Data Update:")
                 print(json.dumps(stream_data, indent=2))
-            await asyncio.sleep(self.update_rate)
+            await asyncio.sleep(self.update_rate)  # 100ms sleep
 
 class Negotiator:
     def __init__(self, engine, ws_url='ws://localhost:3000', Debuglvl=0):
@@ -150,32 +169,116 @@ class Negotiator:
         self.ws_url = ws_url
         self.Debuglvl = Debuglvl
         self.ws_session = None
-        self.pub_sub_rate = 0.01
+        self.pub_sub_rate = 0.1  # 100ms pub/sub rate
 
     async def ws_pub_sub(self):
         if self.Debuglvl > 0:
             print("Starting pub_sub")
         async with aiohttp.ClientSession() as session:
-            async with session.ws_connect(self.ws_url) as ws:
-                self.ws_session = ws
-                while True:
+            while True:
+                try:
+                    async with session.ws_connect(self.ws_url) as ws:
+                        self.ws_session = ws
+                        while True:
+                            try:
+                                # Send module data
+                                if self.Debuglvl > 1:
+                                    print("Negotiator: Sending WS message")
+                                module_data = self.engine.module_handler.get_all_stream_data()
+                                negotiation = {
+                                    "type": "negotiation",
+                                    "status": "active",
+                                    "data": module_data,
+                                    "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                }
+                                message = json.dumps(negotiation)
+                                await ws.send_str(message)
+                                if self.Debuglvl > 1:
+                                    print(f"Negotiator: Sent: {message}")
+                                
+                                # Receive and process messages
+                                try:
+                                    response = await asyncio.wait_for(ws.receive(), timeout=0.1)  # 100ms timeout
+                                    if self.Debuglvl > 1:
+                                        print(f"Negotiator: Received WS: {response.data}")
+                                    
+                                    # Handle incoming messages
+                                    if response.type == aiohttp.WSMsgType.TEXT:
+                                        data = json.loads(response.data)
+                                        if data.get('type') == 'control':
+                                            await self.handle_control_message(data)
+                                        elif data.get('type') == 'config_update':
+                                            await self.handle_config_message(data)
+                                except asyncio.TimeoutError:
+                                    pass  # No message received within timeout, continue with next update
+                                
+                                await asyncio.sleep(self.pub_sub_rate)  # 100ms sleep
+                            except Exception as e:
+                                if self.Debuglvl > 0:
+                                    print(f"Error in ws_pub_sub loop: {e}")
+                                await asyncio.sleep(0.1)  # 100ms sleep on error
+                except Exception as e:
                     if self.Debuglvl > 0:
-                        print("Negotiator: Sending WS message")
-                    module_data = self.engine.module_handler.get_all_stream_data()
-                    negotiation = {
-                        "type": "negotiation",
-                        "status": "active",
-                        "data": module_data,
-                        "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        print(f"Error in ws connection: {e}")
+                    await asyncio.sleep(0.1)  # 100ms sleep on connection error
+
+    async def handle_control_message(self, data):
+        """Handle control messages from UI via stream handler"""
+        module_id = data.get('module_id')
+        command = data.get('command')
+        if module_id and command:
+            module = self.engine.module_handler.get_module(module_id)
+            if module:
+                try:
+                    module.control(command)
+                    debug_messages = []
+                    if hasattr(module.instance, 'get_debug_messages'):
+                        debug_messages = module.instance.get_debug_messages()
+                    response = {
+                        "type": "control_response",
+                        "module_id": module_id,
+                        "status": "success",
+                        "debug_messages": debug_messages,
+                        "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     }
-                    message = json.dumps(negotiation)
-                    await ws.send_str(message)
-                    if self.Debuglvl > 1:
-                        print(f"Negotiator: Sent: {message}")
-                    response = await ws.receive()
-                    if self.Debuglvl > 1:
-                        print(f"Negotiator: Received WS: {response.data}")
-                    await asyncio.sleep(self.pub_sub_rate)
+                except Exception as e:
+                    response = {
+                        "type": "control_response",
+                        "module_id": module_id,
+                        "status": "error",
+                        "error": str(e),
+                        "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                await self.ws_session.send_str(json.dumps(response))
+
+    async def handle_config_message(self, data):
+        """Handle config update messages from UI via stream handler"""
+        module_id = data.get('module_id')
+        config = data.get('config')
+        if module_id and config:
+            module = self.engine.module_handler.get_module(module_id)
+            if module:
+                try:
+                    module.update_config(config)
+                    debug_messages = []
+                    if hasattr(module.instance, 'get_debug_messages'):
+                        debug_messages = module.instance.get_debug_messages()
+                    response = {
+                        "type": "config_response",
+                        "module_id": module_id,
+                        "status": "success",
+                        "debug_messages": debug_messages,
+                        "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                except Exception as e:
+                    response = {
+                        "type": "config_response",
+                        "module_id": module_id,
+                        "status": "error",
+                        "error": str(e),
+                        "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                await self.ws_session.send_str(json.dumps(response))
 
     async def close(self):
         if self.ws_session:
@@ -185,6 +288,43 @@ def create_debug_window(engine):
     debug_root = tk.Tk()
     debug_root.title("Engine Debug")
     debug_root.geometry("1000x600")
+
+    # Add control frame
+    control_frame = tk.Frame(debug_root)
+    control_frame.pack(fill="x", pady=5)
+    
+    # Add pause button and refresh rate control
+    paused = False
+    def toggle_pause():
+        nonlocal paused
+        paused = not paused
+        pause_button.config(text="Resume" if paused else "Pause")
+        
+    pause_button = tk.Button(control_frame, text="Pause", command=toggle_pause)
+    pause_button.pack(side="left", padx=5)
+    
+    # Add refresh rate control
+    tk.Label(control_frame, text="Refresh Rate (ms):").pack(side="left", padx=5)
+    refresh_entry = tk.Entry(control_frame, width=10)
+    refresh_entry.insert(0, "100")  # Default to 100ms
+    refresh_entry.pack(side="left", padx=5)
+    
+    refresh_rate = 100  # Default refresh rate in ms
+    
+    def update_refresh():
+        nonlocal refresh_rate
+        try:
+            new_rate = int(refresh_entry.get())
+            if new_rate > 0:
+                refresh_rate = new_rate
+                messagebox.showinfo("Success", f"Refresh rate updated to {new_rate}ms")
+            else:
+                messagebox.showerror("Error", "Refresh rate must be positive")
+        except ValueError:
+            messagebox.showerror("Error", "Invalid refresh rate")
+            
+    tk.Button(control_frame, text="Update Rate", command=update_refresh).pack(side="left", padx=5)
+
     tree = ttk.Treeview(debug_root, columns=("ModuleID", "Name", "Status", "Timestamp", "StreamID", "StreamName", "Value", "StreamTimestamp"), show="headings")
     tree.heading("ModuleID", text="Module ID")
     tree.heading("Name", text="Module Name")
@@ -205,14 +345,19 @@ def create_debug_window(engine):
     tree.pack(fill="both", expand=True)
 
     def update_table():
-        for item in tree.get_children():
-            tree.delete(item)
-        module_data = engine.module_handler.get_all_stream_data()
-        for module_id, data in module_data.items():
-            module_node = tree.insert("", "end", values=(module_id, data["name"], data["status"], data["module-update-timestamp"], "", "", "", ""))
-            for stream_id, stream in data["streams"].items():
-                tree.insert(module_node, "end", values=("", "", "", "", stream_id, stream["name"], str(stream["value"]), stream["stream-update-timestamp"]))
-        debug_root.after(1000, update_table)
+        if not paused:
+            for item in tree.get_children():
+                # Store the open/closed state of each item
+                is_open = tree.item(item, "open")
+                tree.delete(item)
+            module_data = engine.module_handler.get_all_stream_data()
+            for module_id, data in module_data.items():
+                module_node = tree.insert("", "end", values=(module_id, data["name"], data["status"], data["module-update-timestamp"], "", "", "", ""))
+                # Expand all module nodes by default
+                tree.item(module_node, open=True)
+                for stream_id, stream in data["streams"].items():
+                    tree.insert(module_node, "end", values=("", "", "", "", stream_id, stream["name"], str(stream["value"]), stream["stream-update-timestamp"]))
+        debug_root.after(refresh_rate, update_table)  # Use configurable refresh rate
 
     update_table()
     debug_root.mainloop()
@@ -220,43 +365,77 @@ def create_debug_window(engine):
 def create_config_window(engine, negotiator):
     config_root = tk.Tk()
     config_root.title("Engine Configuration")
-    config_root.geometry("400x300")
+    config_root.geometry("400x500")
 
-    tk.Label(config_root, text="Verbose Level (0-2):").pack(pady=5)
-    verbose_entry = tk.Entry(config_root)
+    # Add scrollable frame for configurations
+    canvas = tk.Canvas(config_root)
+    scrollbar = tk.Scrollbar(config_root, orient="vertical", command=canvas.yview)
+    scrollable_frame = tk.Frame(canvas)
+
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
+
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    # Engine Configuration
+    tk.Label(scrollable_frame, text="Engine Configuration", font=("TkDefaultFont", 10, "bold")).pack(pady=10)
+    
+    tk.Label(scrollable_frame, text="Verbose Level (0-2):").pack(pady=5)
+    verbose_entry = tk.Entry(scrollable_frame)
     verbose_entry.insert(0, str(engine.Debuglvl))
     verbose_entry.pack()
 
-    tk.Label(config_root, text="Update Rate (seconds):").pack(pady=5)
-    update_entry = tk.Entry(config_root)
+    tk.Label(scrollable_frame, text="Update Rate (seconds):").pack(pady=5)
+    update_entry = tk.Entry(scrollable_frame)
     update_entry.insert(0, str(engine.update_rate))
     update_entry.pack()
 
-    tk.Label(config_root, text="Pub/Sub Rate (seconds):").pack(pady=5)
-    pubsub_entry = tk.Entry(config_root)
+    # Negotiator Configuration
+    tk.Label(scrollable_frame, text="Negotiator Configuration", font=("TkDefaultFont", 10, "bold")).pack(pady=10)
+    
+    tk.Label(scrollable_frame, text="Pub/Sub Rate (seconds):").pack(pady=5)
+    pubsub_entry = tk.Entry(scrollable_frame)
     pubsub_entry.insert(0, str(negotiator.pub_sub_rate))
     pubsub_entry.pack()
+
+    tk.Label(scrollable_frame, text="WebSocket URL:").pack(pady=5)
+    ws_entry = tk.Entry(scrollable_frame)
+    ws_entry.insert(0, negotiator.ws_url)
+    ws_entry.pack()
 
     def save_config():
         try:
             verbose = int(verbose_entry.get())
             update_rate = float(update_entry.get())
             pubsub_rate = float(pubsub_entry.get())
+            ws_url = ws_entry.get()
+
             if verbose < 0 or verbose > 2:
                 raise ValueError("Verbose level must be 0-2")
             if update_rate <= 0 or pubsub_rate <= 0:
                 raise ValueError("Rates must be positive")
+            if not ws_url.startswith(("ws://", "wss://")):
+                raise ValueError("WebSocket URL must start with ws:// or wss://")
+
             engine.Debuglvl = verbose
             engine.module_handler.Debuglvl = verbose
             engine.update_rate = update_rate
             negotiator.Debuglvl = verbose
             negotiator.pub_sub_rate = pubsub_rate
-            messagebox.showinfo("Success", "Configuration updated")
+            negotiator.ws_url = ws_url
+
+            messagebox.showinfo("Success", "Configuration updated\n(some changes require restart)")
             config_root.destroy()
         except ValueError as e:
             messagebox.showerror("Error", str(e))
 
-    tk.Button(config_root, text="Save", command=save_config).pack(pady=20)
+    tk.Button(scrollable_frame, text="Save", command=save_config).pack(pady=20)
+
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
     config_root.mainloop()
 
 def start_debug_window(engine):
