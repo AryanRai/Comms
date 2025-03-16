@@ -4,6 +4,98 @@
 
 A centralized communications dashboard for multi-layered control in ground stations, all-in-one DAQ solutions, and hardware interfaces. Comms provides a modular, extensible platform for hardware development and monitoring.
 
+## Project Overview
+
+### Versions
+
+- **Alpha v1.0**: First stable release (unreleased, scheduled). Focuses on one-way communication and core functionality.
+- **Alpha v2.0 (Dev Branch)**: Adds two-way communication, enhanced stream management, new control widgets, and performance improvements.
+
+### Core Components
+
+1. **Engine + Dynamic Modules (Python)**
+Manages hardware interfaces and data streams.
+2. **Stream Handler + Stream Transformers (Python + WebSocket)**
+Handles real-time data flow between Engine and UI.
+3. **AriesUI + Aries Modules (NodeJS + Electron + TailwindCSS + DaisyUI)**
+Provides a customizable, grid-based dashboard UI.
+- **Modularity**: Each component can run independently on different devices and be built with various frameworks/languages.
+- **HyperThreader**: Manages, runs, and debugs all instances concurrently.
+
+---
+
+## System Architecture
+
+### Engine (aka "en")
+
+- **Role**: Core processing layer for hardware communications.
+- **Features**:
+    - Dynamic module loading with safe initialization.
+    - Async operation support.
+    - Hardware interface abstraction.
+    - Configurable update rates (default 100ms in v2.0).
+    - Error handling, recovery, and debug message propagation.
+    - Value change notification system (v2.0).
+- **DynamicModules (DynMods)**:
+    - Wrappers for hardware (e.g., sensors) with communication methods (serial, etc.).
+    - Creates streams for hardware variables, updating them via the Engine.
+    - Examples: Serial Communication, Random Number Generator (test), Custom Hardware Templates.
+    - **Negotiator Class**: Links Engine to Stream Handler, publishing/receiving data.
+
+### Stream Handler (aka "sh")
+
+- **Role**: Manages data flow between Engine and UI.
+- **Features**:
+    - WebSocket-based communication (Socketify, 100ms idle timeout in v2.0).
+    - Message queuing, priority-based routing, and compression.
+    - Real-time stream creation, deletion, and updates.
+    - Debug interface with pause/resume (v2.0).
+    - Configurable refresh rates (v2.0).
+- **Streams**:
+    - Data exchanges (actions, readings) synced between frontend and backend.
+    - Configurable as one-sided or bidirectional (v2.0).
+- **Logger**: Logs activated readings and actions.
+- **Stream Transformer/Interpreter**: Applies protocol/message format conversions.
+
+### AriesUI (aka "ui")
+
+- **Role**: User interface for visualization and control.
+- **Features**:
+    - Customizable grid layout (Gridstack) with drag-and-drop widgets.
+    - Real-time data visualization and monitoring.
+    - Module configuration and status monitoring.
+    - New control widgets (v2.0): Toggle, Slider, Value Monitor.
+    - Responsive to rate changes and enhanced error feedback (v2.0).
+- **AriesMods**:
+    - Extensions: JavaScript (functionality), UI (design/function), Backend Hardware (interfaces), or combinations.
+    - **Marketplace**: Centralized page for adding modules.
+- **Profiles (Suggest a New Name)**:
+    - Stores dashboard layouts, streams, and hardware configs.
+    - Saved locally, supports multiple layouts.
+
+---
+
+## Core Features
+
+### Alpha v1.0 (Currently Implemented)
+
+- One-way end-to-end communication, data acquisition, and visualization.
+- Engine with custom plugins and DynamicModules.
+- Stream Handler with WebSocket streaming.
+- AriesUI with dynamic, customizable dashboards.
+- AriesMods: Drag-and-drop widgets, live data visualization, community marketplace.
+- HyperThreader for managing instances.
+
+### Alpha v2.0 (New Features)
+
+- **Two-Way Communication**: Bidirectional control with real-time feedback.
+- **Enhanced Stream Management**: Metadata handling, value change tracking, stream priorities.
+- **New Control Widgets**: Toggle (binary), Slider (continuous), Value Monitor (history tracking).
+- **Performance Improvements**: 100ms default update rate, configurable via HyperThreader, optimized WebSocket usage.
+- **Debug Features**: Comprehensive logging, command history, real-time status updates.
+
+---
+
 ## What's New in v2.0
 
 ### Two-Way Communication
@@ -97,23 +189,64 @@ A centralized communications dashboard for multi-layered control in ground stati
 - Status indicators for all components
 - Responsive to rate changes
 
+
+## Stream Format
+
+### Standard Message Format (v1.0 & v2.0)
+
+```json
+{
+  "type": "negotiation",
+  "status": "active",
+  "data": {
+    "module_id": {
+      "name": "Module Name",
+      "status": "active",
+      "config": {
+        "update_rate": 1.0,
+        "enabled_streams": ["stream1"],
+        "debug_mode": false
+      },
+      "streams": {
+        "stream1": {
+          "stream_id": 1,
+          "name": "Temperature",
+          "datatype": "float",
+          "unit": "Celsius",
+          "status": "active",
+          "metadata": {
+            "sensor": "TMP36",
+            "precision": 0.1,
+            "location": "main_chamber"
+          },
+          "value": 25.4,
+          "priority": "high"
+        }
+      }
+    }
+  },
+  "msg-sent-timestamp": "2024-10-30 00:09:54"
+}
+
+```
+
+- **v2.0 Additions**: Value change history, source attribution (UI vs. internal), configurable priorities.
+
 ---
-
-# Previous Release: Comms Alpha v1.0
-
-[Previous version content remains unchanged...]
 
 ## Installation & Setup
 
 ### Prerequisites
+
 - Python 3.8+
 - Node.js 14+
 - npm or yarn
 
 ### Quick Start
+
 ```bash
-# Clone repository
-git clone -b Dev2.0V https://github.com/AryanRai/Comms.git
+# Clone repository (v2.0 Dev Branch)
+git clone -b Dev2.0V <https://github.com/AryanRai/Comms.git>
 cd Comms
 
 # Install Python dependencies
@@ -122,72 +255,141 @@ pip install socketify
 # Install UI dependencies
 cd ui/ariesUI
 npm install
+
 ```
 
 ### Running the System
-```bash
-# Start HyperThreader (Recommended)
-conda comms
-python HyperThreader.py
 
-# Or run components separately:
-# Start Stream Handler
-python sh/sh.py
+- **Via HyperThreader (Recommended)**:
+    
+    ```bash
+    conda comms
+    python HyperThreader.py
+    
+    ```
+    
+- **Separately**:
+    
+    ```bash
+    # Start Stream Handler
+    cd StreamHandler
+    python stream_handlerv2.3.py  # or sh/sh.py for v2.0
+    
+    # Start Engine
+    cd Engine
+    python engine.py  # or en/en.py for v2.0
+    
+    # Launch AriesUI
+    cd ui/ariesUI
+    npm start
+    
+    ```
+    
 
-# Start Engine
-python en/en.py
-
-# Launch AriesUI
-cd ui/ariesUI
-npm start
-```
+---
 
 ## Development Guide
 
 ### Creating Custom Modules
 
-#### Module Template with Value Change Notifications
+### Engine Module Template (v2.0)
+
 ```python
 class CustomModule:
     def __init__(self):
         self.config = {
-            'notify_on_change': True,
-            'update_rate': 0.1
+            "notify_on_change": True,
+            "update_rate": 0.1
         }
-        self.streams = self._initialize_streams()
+        self.streams = {
+            "1": Stream(
+                stream_id=1,
+                name="SensorName",
+                datatype="float",
+                unit="Units",
+                status="active",
+                metadata={"sensor": "Model", "precision": 0.1}
+            )
+        }
         self.debug_messages = []
         self.value_change_history = []
 
     def _handle_value_change(self, stream_id, old_value, new_value, source="internal"):
-        # Implementation for tracking value changes
+        # Track value changes
         pass
 
     async def update_streams_forever(self):
-        # Implementation for continuous updates
+        # Continuous updates
         pass
+
 ```
 
-### UI Widget Development
-```javascript
+### UI Widget Development (v2.0)
+
+```jsx
 const ControlWidget = ({ streamId }) => {
     const [value, setValue] = useState(0);
-    const [status, setStatus] = useState('idle');
+    const [status, setStatus] = useState("idle");
 
-    // Implementation for control logic
+    // Control logic here
     return (
         <div className="control-widget">
             {/* Widget content */}
         </div>
     );
 };
+
 ```
 
+---
+
+## File Structure
+
+```
+Comms/
+├── Engine/
+│   ├── engine.py           # Main engine process
+│   └── DynamicModules/     # Hardware interface modules
+│       ├── hw_module_1.py  # Sample module
+│       └── hw_win_serial_chyappy.py  # Serial module
+├── StreamHandler/
+│   └── stream_handlerv2.3.py  # WebSocket server
+├── ui/ariesUI/             # Electron-based UI
+│   ├── src/
+│   │   ├── App.js         # Main React app
+│   │   ├── components/    # React components
+│   │   └── assets/        # CSS, JS, etc.
+│   └── main.js            # Electron main process
+└── HyperThreader.py        # Instance manager
+
+```
+
+---
+
+## Visuals
+
+- **Preloader**: [Image](https://github.com/user-attachments/assets/7c4ef414-1c9a-4a61-9ce4-4b4fedfc6127)
+- **AriesUI**: [Image](https://github.com/user-attachments/assets/50c152d3-6e9f-4ffd-a809-f051c1da6234)
+- **Toolbox**: [Image](https://github.com/user-attachments/assets/0396efcb-73cb-468e-bc73-aa85319d592d)
+- **StreamHandler**: [Image](https://github.com/user-attachments/assets/ff4716f3-7659-47ac-afef-24114f4cd9b9)
+
+---
+
+## TODOs
+
+- **Short-Term**: GUI for unique sensor data per grid, fix stream format inconsistencies, add refresh rate controls.
+- **Long-Term**: 3D mode with Three.js, local hosting for mobile access, online Stream Handler with unique codes.
+
+---
+
 ## Contributing
-Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting pull requests.
+
+See [Contributing Guidelines](https://www.notion.so/CONTRIBUTING.md). Pull requests welcome!
 
 ## License
-[Add License Information]
+
+[MIT License]
 
 ## Contact
-[Add Contact Information]
 
+[aryanrai170@gmail.com]
