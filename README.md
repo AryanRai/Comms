@@ -10,13 +10,14 @@ A centralized communications dashboard for multi-layered control in ground stati
 - Full bidirectional communication between UI and hardware modules
 - Real-time control capabilities with instant feedback
 - Enhanced error handling and status reporting
-- Configurable update rates for each component
+- Configurable update rates for each component through HyperThreader
 
 ### Enhanced Stream Management
 - Automatic stream metadata handling
 - Value change notifications and history tracking
 - Configurable stream priorities
 - Improved error detection and recovery
+- Centralized update rate configuration
 
 ### New Control Widgets
 1. **Toggle Control**
@@ -40,17 +41,27 @@ A centralized communications dashboard for multi-layered control in ground stati
    - Configurable notification thresholds
 
 ### Performance Improvements
-- Optimized update rates (100ms default)
-- Reduced network overhead
+- Default 100ms update rate across all components
+- Configurable update rates through HyperThreader:
+  - Performance monitor refresh rate
+  - Terminal output refresh rate
+  - Engine update rate
+  - Negotiator rate
+  - Individual module update rates
+- Reduced network overhead with optimized WebSocket settings
 - Better memory management
 - Enhanced error recovery
+- Real-time rate adjustments without restart
 
 ### Debug Features
 - Comprehensive logging system
 - Value change tracking
 - Command history
 - Real-time status updates
-- Debug windows for each component
+- Debug windows for each component:
+  - Stream Handler Debug: Configurable refresh rate and pause functionality
+  - Engine Debug: Configurable refresh rate and module expansion
+  - Configuration windows for all components
 
 ## Core Components
 
@@ -60,13 +71,23 @@ A centralized communications dashboard for multi-layered control in ground stati
 - Enhanced error handling and recovery
 - Debug message propagation
 - Value change notification system
+- Real-time configuration updates
 
 ### Stream Handler (v2.0)
-- Improved WebSocket management
-- Configurable idle timeout
+- Improved WebSocket management with 100ms idle timeout
+- Configurable refresh rates
 - Enhanced message compression
 - Priority-based message routing
 - Debug interface with pause/resume
+- Real-time configuration updates
+
+### HyperThreader (v2.0)
+- Centralized control interface
+- Universal update rate configuration
+- Real-time performance monitoring
+- Component-specific configuration windows
+- Improved terminal output control
+- System-wide debug level management
 
 ### AriesUI (v2.0)
 - New control widgets
@@ -74,6 +95,7 @@ A centralized communications dashboard for multi-layered control in ground stati
 - Real-time value monitoring
 - Improved error feedback
 - Status indicators for all components
+- Responsive to rate changes
 
 ---
 
