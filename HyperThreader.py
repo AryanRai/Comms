@@ -87,6 +87,7 @@ class ProcessManager:
         self.output_text.configure(yscrollcommand=output_scrollbar.set)
         self.output_text.pack(side="left", fill="both", expand=True)
         output_scrollbar.pack(side="right", fill="y")
+        Button(control_frame, text="Safely Quit", command=self.safely_quit).pack(pady=5)
 
     def setup_tray(self):
         image = Image.new('RGB', (64, 64), (255, 0, 0))
@@ -329,6 +330,32 @@ class ProcessManager:
         if self.tray_icon:
             self.tray_icon.stop()
         tracemalloc.stop()
+    
+
+    # New safely_quit method:
+    def safely_quit(self):
+        """Gracefully stop all processes and close the application."""
+        logging.info("Initiating safe quit...")
+        
+        process_names = ["sh", "en", "ui"]
+        
+        for name in process_names:
+            if name in self.processes and self.processes[name].poll() is None:
+                logging.info(f"Stopping {name}...")
+                if not self.stop_process(name):
+                    logging.error(f"Failed to stop {name}")
+                    messagebox.showerror("Error", f"Failed to stop {name}")
+                    return
+        
+        for name in process_names:
+            if name in self.processes and self.processes[name].poll() is None:
+                try:
+                    self.processes[name].wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    logging.warning(f"Process {name} did not terminate in time. Forcing stop.")
+                    self.cleanup_process(name, force=True)
+        
+        self.on_closing()
 
 if __name__ == "__main__":
     manager = ProcessManager()
