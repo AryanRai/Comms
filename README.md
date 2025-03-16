@@ -6,6 +6,9 @@ A centralized communications dashboard for multi-layered control in ground stati
 
 ![Comms](https://github.com/user-attachments/assets/7de95c4d-412d-469c-b0d5-79d940087ebe)
 
+![Demo L](https://github.com/user-attachments/assets/1940eeb6-21f9-4bb1-915e-4e18014a87e3)
+![Demo D](https://github.com/user-attachments/assets/f7da3c54-52c2-4bec-ab1f-70817ee9b21e)
+
 
 [Notion Tracker](https://green-croissant-260.notion.site/2bd3cc2581c94ca6b16c0f801b337208?v=1adeb3eb3974800d985f000ca6a61924)
 
