@@ -1,199 +1,145 @@
 # Comms Alpha v2.0 (Dev Branch)
 
-![Comms2.0](https://github.com/user-attachments/assets/02e70432-e6f7-4664-9f17-b6b0acd60a67)
+![Comms2.0](https://github.com/user-attachments/assets/02e70432-e6f7-4664-9f17-b6b0acd60a67)  
+**A centralized communications dashboard for multi-layered control in ground stations, all-in-one DAQ solutions, and hardware interfaces.**  
+Comms is a modular, extensible platform designed to streamline hardware development and monitoring.
 
-A centralized communications dashboard for multi-layered control in ground stations, all-in-one DAQ solutions, and hardware interfaces. Comms provides a modular, extensible platform for hardware development and monitoring.
+[![Version](https://img.shields.io/badge/Version-Alpha%20v2.0-blue)](https://github.com/AryanRai/Comms/tree/Dev2.0V) [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE) [![Contact](https://img.shields.io/badge/Email-aryanrai170@gmail.com-orange)](mailto:aryanrai170@gmail.com)
+
+---
 
 ## Project Overview
 
 ### Versions
-
-- **Alpha v1.0**: First stable release (unreleased, scheduled). Focuses on one-way communication and core functionality.
-- **Alpha v2.0 (Dev Branch)**: Adds two-way communication, enhanced stream management, new control widgets, and performance improvements.
+- **Alpha v1.0**: First stable release (unreleased, scheduled) with one-way communication.
+- **Alpha v2.0 (Dev Branch)**: Adds two-way communication, new widgets, and performance boosts.
 
 ### Core Components
+1. **Engine + Dynamic Modules (Python)** - Hardware interfacing and data streams.
+2. **Stream Handler + Stream Transformers (Python + WebSocket)** - Real-time data flow.
+3. **AriesUI + Aries Modules (NodeJS + Electron + TailwindCSS + DaisyUI)** - Customizable UI.  
+   - **Modularity**: Components run independently across devices and frameworks.  
+   - **HyperThreader**: Manages and debugs all instances concurrently.
 
-1. **Engine + Dynamic Modules (Python)**
-Manages hardware interfaces and data streams.
-2. **Stream Handler + Stream Transformers (Python + WebSocket)**
-Handles real-time data flow between Engine and UI.
-3. **AriesUI + Aries Modules (NodeJS + Electron + TailwindCSS + DaisyUI)**
-Provides a customizable, grid-based dashboard UI.
-- **Modularity**: Each component can run independently on different devices and be built with various frameworks/languages.
-- **HyperThreader**: Manages, runs, and debugs all instances concurrently.
+---
+
+## What’s New in v2.0?
+
+<details>
+<summary><b>Click to Explore v2.0 Features</b></summary>
+
+### Two-Way Communication
+- Bidirectional UI-to-hardware control with instant feedback.
+- Enhanced error handling and status reporting.
+- Configurable update rates via HyperThreader.
+
+### Enhanced Stream Management
+- Automatic metadata handling.
+- Value change notifications and history tracking.
+- Configurable stream priorities and error recovery.
+
+### New Control Widgets
+1. **Toggle Control**: Binary (0/1) with real-time feedback and error states.
+2. **Slider Control**: Continuous values with auto-range, units, and debounced updates.
+3. **Value Monitor**: Tracks changes with timestamps and source attribution.
+
+### Performance Improvements
+- Default 100ms update rate, adjustable via HyperThreader.
+- Optimized WebSocket settings, better memory use, and real-time rate tweaks.
+
+### Debug Features
+- Comprehensive logging, command history, and real-time status.
+- Debug windows for Stream Handler, Engine, and configurations.
+
+</details>
 
 ---
 
 ## System Architecture
 
-### Engine (aka "en")
+<details>
+<summary><b>Engine (aka "en")</b></summary>
 
-- **Role**: Core processing layer for hardware communications.
+- **Role**: Core layer for hardware communications.
 - **Features**:
-    - Dynamic module loading with safe initialization.
-    - Async operation support.
-    - Hardware interface abstraction.
-    - Configurable update rates (default 100ms in v2.0).
-    - Error handling, recovery, and debug message propagation.
-    - Value change notification system (v2.0).
+  - Dynamic module loading with safe initialization.
+  - Async operations and hardware abstraction.
+  - Configurable update rates (100ms default in v2.0).
+  - Error handling, recovery, and debug propagation.
+  - Value change notifications (v2.0).
 - **DynamicModules (DynMods)**:
-    - Wrappers for hardware (e.g., sensors) with communication methods (serial, etc.).
-    - Creates streams for hardware variables, updating them via the Engine.
-    - Examples: Serial Communication, Random Number Generator (test), Custom Hardware Templates.
-    - **Negotiator Class**: Links Engine to Stream Handler, publishing/receiving data.
+  - Hardware wrappers (e.g., sensors) using serial or other methods.
+  - Streams hardware variables to the Engine.
+  - Examples: Serial Communication, Random Number Generator, Custom Templates.
+  - **Negotiator Class**: Links Engine to Stream Handler.
 
-### Stream Handler (aka "sh")
+</details>
+
+<details>
+<summary><b>Stream Handler (aka "sh")</b></summary>
 
 - **Role**: Manages data flow between Engine and UI.
 - **Features**:
-    - WebSocket-based communication (Socketify, 100ms idle timeout in v2.0).
-    - Message queuing, priority-based routing, and compression.
-    - Real-time stream creation, deletion, and updates.
-    - Debug interface with pause/resume (v2.0).
-    - Configurable refresh rates (v2.0).
+  - WebSocket-based (Socketify, 100ms timeout in v2.0).
+  - Message queuing, priority routing, and compression.
+  - Real-time stream creation/deletion/updates.
+  - Debug interface with pause/resume (v2.0).
 - **Streams**:
-    - Data exchanges (actions, readings) synced between frontend and backend.
-    - Configurable as one-sided or bidirectional (v2.0).
-- **Logger**: Logs activated readings and actions.
-- **Stream Transformer/Interpreter**: Applies protocol/message format conversions.
+  - Syncs data exchanges (actions, readings) between frontend/backend.
+  - One-sided or bidirectional (v2.0).
+- **Logger**: Logs active readings and actions.
+- **Stream Transformer**: Applies protocol/message conversions.
 
-### AriesUI (aka "ui")
+</details>
 
-- **Role**: User interface for visualization and control.
+<details>
+<summary><b>AriesUI (aka "ui")</b></summary>
+
+- **Role**: Visualization and control interface.
 - **Features**:
-    - Customizable grid layout (Gridstack) with drag-and-drop widgets.
-    - Real-time data visualization and monitoring.
-    - Module configuration and status monitoring.
-    - New control widgets (v2.0): Toggle, Slider, Value Monitor.
-    - Responsive to rate changes and enhanced error feedback (v2.0).
+  - Grid layout (Gridstack) with drag-and-drop widgets.
+  - Real-time data visualization and monitoring.
+  - New widgets: Toggle, Slider, Value Monitor (v2.0).
+  - Responsive to rate changes with error feedback (v2.0).
 - **AriesMods**:
-    - Extensions: JavaScript (functionality), UI (design/function), Backend Hardware (interfaces), or combinations.
-    - **Marketplace**: Centralized page for adding modules.
-- **Profiles (Suggest a New Name)**:
-    - Stores dashboard layouts, streams, and hardware configs.
-    - Saved locally, supports multiple layouts.
+  - Extensions: JavaScript, UI, Backend Hardware, or combinations.
+  - **Marketplace**: Centralized module hub.
+- **Profiles**: Stores layouts, streams, and hardware configs (saved locally).
+
+</details>
 
 ---
 
 ## Core Features
 
-### Alpha v1.0 (Currently Implemented)
+<details>
+<summary><b>Alpha v1.0 (Implemented)</b></summary>
 
-- One-way end-to-end communication, data acquisition, and visualization.
+- One-way communication, data acquisition, and visualization.
 - Engine with custom plugins and DynamicModules.
 - Stream Handler with WebSocket streaming.
-- AriesUI with dynamic, customizable dashboards.
-- AriesMods: Drag-and-drop widgets, live data visualization, community marketplace.
-- HyperThreader for managing instances.
+- AriesUI with dynamic dashboards.
+- AriesMods: Drag-and-drop widgets, live data, marketplace.
+- HyperThreader for instance management.
 
-### Alpha v2.0 (New Features)
+</details>
 
-- **Two-Way Communication**: Bidirectional control with real-time feedback.
-- **Enhanced Stream Management**: Metadata handling, value change tracking, stream priorities.
-- **New Control Widgets**: Toggle (binary), Slider (continuous), Value Monitor (history tracking).
-- **Performance Improvements**: 100ms default update rate, configurable via HyperThreader, optimized WebSocket usage.
-- **Debug Features**: Comprehensive logging, command history, real-time status updates.
+<details>
+<summary><b>Alpha v2.0 (New Features)</b></summary>
+
+- Two-way communication with real-time control.
+- Enhanced stream management (metadata, priorities).
+- New widgets: Toggle, Slider, Value Monitor.
+- Performance: 100ms update rate, HyperThreader-configurable.
+- Debug: Logging, history, real-time status.
+
+</details>
 
 ---
 
-## What's New in v2.0
-
-### Two-Way Communication
-- Full bidirectional communication between UI and hardware modules
-- Real-time control capabilities with instant feedback
-- Enhanced error handling and status reporting
-- Configurable update rates for each component through HyperThreader
-
-### Enhanced Stream Management
-- Automatic stream metadata handling
-- Value change notifications and history tracking
-- Configurable stream priorities
-- Improved error detection and recovery
-- Centralized update rate configuration
-
-### New Control Widgets
-1. **Toggle Control**
-   - Binary state control (0/1)
-   - Real-time status feedback
-   - Visual state indication
-   - Error state handling
-
-2. **Slider Control**
-   - Continuous value control
-   - Auto-range detection from stream metadata
-   - Real-time value display
-   - Unit display support
-   - Debounced updates
-   - Min/max range validation
-
-3. **Value Monitor**
-   - Change history tracking
-   - Timestamp-based monitoring
-   - Source attribution (UI vs. Internal)
-   - Configurable notification thresholds
-
-### Performance Improvements
-- Default 100ms update rate across all components
-- Configurable update rates through HyperThreader:
-  - Performance monitor refresh rate
-  - Terminal output refresh rate
-  - Engine update rate
-  - Negotiator rate
-  - Individual module update rates
-- Reduced network overhead with optimized WebSocket settings
-- Better memory management
-- Enhanced error recovery
-- Real-time rate adjustments without restart
-
-### Debug Features
-- Comprehensive logging system
-- Value change tracking
-- Command history
-- Real-time status updates
-- Debug windows for each component:
-  - Stream Handler Debug: Configurable refresh rate and pause functionality
-  - Engine Debug: Configurable refresh rate and module expansion
-  - Configuration windows for all components
-
-## Core Components
-
-### Engine (v2.0)
-- Dynamic module loading with safe initialization
-- Configurable update rates per module
-- Enhanced error handling and recovery
-- Debug message propagation
-- Value change notification system
-- Real-time configuration updates
-
-### Stream Handler (v2.0)
-- Improved WebSocket management with 100ms idle timeout
-- Configurable refresh rates
-- Enhanced message compression
-- Priority-based message routing
-- Debug interface with pause/resume
-- Real-time configuration updates
-
-### HyperThreader (v2.0)
-- Centralized control interface
-- Universal update rate configuration
-- Real-time performance monitoring
-- Component-specific configuration windows
-- Improved terminal output control
-- System-wide debug level management
-
-### AriesUI (v2.0)
-- New control widgets
-- Enhanced grid layout system
-- Real-time value monitoring
-- Improved error feedback
-- Status indicators for all components
-- Responsive to rate changes
-
-
 ## Stream Format
 
-### Standard Message Format (v1.0 & v2.0)
-
+### Standard Message (v1.0 & v2.0)
 ```json
 {
   "type": "negotiation",
@@ -227,26 +173,22 @@ Provides a customizable, grid-based dashboard UI.
   },
   "msg-sent-timestamp": "2024-10-30 00:09:54"
 }
-
 ```
-
-- **v2.0 Additions**: Value change history, source attribution (UI vs. internal), configurable priorities.
+- **v2.0 Additions**: Value history, source attribution, priorities.
 
 ---
 
 ## Installation & Setup
 
 ### Prerequisites
-
-- Python 3.8+
-- Node.js 14+
+- Python 3.8+  
+- Node.js 14+  
 - npm or yarn
 
 ### Quick Start
-
 ```bash
-# Clone repository (v2.0 Dev Branch)
-git clone -b Dev2.0V <https://github.com/AryanRai/Comms.git>
+# Clone v2.0 Dev Branch
+git clone -b Dev2.0V https://github.com/AryanRai/Comms.git
 cd Comms
 
 # Install Python dependencies
@@ -255,45 +197,37 @@ pip install socketify
 # Install UI dependencies
 cd ui/ariesUI
 npm install
-
 ```
 
 ### Running the System
-
 - **Via HyperThreader (Recommended)**:
-    
-    ```bash
-    conda comms
-    python HyperThreader.py
-    
-    ```
-    
+  ```bash
+  conda comms
+  python HyperThreader.py
+  ```
 - **Separately**:
-    
-    ```bash
-    # Start Stream Handler
-    cd StreamHandler
-    python stream_handlerv2.3.py  # or sh/sh.py for v2.0
-    
-    # Start Engine
-    cd Engine
-    python engine.py  # or en/en.py for v2.0
-    
-    # Launch AriesUI
-    cd ui/ariesUI
-    npm start
-    
-    ```
-    
+  ```bash
+  # Start Stream Handler
+  cd StreamHandler
+  python stream_handlerv2.3.py  # or sh/sh.py for v2.0
+
+  # Start Engine
+  cd Engine
+  python engine.py  # or en/en.py for v2.0
+
+  # Launch AriesUI
+  cd ui/ariesUI
+  npm start
+  ```
 
 ---
 
 ## Development Guide
 
-### Creating Custom Modules
+<details>
+<summary><b>Creating Custom Modules</b></summary>
 
 ### Engine Module Template (v2.0)
-
 ```python
 class CustomModule:
     def __init__(self):
@@ -321,11 +255,9 @@ class CustomModule:
     async def update_streams_forever(self):
         # Continuous updates
         pass
-
 ```
 
 ### UI Widget Development (v2.0)
-
 ```jsx
 const ControlWidget = ({ streamId }) => {
     const [value, setValue] = useState(0);
@@ -338,18 +270,18 @@ const ControlWidget = ({ streamId }) => {
         </div>
     );
 };
-
 ```
+
+</details>
 
 ---
 
 ## File Structure
-
 ```
 Comms/
 ├── Engine/
 │   ├── engine.py           # Main engine process
-│   └── DynamicModules/     # Hardware interface modules
+│   └── DynamicModules/     # Hardware modules
 │       ├── hw_module_1.py  # Sample module
 │       └── hw_win_serial_chyappy.py  # Serial module
 ├── StreamHandler/
@@ -361,35 +293,29 @@ Comms/
 │   │   └── assets/        # CSS, JS, etc.
 │   └── main.js            # Electron main process
 └── HyperThreader.py        # Instance manager
-
 ```
 
 ---
 
 ## Visuals
-
-- **Preloader**: [Image](https://github.com/user-attachments/assets/7c4ef414-1c9a-4a61-9ce4-4b4fedfc6127)
-- **AriesUI**: [Image](https://github.com/user-attachments/assets/50c152d3-6e9f-4ffd-a809-f051c1da6234)
-- **Toolbox**: [Image](https://github.com/user-attachments/assets/0396efcb-73cb-468e-bc73-aa85319d592d)
-- **StreamHandler**: [Image](https://github.com/user-attachments/assets/ff4716f3-7659-47ac-afef-24114f4cd9b9)
+- **Preloader**: [View](https://github.com/user-attachments/assets/7c4ef414-1c9a-4a61-9ce4-4b4fedfc6127)  
+- **AriesUI**: [View](https://github.com/user-attachments/assets/50c152d3-6e9f-4ffd-a809-f051c1da6234)  
+- **Toolbox**: [View](https://github.com/user-attachments/assets/0396efcb-73cb-468e-bc73-aa85319d592d)  
+- **StreamHandler**: [View](https://github.com/user-attachments/assets/ff4716f3-7659-47ac-afef-24114f4cd9b9)
 
 ---
 
 ## TODOs
-
-- **Short-Term**: GUI for unique sensor data per grid, fix stream format inconsistencies, add refresh rate controls.
-- **Long-Term**: 3D mode with Three.js, local hosting for mobile access, online Stream Handler with unique codes.
+- **Short-Term**: Unique sensor data GUI per grid, fix stream format, add refresh controls.
+- **Long-Term**: 3D mode (Three.js), mobile hosting, online Stream Handler with codes.
 
 ---
 
 ## Contributing
-
-See [Contributing Guidelines](https://www.notion.so/CONTRIBUTING.md). Pull requests welcome!
+Check out our [Contributing Guidelines](https://www.notion.so/CONTRIBUTING.md). Pull requests are welcome!
 
 ## License
-
-[MIT License]
+[MIT License](LICENSE)
 
 ## Contact
-
-[aryanrai170@gmail.com]
+📧 [aryanrai170@gmail.com](mailto:aryanrai170@gmail.com)
