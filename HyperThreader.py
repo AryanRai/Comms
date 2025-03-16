@@ -15,6 +15,8 @@ import io
 import shutil
 import queue
 import socket
+import json
+import tkinter as tk
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
@@ -83,6 +85,9 @@ class ProcessManager:
         Button(button_frame, text="Clear Terminal", command=self.clear_terminal).pack(side="left", padx=2)
         self.pause_button = Button(button_frame, text="Pause Terminal", command=self.toggle_terminal_pause)
         self.pause_button.pack(side="left", padx=2)
+        
+        # Add Update Rates Configuration button
+        Button(button_frame, text="Configure Update Rates", command=self.configure_update_rates).pack(side="left", padx=2)
         
         # System controls at the bottom
         system_frame = Frame(control_frame)
@@ -427,6 +432,208 @@ class ProcessManager:
             logging.info("Sent config signal to Engine")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to open EN config: {str(e)}")
+
+    def configure_update_rates(self):
+        config_root = tk.Toplevel(self.root)
+        config_root.title("Update Rates Configuration")
+        config_root.geometry("500x800")
+
+        # Add scrollable frame
+        canvas = tk.Canvas(config_root)
+        scrollbar = tk.Scrollbar(config_root, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Get current configuration from Engine
+        current_config = {}
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(("localhost", 5002))
+                s.sendall("get_config".encode())
+                response = s.recv(4096).decode()
+                current_config = json.loads(response)
+        except Exception as e:
+            messagebox.showwarning("Warning", "Could not fetch current configuration. Is Engine running?")
+            current_config = {
+                "engine_rate": 0.1,
+                "negotiator_rate": 0.1,
+                "debug_level": 0,
+                "module_rates": {},
+                "module_configs": {}
+            }
+
+        # System Update Rates
+        tk.Label(scrollable_frame, text="HyperThreader Display Update Rates", font=("TkDefaultFont", 12, "bold")).pack(pady=10)
+        
+        # Performance Monitor Rate
+        tk.Label(scrollable_frame, text="Performance Monitor Rate (ms):").pack(pady=5)
+        perf_rate = tk.Entry(scrollable_frame)
+        perf_rate.insert(0, "100")  # HyperThreader's internal rate
+        perf_rate.pack()
+
+        # Terminal Output Rate
+        tk.Label(scrollable_frame, text="Terminal Output Rate (ms):").pack(pady=5)
+        term_rate = tk.Entry(scrollable_frame)
+        term_rate.insert(0, "100")  # HyperThreader's internal rate
+        term_rate.pack()
+
+        # Engine Configuration
+        tk.Label(scrollable_frame, text="Engine Configuration", font=("TkDefaultFont", 12, "bold")).pack(pady=10)
+        
+        # Debug Level
+        tk.Label(scrollable_frame, text="Debug Level (0-2):").pack(pady=5)
+        debug_level = tk.Entry(scrollable_frame)
+        debug_level.insert(0, str(current_config.get("debug_level", 0)))
+        debug_level.pack()
+        
+        # Engine Update Rate
+        tk.Label(scrollable_frame, text="Engine Update Rate (ms):").pack(pady=5)
+        engine_rate = tk.Entry(scrollable_frame)
+        engine_rate.insert(0, str(current_config.get("engine_rate", 0.1) * 1000))
+        engine_rate.pack()
+
+        # Negotiator Rate
+        tk.Label(scrollable_frame, text="Negotiator Update Rate (ms):").pack(pady=5)
+        negotiator_rate = tk.Entry(scrollable_frame)
+        negotiator_rate.insert(0, str(current_config.get("negotiator_rate", 0.1) * 1000))
+        negotiator_rate.pack()
+
+        # Dynamic Modules Configuration
+        tk.Label(scrollable_frame, text="Dynamic Modules Configuration", font=("TkDefaultFont", 12, "bold")).pack(pady=10)
+
+        module_rates = {}
+        module_configs = {}
+        
+        def update_module_rates():
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.connect(("localhost", 5002))
+                    s.sendall("get_modules".encode())
+                    response = s.recv(4096).decode()
+                    modules = json.loads(response)
+                    
+                    for module_id in modules:
+                        if module_id not in module_rates:
+                            # Module frame
+                            module_frame = tk.Frame(scrollable_frame)
+                            module_frame.pack(pady=10, fill="x", padx=10)
+                            
+                            tk.Label(module_frame, text=f"{module_id} Configuration", font=("TkDefaultFont", 10, "bold")).pack()
+                            
+                            # Update Rate
+                            rate_frame = tk.Frame(module_frame)
+                            rate_frame.pack(fill="x")
+                            tk.Label(rate_frame, text="Update Rate (ms):").pack(side="left")
+                            rate_entry = tk.Entry(rate_frame, width=10)
+                            current_rate = current_config.get("module_rates", {}).get(module_id, 0.1)
+                            rate_entry.insert(0, str(current_rate * 1000))
+                            rate_entry.pack(side="left", padx=5)
+                            module_rates[module_id] = rate_entry
+                            
+                            # Additional module configs
+                            if module_id in current_config.get("module_configs", {}):
+                                config_entries = {}
+                                for key, value in current_config["module_configs"][module_id].items():
+                                    if isinstance(value, (int, float, str, bool)):
+                                        config_frame = tk.Frame(module_frame)
+                                        config_frame.pack(fill="x")
+                                        tk.Label(config_frame, text=f"{key}:").pack(side="left")
+                                        entry = tk.Entry(config_frame, width=20)
+                                        entry.insert(0, str(value))
+                                        entry.pack(side="left", padx=5)
+                                        config_entries[key] = entry
+                                module_configs[module_id] = config_entries
+            except Exception as e:
+                messagebox.showwarning("Warning", "Could not fetch module list. Is Engine running?")
+
+        update_module_rates()
+
+        def apply_config():
+            try:
+                # Validate all inputs are positive numbers
+                rates = {
+                    "perf_monitor_rate": float(perf_rate.get()) / 1000,
+                    "terminal_rate": float(term_rate.get()),
+                    "engine_rate": float(engine_rate.get()) / 1000,
+                    "negotiator_rate": float(negotiator_rate.get()) / 1000,
+                    "debug_level": int(debug_level.get())
+                }
+                
+                # Validate debug level
+                if not (0 <= rates["debug_level"] <= 2):
+                    raise ValueError("Debug level must be between 0 and 2")
+                
+                # Validate rates
+                for name, value in rates.items():
+                    if value <= 0:
+                        raise ValueError(f"{name} must be positive")
+
+                # Apply system rates
+                self.perf_monitor_rate = rates["perf_monitor_rate"]
+                self.terminal_rate = rates["terminal_rate"]
+
+                # Collect module rates and configs
+                module_rate_values = {}
+                module_config_values = {}
+                
+                for module_id, entry in module_rates.items():
+                    rate = float(entry.get()) / 1000
+                    if rate <= 0:
+                        raise ValueError(f"Module {module_id} rate must be positive")
+                    module_rate_values[module_id] = rate
+                    
+                    if module_id in module_configs:
+                        config_dict = {}
+                        for key, entry in module_configs[module_id].items():
+                            value = entry.get()
+                            # Try to convert to appropriate type
+                            try:
+                                if value.lower() in ('true', 'false'):
+                                    value = value.lower() == 'true'
+                                elif '.' in value:
+                                    value = float(value)
+                                else:
+                                    value = int(value)
+                            except:
+                                pass  # Keep as string if conversion fails
+                            config_dict[key] = value
+                        module_config_values[module_id] = config_dict
+
+                # Send configuration to Engine
+                engine_config = {
+                    "engine_rate": rates["engine_rate"],
+                    "negotiator_rate": rates["negotiator_rate"],
+                    "debug_level": rates["debug_level"],
+                    "module_rates": module_rate_values,
+                    "module_configs": module_config_values
+                }
+                
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.connect(("localhost", 5002))
+                    s.sendall(f"update_rates:{json.dumps(engine_config)}".encode())
+                    response = s.recv(1024).decode()
+                    if response != "success":
+                        raise Exception(response)
+
+                messagebox.showinfo("Success", "Update rates configured successfully")
+                config_root.destroy()
+            except ValueError as e:
+                messagebox.showerror("Error", str(e))
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to apply configuration: {str(e)}")
+
+        # Add Apply button
+        tk.Button(scrollable_frame, text="Apply Configuration", command=apply_config).pack(pady=20)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
 
 if __name__ == "__main__":
     manager = ProcessManager()

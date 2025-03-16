@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "author": "Yanyan",
     "description": "Real-time plotting widget",
-    "gitUrl": "https://raw.githubusercontent.com/AryanRai/Comms/refs/heads/main/ui/ariesMods/GraphDisplay.js",
+    "gitUrl": "https://raw.githubusercontent.com/AryanRai/Comms/Dev2.0V/ui/ariesMods/GraphDisplay.js",
     "category": "visualization"
   },
   {
@@ -12,7 +12,31 @@
     "version": "1.0.0",
     "author": "Yanyan",
     "description": "Simple sensor monitor",
-    "gitUrl": "https://raw.githubusercontent.com/AryanRai/Comms/refs/heads/main/ui/ariesMods/SensorDisplay.js",
+    "gitUrl": "https://raw.githubusercontent.com/AryanRai/Comms/Dev2.0V/ui/ariesMods/SensorDisplay.js",
     "category": "utility"
+  },
+  {
+    "name": "ToggleControl",
+    "version": "1.0.0",
+    "author": "Yanyan",
+    "description": "Binary state control widget with status feedback",
+    "gitUrl": "https://raw.githubusercontent.com/AryanRai/Comms/Dev2.0V/ui/ariesMods/ToggleControl.js",
+    "category": "control"
+  },
+  {
+    "name": "SliderControl",
+    "version": "1.0.0",
+    "author": "Yanyan",
+    "description": "Continuous value control with real-time feedback",
+    "gitUrl": "https://raw.githubusercontent.com/AryanRai/Comms/Dev2.0V/ui/ariesMods/SliderControl.js",
+    "category": "control"
+  },
+  {
+    "name": "ValueMonitor",
+    "version": "1.0.0",
+    "author": "Yanyan",
+    "description": "Advanced value monitoring with change notifications",
+    "gitUrl": "https://raw.githubusercontent.com/AryanRai/Comms/Dev2.0V/ui/ariesMods/ValueMonitor.js",
+    "category": "monitoring"
   }
 ]

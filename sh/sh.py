@@ -84,7 +84,7 @@ def create_debug_window():
     pause_button.pack(side="left", padx=5)
     
     # Add refresh rate control
-    tk.Label(control_frame, text="Refresh Rate (ms):").pack(side="left", padx=5)
+    tk.Label(control_frame, text="Display Refresh Rate (ms):").pack(side="left", padx=5)
     refresh_entry = tk.Entry(control_frame, width=10)
     refresh_entry.insert(0, str(DEBUG_REFRESH))
     refresh_entry.pack(side="left", padx=5)

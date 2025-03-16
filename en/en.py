@@ -448,18 +448,79 @@ def start_config_window(engine, negotiator):
 
 def debug_socket_server(engine, negotiator):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('localhost', 5002))
-    server.listen(1)
-    if engine.Debuglvl > 0:
-        print("EN debug socket server listening on localhost:5002")
-    while True:
-        client, addr = server.accept()
-        data = client.recv(1024).decode()
-        if data == "debug":
-            start_debug_window(engine)
-        elif data == "config":
-            start_config_window(engine, negotiator)
-        client.close()
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        server.bind(('localhost', 5002))
+        server.listen(1)
+        if engine.Debuglvl > 0:
+            print("EN debug socket server listening on localhost:5002")
+        while True:
+            client, addr = server.accept()
+            try:
+                data = client.recv(1024).decode()
+                if data == "debug":
+                    start_debug_window(engine)
+                elif data == "config":
+                    start_config_window(engine, negotiator)
+                elif data == "get_modules":
+                    # Get list of all module IDs
+                    module_list = list(engine.module_handler.modules.keys())
+                    client.sendall(json.dumps(module_list).encode())
+                elif data == "get_config":
+                    # Get current configuration values
+                    config = {
+                        "engine_rate": engine.update_rate,
+                        "negotiator_rate": negotiator.pub_sub_rate,
+                        "debug_level": engine.Debuglvl,
+                        "module_rates": {},
+                        "module_configs": {}
+                    }
+                    # Get module rates and configs
+                    for module_id, module in engine.module_handler.modules.items():
+                        config["module_rates"][module_id] = module.config.get('update_rate', 0.1)
+                        config["module_configs"][module_id] = module.config
+                    client.sendall(json.dumps(config).encode())
+                elif data.startswith("update_rates:"):
+                    try:
+                        # Parse the configuration data
+                        config_data = json.loads(data.split("update_rates:", 1)[1])
+                        
+                        # Update Engine rate
+                        engine.update_rate = config_data["engine_rate"]
+                        
+                        # Update Negotiator rate
+                        negotiator.pub_sub_rate = config_data["negotiator_rate"]
+                        
+                        # Update debug level if provided
+                        if "debug_level" in config_data:
+                            engine.Debuglvl = config_data["debug_level"]
+                            engine.module_handler.Debuglvl = config_data["debug_level"]
+                            negotiator.Debuglvl = config_data["debug_level"]
+                        
+                        # Update module rates and configs
+                        for module_id, rate in config_data["module_rates"].items():
+                            module = engine.module_handler.get_module(module_id)
+                            if module:
+                                module.config['update_rate'] = rate
+                                
+                        if "module_configs" in config_data:
+                            for module_id, config in config_data["module_configs"].items():
+                                module = engine.module_handler.get_module(module_id)
+                                if module:
+                                    module.update_config(config)
+                        
+                        client.sendall(b"success")
+                    except Exception as e:
+                        if engine.Debuglvl > 0:
+                            print(f"Error updating rates: {e}")
+                        client.sendall(str(e).encode())
+            finally:
+                client.close()
+    except Exception as e:
+        if engine.Debuglvl > 0:
+            print(f"Error in debug socket server: {e}")
+    finally:
+        server.close()
 
 async def main():
     engine = Engine(Debuglvl=1)

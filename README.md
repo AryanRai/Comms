@@ -1,4 +1,4 @@
-# Comms Alpha v1.5 -> v2.0 Documentation (Unreleased yet)
+# Comms Alpha v2.0 (Dev Branch)
 
 ![Comms2.0](https://github.com/user-attachments/assets/02e70432-e6f7-4664-9f17-b6b0acd60a67)
 
@@ -17,93 +17,59 @@ A centralized communications dashboard for multi-layered control in ground stati
 [Notion Tracker](https://green-croissant-260.notion.site/2bd3cc2581c94ca6b16c0f801b337208?v=1adeb3eb3974800d985f000ca6a61924)
 
 
-## Core Features
+## Latest Updates
 
-### Currently Implemented ✓
-- Fully 1 way end-end communication, data aquasation and visualization
-- Engine: Fully implemented backend with custom plugins 
-- DynamicModules: Modular hardware interface system, Custom Modules + Temples
-- StreamHandler: Real-time data recieving and streaming via WebSocket
-- AriesUI: Dynamic complex customizable dashboards grid layout system
-- AriesMods: Drag-and-drop customizable widgets, Live data visualization, Community git marketplace + templete
-- HyperThreader: All in one solution for running debugging and managing instances of sh, en and ui
+### Configurable Update Rates
+- All system components now support configurable update rates:
+  - Performance monitor refresh rate
+  - Terminal output refresh rate
+  - Engine update rate
+  - Negotiator update rate
+  - Individual module update rates
+- Default 100ms refresh rate for responsive real-time updates
+- Configurable through HyperThreader's "Configure Update Rates" interface
 
+### Enhanced Debug Features
+- Debug level control (0-2) for all components
+- Real-time performance metrics with visual indicators
+- Improved error handling and status reporting
+- Module-specific configuration options
 
-## Architecture
+### Improved UI Features
+- Visual performance metrics with CPU and memory usage bars
+- Organized button layout with clear section grouping
+- Enhanced terminal output control
+- Real-time module status updates
 
-### 1. Engine Layer
-The core processing layer managing hardware communications.
+## Core Components
 
-#### Features
-- Dynamic module loading
-- Async operation support
-- Hardware interface abstraction
-- Configurable update rates
-- Error handling and recovery
+### HyperThreader
+- Centralized control interface for all system components
+- Real-time performance monitoring with visual metrics
+- Configurable update rates for all components
+- Organized section-based controls for SH, EN, and UI
+- Enhanced terminal output management
 
-#### Module Types
-- Serial Communication
-- Random Number Generator (test module)
-- Custom Hardware Modules (template)
+### Engine Layer
+- Dynamic module loading with configurable update rates
+- Real-time module status monitoring
+- Enhanced error handling and recovery
+- Debug level control for verbose output
+- Module-specific configuration management
 
-### 2. Stream Handler Layer
-Manages data flow between Engine and UI layers.
+### Stream Handler Layer
+- WebSocket-based communication with configurable idle timeout
+- Message queuing with priority support
+- Real-time connection management
+- Configurable refresh rates for debug window
+- Enhanced error handling and status reporting
 
-#### Features
-- WebSocket-based communication
-- Message queuing
-- Priority-based routing
-- Connection management
-- Data compression
-- Timestamp synchronization
-
-### 3. AriesUI Layer
-User interface built with Electron, React, and TailwindCSS.
-
-#### Features
-- Customizable grid layout
-- Real-time data visualization
+### AriesUI Layer
+- Real-time data visualization with configurable refresh rates
+- Customizable grid layout system
 - Module configuration interface
-- Status monitoring
-- Logging controls
-- Stream selection interface
-
-## Stream Format
-
-### Standard Message Format
-```json
-{
-  "type": "negotiation",
-  "status": "active",
-  "data": {
-    "module_id": {
-      "name": "Module Name",
-      "status": "active",
-      "config": {
-        "update_rate": 1.0,
-        "enabled_streams": ["stream1"],
-        "debug_mode": false
-      },
-      "streams": {
-        "stream1": {
-          "stream_id": 1,
-          "name": "Temperature",
-          "datatype": "float",
-          "unit": "Celsius",
-          "status": "active",
-          "metadata": {
-            "sensor": "TMP36",
-            "precision": 0.1,
-            "location": "main_chamber"
-          },
-          "value": 25.4,
-          "priority": "high"
-        }
-      }
-    }
-  }
-}
-```
+- Status monitoring with visual indicators
+- Enhanced logging controls
 
 ## Installation
 
@@ -115,68 +81,83 @@ User interface built with Electron, React, and TailwindCSS.
 ### Setup Steps
 ```bash
 # Clone repository
-git clone https://github.com/AryanRai/Comms.git
+git clone -b Dev2.0V https://github.com/AryanRai/Comms.git
 cd Comms
 
 # Install Python dependencies
 pip install socketify
 
 # Install UI dependencies
-cd Gui/ariesUI
+cd ui/ariesUI
 npm install
 ```
 
-### Running the System HyperThreader
+### Running the System
+
+#### Using HyperThreader (Recommended)
 ```bash
 # Start HyperThreader
-conda comms
 python HyperThreader.py
-
 ```
 
-### Running the System Seperately
+#### Running Components Separately
 ```bash
 # Start Stream Handler
-cd StreamHandler
-python stream_handlerv2.3.py
+cd sh
+python sh.py
 
 # Start Engine
-cd Engine
-python engine.py
+cd en
+python en.py
 
 # Launch AriesUI
-cd Gui/ariesUI
+cd ui/ariesUI
 npm start
 ```
+
+## Configuration
+
+### Update Rates
+Access the configuration window through HyperThreader:
+1. Click "Configure Update Rates"
+2. Adjust rates for:
+   - Performance Monitor
+   - Terminal Output
+   - Engine
+   - Negotiator
+   - Individual Modules
+3. Set Debug Level (0-2)
+4. Apply changes
+
+### Module Configuration
+Each module supports:
+- Custom update rate
+- Debug mode toggle
+- Module-specific settings
+- Stream configuration
 
 ## Development Guide
 
 ### Creating Custom Modules
 
-#### Engine Module Template
+#### Module Template
 ```python
 class CustomModule:
     def __init__(self):
-        self.streams = {
-            '1': Stream(
-                stream_id=1,
-                name="SensorName",
-                datatype="float",
-                unit="Units",
-                status="active",
-                metadata={
-                    "sensor": "Model",
-                    "precision": 0.1
-                }
-            )
+        self.config = {
+            'update_rate': 0.1,  # 100ms default
+            'debug_mode': False,
+            'enabled_streams': ['stream1']
         }
+        self.streams = self._initialize_streams()
 
-    async def run(self):
-        # Implementation
-        pass
+    async def update_streams_forever(self):
+        while True:
+            # Update logic here
+            await asyncio.sleep(self.config['update_rate'])
 ```
 
-#### UI Widget Development
+### UI Widget Development
 ```html
 <div class="grid-stack-item" gs-w="2" gs-h="1">
     <div class="grid-stack-item-content">
@@ -185,10 +166,8 @@ class CustomModule:
 </div>
 ```
 
-
-
 ## Contributing
-Contributions are welcome! Please read our contributing guidelines and submit pull requests to our GitHub repository.
+Please read our contributing guidelines before submitting pull requests.
 
 ## License
 [Add License Information]
@@ -273,7 +252,7 @@ Each module has a `run()` function to execute the module in an async loop.
 
 Clone the repository:
 ```bash
-git clone https://github.com/AryanRai/Comms.git
+git clone -b Dev2.0V https://github.com/AryanRai/Comms.git
 cd Comms
 ```
 
@@ -284,7 +263,7 @@ pip install socketify
 
 Install UI dependencies:
 ```bash
-cd Gui/ariesUI
+cd ui/ariesUI
 npm install
 ```
 
@@ -304,7 +283,7 @@ npm install
 
 3. Launch AriesUI:
    ```bash
-   cd Gui/ariesUI
+   cd ui/ariesUI
    npm start
    ```
 
@@ -418,7 +397,7 @@ Images
 A sample message recieved by the Aries UI from a sensor 
 
 ```
-Received message: {"type": "negotiation", "status": "active", "data": {"hw_module_1": {"module_id": "hw_module_1", "name": "Hw Module 1", "status": "active", "module-update-timestamp": "2024-10-30 00:09:32", "config": {"update_rate": 1.0, "temperature_range": {"min": -50, "max": 150}, "pressure_range": {"min": 800, "max": 1200}, "enabled_streams": ["stream1", "stream2"], "debug_mode": false}, "streams": {"stream1": {"stream_id": 1, "name": "Temperature", "datatype": "float", "unit": "Celsius", "status": "active", "metadata": {"sensor": "TMP36", "precision": 0.1, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 120.2127922110659, "stream-update-timestamp": "2024-10-30 00:09:53", "priority": "high"}, "stream2": {"stream_id": 2, "name": "Pressure", "datatype": "float", "unit": "hPa", "status": "active", "metadata": {"sensor": "BMP180", "precision": 0.5, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 888.8849471853615, "stream-update-timestamp": "2024-10-30 00:09:53", "priority": "high"}}}, "hw_win_serial_chyappy": {"module_id": "hw_win_serial_chyappy", "name": "Hw Win Serial Chyappy", "status": "active", "module-update-timestamp": "2024-10-30 00:09:32", "config": {}, "streams": {"1": {"stream_id": 1, "name": "Temperature", "datatype": "float", "unit": "Celsius", "status": "active", "metadata": {"sensor": "TMP36", "precision": 0.1, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 0, "stream-update-timestamp": "2024-10-30 00:09:32", "priority": "high"}, "2": {"stream_id": 2, "name": "Pressure", "datatype": "float", "unit": "hPa", "status": "active", "metadata": {"sensor": "BMP180", "precision": 0.5, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 0, "stream-update-timestamp": "2024-10-30 00:09:32", "priority": "high"}}}}, "msg-sent-timestamp": "2024-10-30 00:09:54"}
+Received message: {"type": "negotiation", "status": "active", "data": {"hw_module_1": {"module_id": "hw_module_1", "name": "Hw Module 1", "status": "active", "module-update-timestamp": "2024-10-30 00:09:32", "config": {"update_rate": 1.0, "temperature_range": {"min": -50, "max": 150}, "pressure_range": {"min": 800, "max": 1200}, "enabled_streams": ["stream1", "stream2"], "debug_mode": false}, "streams": {"stream1": {"stream_id": 1, "name": "Temperature", "datatype": "float", "unit": "Celsius", "status": "active", "metadata": {"sensor": "TMP36", "precision": 0.1, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 120.2127922110659, "stream-update-timestamp": "2024-10-30 00:09:53", "priority": "high"}, "stream2": {"stream_id": 2, "name": "Pressure", "datatype": "float", "unit": "hPa", "status": "active", "metadata": {"sensor": "BMP180", "precision": 0.5, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 888.8849471853615, "stream-update-timestamp": "2024-10-30 00:09:53", "priority": "high"}}}}, "hw_win_serial_chyappy": {"module_id": "hw_win_serial_chyappy", "name": "Hw Win Serial Chyappy", "status": "active", "module-update-timestamp": "2024-10-30 00:09:32", "config": {}, "streams": {"1": {"stream_id": 1, "name": "Temperature", "datatype": "float", "unit": "Celsius", "status": "active", "metadata": {"sensor": "TMP36", "precision": 0.1, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 0, "stream-update-timestamp": "2024-10-30 00:09:32", "priority": "high"}, "2": {"stream_id": 2, "name": "Pressure", "datatype": "float", "unit": "hPa", "status": "active", "metadata": {"sensor": "BMP180", "precision": 0.5, "location": "main_chamber", "calibration_date": "2024-10-30"}, "value": 0, "stream-update-timestamp": "2024-10-30 00:09:32", "priority": "high"}}}}, "msg-sent-timestamp": "2024-10-30 00:09:54"}
 ```
 
 ### Stream Selection Gui
@@ -653,4 +632,169 @@ Modules are categorized into:
 ---
 
 conditions, actions, and procedures 
+
+## What's New in v2.0
+
+### Two-Way Communication
+- Full bidirectional communication between UI and hardware modules
+- Real-time control capabilities with instant feedback
+- Enhanced error handling and status reporting
+- Configurable update rates for each component
+
+### Enhanced Stream Management
+- Automatic stream metadata handling
+- Value change notifications and history tracking
+- Configurable stream priorities
+- Improved error detection and recovery
+
+### New Control Widgets
+1. **Toggle Control**
+   - Binary state control (0/1)
+   - Real-time status feedback
+   - Visual state indication
+   - Error state handling
+
+2. **Slider Control**
+   - Continuous value control
+   - Auto-range detection from stream metadata
+   - Real-time value display
+   - Unit display support
+   - Debounced updates
+   - Min/max range validation
+
+3. **Value Monitor**
+   - Change history tracking
+   - Timestamp-based monitoring
+   - Source attribution (UI vs. Internal)
+   - Configurable notification thresholds
+
+### Performance Improvements
+- Optimized update rates (100ms default)
+- Reduced network overhead
+- Better memory management
+- Enhanced error recovery
+
+### Debug Features
+- Comprehensive logging system
+- Value change tracking
+- Command history
+- Real-time status updates
+- Debug windows for each component
+
+## Core Components
+
+### Engine (v2.0)
+- Dynamic module loading with safe initialization
+- Configurable update rates per module
+- Enhanced error handling and recovery
+- Debug message propagation
+- Value change notification system
+
+### Stream Handler (v2.0)
+- Improved WebSocket management
+- Configurable idle timeout
+- Enhanced message compression
+- Priority-based message routing
+- Debug interface with pause/resume
+
+### AriesUI (v2.0)
+- New control widgets
+- Enhanced grid layout system
+- Real-time value monitoring
+- Improved error feedback
+- Status indicators for all components
+
+---
+
+# Previous Release: Comms Alpha v1.0
+
+[Previous version content remains unchanged...]
+
+## Installation & Setup
+
+### Prerequisites
+- Python 3.8+
+- Node.js 14+
+- npm or yarn
+
+### Quick Start
+```bash
+# Clone repository
+git clone -b Dev2.0V https://github.com/AryanRai/Comms.git
+cd Comms
+
+# Install Python dependencies
+pip install socketify
+
+# Install UI dependencies
+cd ui/ariesUI
+npm install
+```
+
+### Running the System
+```bash
+# Start HyperThreader (Recommended)
+conda comms
+python HyperThreader.py
+
+# Or run components separately:
+# Start Stream Handler
+python sh/sh.py
+
+# Start Engine
+python en/en.py
+
+# Launch AriesUI
+cd ui/ariesUI
+npm start
+```
+
+## Development Guide
+
+### Creating Custom Modules
+
+#### Module Template with Value Change Notifications
+```python
+class CustomModule:
+    def __init__(self):
+        self.config = {
+            'notify_on_change': True,
+            'update_rate': 0.1
+        }
+        self.streams = self._initialize_streams()
+        self.debug_messages = []
+        self.value_change_history = []
+
+    def _handle_value_change(self, stream_id, old_value, new_value, source="internal"):
+        # Implementation for tracking value changes
+        pass
+
+    async def update_streams_forever(self):
+        # Implementation for continuous updates
+        pass
+```
+
+### UI Widget Development
+```javascript
+const ControlWidget = ({ streamId }) => {
+    const [value, setValue] = useState(0);
+    const [status, setStatus] = useState('idle');
+
+    // Implementation for control logic
+    return (
+        <div className="control-widget">
+            {/* Widget content */}
+        </div>
+    );
+};
+```
+
+## Contributing
+Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting pull requests.
+
+## License
+[Add License Information]
+
+## Contact
+[Add Contact Information]
 
