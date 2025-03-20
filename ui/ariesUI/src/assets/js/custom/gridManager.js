@@ -41,6 +41,10 @@ const options = {
   children: [],
 };
 
+// Global variables for serialization
+let serializedData = [];
+let serializedFull;
+
 // Initialize the main grid
 export function initializeGrid(containerSelector) {
   const grid = GridStack.addGrid(document.querySelector(containerSelector), options);
@@ -155,16 +159,25 @@ export function addNewWidget(subGridSelector) {
 
 // Save grid state
 export function save(grid, content = true, full = true) {
-  const savedOptions = grid.save(content, full);
-  console.log(savedOptions);
-  return savedOptions;
+  if (full) {
+    // Full save - includes grid options and all children
+    serializedFull = grid.save(true, true);
+    serializedData = serializedFull.children;
+    console.log('Full grid saved:', serializedFull);
+    return serializedFull;
+  } else {
+    // Save just the widgets with content
+    serializedData = grid.save();
+    console.log('Grid widgets saved:', serializedData);
+    return serializedData;
+  }
 }
 
 // Destroy the grid
 export function destroy(grid, full = true) {
   if (full) {
     grid.off('dropped');
-    grid.destroy();
+    grid.destroy(true); // nuke everything
     widgetIds = []; // Clear all IDs when grid is destroyed
   } else {
     grid.removeAll();
@@ -175,10 +188,26 @@ export function destroy(grid, full = true) {
 // Reload the grid
 export function load(grid, full = true) {
   if (full) {
-    grid = GridStack.addGrid(document.querySelector('.container-fluid'), options);
+    // Full reload from scratch
+    if (!serializedFull) {
+      console.warn('No full grid data to load');
+      return grid;
+    }
+    if (grid) {
+      grid.destroy(true);
+    }
+    grid = GridStack.addGrid(document.querySelector('.container-fluid'), serializedFull);
   } else {
-    grid.load(options);
+    // Load just the widgets
+    if (!serializedData || serializedData.length === 0) {
+      console.warn('No grid data to load');
+      return grid;
+    }
+    if (grid) {
+      grid.load(serializedData);
+    }
   }
+  return grid;
 }
 
 // Add function to remove ID from list when widget is removed
