@@ -1,57 +1,101 @@
-# Comms Alpha v2.0 (Dev Branch)
+# Comms Alpha v3.0 (Dev Branch)
 
-![Comms2.0](https://github.com/user-attachments/assets/02e70432-e6f7-4664-9f17-b6b0acd60a67)  
+![Comms3.0](https://github.com/user-attachments/assets/02e70432-e6f7-4664-9f17-b6b0acd60a67)  
 **A centralized communications dashboard for multi-layered control in ground stations, all-in-one DAQ solutions, and hardware interfaces.**  
 Comms is a modular, extensible platform designed to streamline hardware development and monitoring.
 
-[![Version](https://img.shields.io/badge/Version-Alpha%20v2.0-blue)](https://github.com/AryanRai/Comms/tree/Dev2.0V) [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE) [![Contact](https://img.shields.io/badge/Email-aryanrai170@gmail.com-orange)](mailto:aryanrai170@gmail.com)
+[![Version](https://img.shields.io/badge/Version-Alpha%20v3.0-blue)](https://github.com/AryanRai/Comms/tree/Dev3.0V) [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE) [![Contact](https://img.shields.io/badge/Email-aryanrai170@gmail.com-orange)](mailto:aryanrai170@gmail.com)
 
 ---
 
 ## Project Overview
 
 ### Versions
-- **Alpha v1.0**: First stable release (unreleased, scheduled) with one-way communication.
-- **Alpha v2.0 (Dev Branch)**: Adds two-way communication, new widgets, and performance boosts.
+- **Alpha v1.0**: First stable release with one-way communication.
+- **Alpha v2.0**: Added two-way communication and performance boosts.
+- **Alpha v3.0 (Current)**: Complete UI rebuild with AriesUI, enhanced hardware integration.
 
 ### Core Components
 1. **Engine + Dynamic Modules (Python)** - Hardware interfacing and data streams.
 2. **Stream Handler + Stream Transformers (Python + WebSocket)** - Real-time data flow.
-3. **AriesUI + Aries Modules (NodeJS + Electron + TailwindCSS + DaisyUI)** - Customizable UI.  
-   - **Modularity**: Components run independently across devices and frameworks.  
-   - **HyperThreader**: Manages and debugs all instances concurrently.
+3. **AriesUI (Next.js + Electron + TailwindCSS)** - Modern, responsive UI with hardware integration.
+4. **HyperThreader** - Process management and monitoring.
 
 ---
 
-## What’s New in v2.0?
+## What's New in v3.0?
 
 <details>
-<summary><b>Click to Explore v2.0 Features</b></summary>
+<summary><b>Click to Explore v3.0 Features</b></summary>
 
-### Two-Way Communication
-- Bidirectional UI-to-hardware control with instant feedback.
-- Enhanced error handling and status reporting.
-- Configurable update rates via HyperThreader.
+### AriesUI Rebuild
+- Complete UI rebuild using Next.js and Electron
+- Real-time hardware monitoring with WebSocket integration
+- Drag-and-drop widget system with collision detection
+- Dark/light theme support
+- Desktop application support
 
-### Enhanced Stream Management
-- Automatic metadata handling.
-- Value change notifications and history tracking.
-- Configurable stream priorities and error recovery.
+### Enhanced Hardware Integration
+- Improved two-way communication
+- Real-time hardware status monitoring
+- Advanced widget system for hardware control
+- Configurable update rates via HyperThreader
 
-### New Control Widgets
-1. **Toggle Control**: Binary (0/1) with real-time feedback and error states.
-2. **Slider Control**: Continuous values with auto-range, units, and debounced updates.
-3. **Value Monitor**: Tracks changes with timestamps and source attribution.
-
-### Performance Improvements
-- Default 100ms update rate, adjustable via HyperThreader.
-- Optimized WebSocket settings, better memory use, and real-time rate tweaks.
-
-### Debug Features
-- Comprehensive logging, command history, and real-time status.
-- Debug windows for Stream Handler, Engine, and configurations.
+### Process Management
+- HyperThreader GUI for process control
+- Real-time performance monitoring
+- Configurable update rates
+- Debug windows for all components
 
 </details>
+
+---
+
+## Quick Start
+
+### Option 1: Using HyperThreader (Recommended)
+```bash
+# Clone v3.0 Dev Branch
+git clone -b Dev3.0V https://github.com/AryanRai/Comms.git
+cd Comms
+
+# Install Python dependencies
+pip install socketify
+
+# Install UI dependencies
+cd ui/ariesUI
+npm install
+cd ../..
+
+# Start HyperThreader
+python HyperThreader.py
+```
+
+Use the HyperThreader GUI to:
+- Start/Stop StreamHandler
+- Start/Stop Engine
+- Start/Stop AriesUI
+- Monitor performance
+- Configure update rates
+- View debug information
+
+### Option 2: Manual Component Start
+```bash
+# Start Stream Handler
+cd sh
+python sh.py
+
+# Start Engine
+cd en
+python en.py
+
+# Start AriesUI in development mode
+cd ui/ariesUI
+npm run electron-dev
+
+# OR build and run AriesUI in production
+npm run build-electron
+```
 
 ---
 

@@ -11,6 +11,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
 import socket
+import time
 
 class Stream:
     def __init__(self, stream_id, name, datatype, unit, status, metadata):
@@ -164,12 +165,48 @@ class Engine:
             await asyncio.sleep(self.update_rate)  # 100ms sleep
 
 class Negotiator:
-    def __init__(self, engine, ws_url='ws://localhost:3000', Debuglvl=0):
+    def __init__(self, engine, ws_url='ws://localhost:8000', Debuglvl=0):
         self.engine = engine
         self.ws_url = ws_url
         self.Debuglvl = Debuglvl
         self.ws_session = None
         self.pub_sub_rate = 0.1  # 100ms pub/sub rate
+        self.last_ping_sent = 0
+        self.last_pong_received = 0
+        self.latency = 0
+        self.connection_status = 'disconnected'
+        self.ping_interval = 0.1  # 100ms ping interval
+        self.reconnect_interval = 5.0  # 5s reconnect interval
+        self.last_reconnect_attempt = 0
+
+    async def send_ping(self, ws):
+        try:
+            await ws.send_str(json.dumps({
+                'type': 'ping',
+                'timestamp': time.time(),
+                'target': 'en',
+                'status': 'active',
+                'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }))
+            self.last_ping_sent = time.time()
+        except Exception as e:
+            if self.Debuglvl > 0:
+                print(f"Error sending ping: {e}")
+
+    async def handle_pong(self, data):
+        if data.get('target') == 'en':  # Only process pongs meant for us
+            timestamp = data.get('timestamp')
+            if timestamp:
+                self.last_pong_received = time.time()
+                self.latency = (self.last_pong_received - float(timestamp)) * 1000  # Convert to ms
+
+    async def get_connection_info(self):
+        return {
+            'latency': self.latency,
+            'status': self.connection_status,
+            'last_ping': self.last_ping_sent,
+            'last_pong': self.last_pong_received
+        }
 
     async def ws_pub_sub(self):
         if self.Debuglvl > 0:
@@ -179,6 +216,12 @@ class Negotiator:
                 try:
                     async with session.ws_connect(self.ws_url) as ws:
                         self.ws_session = ws
+                        self.connection_status = 'connected'
+                        self.last_reconnect_attempt = time.time()
+                        
+                        # Initial ping
+                        await self.send_ping(ws)
+                        
                         while True:
                             try:
                                 # Send module data
@@ -196,31 +239,67 @@ class Negotiator:
                                 if self.Debuglvl > 1:
                                     print(f"Negotiator: Sent: {message}")
                                 
+                                # Send ping if interval elapsed
+                                now = time.time()
+                                if now - self.last_ping_sent >= self.ping_interval:
+                                    await self.send_ping(ws)
+                                
                                 # Receive and process messages
                                 try:
                                     response = await asyncio.wait_for(ws.receive(), timeout=0.1)  # 100ms timeout
                                     if self.Debuglvl > 1:
                                         print(f"Negotiator: Received WS: {response.data}")
                                     
-                                    # Handle incoming messages
                                     if response.type == aiohttp.WSMsgType.TEXT:
                                         data = json.loads(response.data)
-                                        if data.get('type') == 'control':
+                                        
+                                        # Handle different message types
+                                        if data.get('type') == 'ping':
+                                            # Respond to ping with pong
+                                            if data.get('target') == 'en':  # Only respond if ping is for us
+                                                await ws.send_str(json.dumps({
+                                                    'type': 'pong',
+                                                    'timestamp': data.get('timestamp'),
+                                                    'target': 'en',
+                                                    'server_time': time.time(),
+                                                    'status': 'active',
+                                                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                                }))
+                                        elif data.get('type') == 'pong':
+                                            await self.handle_pong(data)
+                                        elif data.get('type') == 'query':
+                                            if data.get('query_type') == 'connection_info':
+                                                info = await self.get_connection_info()
+                                                await ws.send_str(json.dumps({
+                                                    'type': 'connection_info',
+                                                    'data': info,
+                                                    'status': 'active',
+                                                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                                }))
+                                        elif data.get('type') == 'control':
                                             await self.handle_control_message(data)
                                         elif data.get('type') == 'config_update':
                                             await self.handle_config_message(data)
                                 except asyncio.TimeoutError:
-                                    pass  # No message received within timeout, continue with next update
+                                    pass  # No message received within timeout
                                 
                                 await asyncio.sleep(self.pub_sub_rate)  # 100ms sleep
                             except Exception as e:
                                 if self.Debuglvl > 0:
                                     print(f"Error in ws_pub_sub loop: {e}")
-                                await asyncio.sleep(0.1)  # 100ms sleep on error
+                                await asyncio.sleep(0.1)
                 except Exception as e:
                     if self.Debuglvl > 0:
                         print(f"Error in ws connection: {e}")
-                    await asyncio.sleep(0.1)  # 100ms sleep on connection error
+                    self.connection_status = 'disconnected'
+                    
+                    # Wait before reconnecting
+                    now = time.time()
+                    if now - self.last_reconnect_attempt < self.reconnect_interval:
+                        await asyncio.sleep(self.reconnect_interval - (now - self.last_reconnect_attempt))
+                    self.last_reconnect_attempt = now
+                    
+                await asyncio.sleep(0.1)  # 100ms sleep on connection error
 
     async def handle_control_message(self, data):
         """Handle control messages from UI via stream handler"""
@@ -525,7 +604,7 @@ def debug_socket_server(engine, negotiator):
 async def main():
     engine = Engine(Debuglvl=1)
     await engine.initialize()
-    negotiator = Negotiator(engine, ws_url='ws://localhost:3000', Debuglvl=1)
+    negotiator = Negotiator(engine, ws_url='ws://localhost:8000', Debuglvl=1)
     debug_thread = threading.Thread(target=debug_socket_server, args=(engine, negotiator), daemon=True)
     debug_thread.start()
     await asyncio.gather(
