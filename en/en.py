@@ -5,6 +5,9 @@ import json
 import os
 import importlib
 import sys
+import time
+import threading
+import socket
 from datetime import datetime
 from typing import Dict, Any, Optional
 import tkinter as tk
@@ -175,37 +178,49 @@ class Negotiator:
         self.last_pong_received = 0
         self.latency = 0
         self.connection_status = 'disconnected'
-        self.ping_interval = 0.1  # 100ms ping interval
+        self.ping_interval = 1.0  # 1 second ping interval - configurable
         self.reconnect_interval = 5.0  # 5s reconnect interval
         self.last_reconnect_attempt = 0
 
-    async def send_ping(self, ws):
-        try:
-            await ws.send_str(json.dumps({
-                'type': 'ping',
-                'timestamp': time.time(),
-                'target': 'en',
-                'status': 'active',
-                'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }))
-            self.last_ping_sent = time.time()
-        except Exception as e:
-            if self.Debuglvl > 0:
-                print(f"Error sending ping: {e}")
+    def update_ping_interval(self, interval_ms):
+        """Update the ping interval from UI configuration"""
+        self.ping_interval = interval_ms / 1000.0  # Convert ms to seconds
+        if self.Debuglvl > 0:
+            print(f"EN: Updated ping interval to {self.ping_interval}s ({interval_ms}ms)")
 
-    async def handle_pong(self, data):
-        if data.get('target') == 'en':  # Only process pongs meant for us
-            timestamp = data.get('timestamp')
-            if timestamp:
-                self.last_pong_received = time.time()
-                self.latency = (self.last_pong_received - float(timestamp)) * 1000  # Convert to ms
+    def update_ping_stats(self):
+        """Update ping statistics to be sent as part of stream data"""
+        current_time = time.time() * 1000  # milliseconds
+        
+        # Send a ping timestamp
+        if current_time - self.last_ping_sent >= (self.ping_interval * 1000):
+            self.last_ping_sent = current_time
+            
+        # Calculate latency (this will be updated when we receive pong from SH)
+        if self.last_pong_received > 0:
+            self.latency = max(0, self.last_pong_received - self.last_ping_sent)
 
-    async def get_connection_info(self):
+    def get_ping_stream_data(self):
+        """Get ping data as a stream that can be included in negotiation"""
+        self.update_ping_stats()
+        
         return {
-            'latency': self.latency,
-            'status': self.connection_status,
-            'last_ping': self.last_ping_sent,
-            'last_pong': self.last_pong_received
+            "engine_ping": {
+                "stream_id": "engine_ping",
+                "name": "Engine Ping",
+                "datatype": "ping",
+                "unit": "ms",
+                "status": "active",
+                "metadata": {
+                    "description": "Engine ping latency to StreamHandler",
+                    "type": "system"
+                },
+                "value": self.latency,
+                "stream-update-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "priority": "high",
+                "ping_timestamp": self.last_ping_sent,
+                "connection_status": self.connection_status
+            }
         }
 
     async def ws_pub_sub(self):
@@ -219,15 +234,25 @@ class Negotiator:
                         self.connection_status = 'connected'
                         self.last_reconnect_attempt = time.time()
                         
-                        # Initial ping
-                        await self.send_ping(ws)
-                        
                         while True:
                             try:
-                                # Send module data
-                                if self.Debuglvl > 1:
-                                    print("Negotiator: Sending WS message")
+                                # Get module data and add ping data
                                 module_data = self.engine.module_handler.get_all_stream_data()
+                                
+                                # Add engine ping data as a special system module
+                                ping_data = self.get_ping_stream_data()
+                                module_data["__engine_system__"] = {
+                                    "module_id": "__engine_system__",
+                                    "name": "Engine System",
+                                    "status": "active",
+                                    "module-update-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                    "config": {},
+                                    "streams": ping_data
+                                }
+                                
+                                # Send negotiation message with ping data
+                                if self.Debuglvl > 1:
+                                    print("Negotiator: Sending WS message with ping data")
                                 negotiation = {
                                     "type": "negotiation",
                                     "status": "active",
@@ -239,11 +264,6 @@ class Negotiator:
                                 if self.Debuglvl > 1:
                                     print(f"Negotiator: Sent: {message}")
                                 
-                                # Send ping if interval elapsed
-                                now = time.time()
-                                if now - self.last_ping_sent >= self.ping_interval:
-                                    await self.send_ping(ws)
-                                
                                 # Receive and process messages
                                 try:
                                     response = await asyncio.wait_for(ws.receive(), timeout=0.1)  # 100ms timeout
@@ -253,33 +273,23 @@ class Negotiator:
                                     if response.type == aiohttp.WSMsgType.TEXT:
                                         data = json.loads(response.data)
                                         
-                                        # Handle different message types
-                                        if data.get('type') == 'ping':
-                                            # Respond to ping with pong
-                                            if data.get('target') == 'en':  # Only respond if ping is for us
-                                                await ws.send_str(json.dumps({
-                                                    'type': 'pong',
-                                                    'timestamp': data.get('timestamp'),
-                                                    'target': 'en',
-                                                    'server_time': time.time(),
-                                                    'status': 'active',
-                                                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                                }))
-                                        elif data.get('type') == 'pong':
-                                            await self.handle_pong(data)
-                                        elif data.get('type') == 'query':
-                                            if data.get('query_type') == 'connection_info':
-                                                info = await self.get_connection_info()
-                                                await ws.send_str(json.dumps({
-                                                    'type': 'connection_info',
-                                                    'data': info,
-                                                    'status': 'active',
-                                                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                                }))
+                                        # Handle engine ping pong - look for pong in response to our ping timestamp
+                                        if data.get('type') == 'engine_pong':
+                                            ping_timestamp = data.get('ping_timestamp')
+                                            if ping_timestamp and float(ping_timestamp) == self.last_ping_sent:
+                                                current_time = time.time() * 1000
+                                                self.last_pong_received = current_time
+                                                self.latency = max(0, current_time - float(ping_timestamp))
+                                                if self.Debuglvl > 1:
+                                                    print(f"EN: Received pong, latency: {self.latency:.2f}ms")
+                                        
+                                        # Handle control and config messages
                                         elif data.get('type') == 'control':
                                             await self.handle_control_message(data)
                                         elif data.get('type') == 'config_update':
                                             await self.handle_config_message(data)
+                                        elif data.get('type') == 'ping_interval_update':
+                                            await self.handle_ping_interval_update(data)
                                 except asyncio.TimeoutError:
                                     pass  # No message received within timeout
                                 
@@ -358,6 +368,23 @@ class Negotiator:
                         "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     }
                 await self.ws_session.send_str(json.dumps(response))
+
+    async def handle_ping_interval_update(self, data):
+        """Handle ping interval update messages from UI"""
+        interval_ms = data.get('interval_ms')
+        if interval_ms and isinstance(interval_ms, (int, float)) and interval_ms > 0:
+            self.update_ping_interval(interval_ms)
+            if self.Debuglvl > 0:
+                print(f"EN: Updated ping interval to {interval_ms}ms")
+            
+            # Send confirmation back
+            response = {
+                "type": "ping_interval_response",
+                "status": "success",
+                "interval_ms": interval_ms,
+                "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            await self.ws_session.send_str(json.dumps(response))
 
     async def close(self):
         if self.ws_session:

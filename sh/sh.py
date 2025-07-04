@@ -44,7 +44,24 @@ class ConnectionManager:
             now = time.time()
             self.connections[ws]['last_pong'] = now
             if timestamp:
-                self.connections[ws]['latency'] = (now - timestamp) * 1000  # Convert to ms
+                try:
+                    # Handle both millisecond and second timestamps
+                    sent_time = float(timestamp)
+                    if sent_time > 1000000000000:  # If timestamp is in milliseconds (> year 2001 in ms)
+                        sent_time_seconds = sent_time / 1000
+                    else:
+                        sent_time_seconds = sent_time
+                    
+                    current_time = now
+                    latency = max(0, (current_time - sent_time_seconds) * 1000)  # Convert to ms
+                    self.connections[ws]['latency'] = latency
+                    
+                    if VERBOSE_LEVEL > 1:
+                        print(f"SH: Ping latency: {latency:.2f}ms")
+                except (ValueError, TypeError):
+                    if VERBOSE_LEVEL > 0:
+                        print(f"SH: Invalid timestamp in pong: {timestamp}")
+                    pass  # Invalid timestamp, keep previous latency
             
     def get_connection_info(self, ws):
         if ws in self.connections:
@@ -90,12 +107,12 @@ def ws_message(ws, message, opcode):
                 connection_manager.update_ping(ws, timestamp)
                 ws.send(json.dumps({
                     'type': 'pong',
-                    'timestamp': timestamp,
+                    'timestamp': timestamp,  # Echo back the original timestamp
                     'target': target,
                     'server_time': time.time(),
                     'status': 'active',
                     'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }))
+                }), OpCode.TEXT)
                 return
             else:
                 # Forward ping to intended recipient(s)
@@ -106,7 +123,8 @@ def ws_message(ws, message, opcode):
             timestamp = data.get('timestamp')
             target = data.get('target', 'sh')
             if target == 'sh':
-                connection_manager.update_pong(ws, timestamp)
+                if timestamp:
+                    connection_manager.update_pong(ws, float(timestamp))
                 return
             else:
                 # Forward pong responses not meant for SH to other clients (e.g., UI)
@@ -139,6 +157,27 @@ def ws_message(ws, message, opcode):
         # Handle other message types
         elif msg_type == 'negotiation':
             active_streams = data["data"]  # Update active streams
+            
+            # Check for engine ping data and respond with pong
+            if "__engine_system__" in active_streams:
+                engine_system = active_streams["__engine_system__"]
+                if "streams" in engine_system and "engine_ping" in engine_system["streams"]:
+                    ping_stream = engine_system["streams"]["engine_ping"]
+                    ping_timestamp = ping_stream.get("ping_timestamp")
+                    
+                    if ping_timestamp and ping_timestamp > 0:
+                        # Send pong response back to engine
+                        pong_response = {
+                            'type': 'engine_pong',
+                            'ping_timestamp': ping_timestamp,
+                            'server_time': time.time() * 1000,
+                            'status': 'active',
+                            'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                        ws.send(json.dumps(pong_response), OpCode.TEXT)
+                        if VERBOSE_LEVEL > 1:
+                            print(f"SH: Sent engine pong for timestamp {ping_timestamp}")
+            
             ws.publish("broadcast", message, opcode)  # Forward to all clients
         elif msg_type == 'control':
             # Forward control messages to all clients (including Engine)
