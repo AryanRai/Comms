@@ -1,0 +1,50 @@
+{
+  "name": "ariesui",
+  "version": "1.0.0",
+  "description": "UI for Comms Centralized Communications dashboards for multi layered control ground stations",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AryanRai/aries-UI.git"
+  },
+  "keywords": [
+    "UI",
+    "dashboard",
+    "control"
+  ],
+  "author": "Aryan Rai",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AryanRai/aries-UI/issues"
+  },
+  "homepage": "https://github.com/AryanRai/aries-UI#readme",
+  "dependencies": {
+    "arwes": "^1.0.0-next.25020502",
+    "daisyui": "^4.12.10",
+    "electron": "^32.0.2",
+    "gridstack": "^11.1.2",
+    "howler": "^2.2.4",
+    "nanoid": "^5.0.9",
+    "plotly": "^1.0.6",
+    "plotly.js-dist": "^2.35.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.10"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.9",
+    "@babel/preset-env": "^7.26.9",
+    "@babel/preset-react": "^7.26.3",
+    "babel-loader": "^9.2.1",
+    "html-webpack-plugin": "^5.6.3",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.2.0"
+  }
+}
