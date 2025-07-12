@@ -5,7 +5,7 @@
 [![Performance](https://img.shields.io/badge/Performance-60fps-brightgreen)](README.md)
 [![Hardware](https://img.shields.io/badge/Hardware-Ready-orange)](README.md)
 
-![Comms Dashboard](https://github.com/user-attachments/assets/02e70432-e6f7-4664-9f17-b6b0acd60a67)
+![Comms Dashboard](https://github.com/user-attachments/assets/0dbdf7e4-0cd6-440e-ae04-6de05ffd369d)
 
 > **A high-performance, modular communications platform for hardware development, real-time monitoring, and data acquisition systems.**
 
