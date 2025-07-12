@@ -313,36 +313,63 @@ class ProcessManager:
             self.en_status.config(text="Not Running")
 
     def start_ui(self):
-        current_path = os.getcwd()
-        ui_path = os.path.join(current_path, "ui", "ariesUI")
-        if not os.path.exists(ui_path):
-            messagebox.showerror("Error", f"UI directory not found: {ui_path}")
+        """Start AriesUI in development mode"""
+        if not os.path.exists("ui/ariesUI"):
+            messagebox.showerror("Error", "AriesUI directory not found at ui/ariesUI")
             return
-        if self.start_process("ui", ["npm", "run", "start"], cwd=ui_path):
+        
+        # Check if npm is installed
+        if not shutil.which("npm"):
+            messagebox.showerror("Error", "npm not found. Please install Node.js and npm.")
+            return
+        
+        # Start the UI in development mode
+        success = self.start_process(
+            "ui",
+            ["npm", "run", "electron-dev"],
+            cwd="ui/ariesUI"
+        )
+        
+        if success:
             self.ui_status.config(text="Running")
+            logging.info("Started AriesUI in development mode")
 
     def stop_ui(self):
-        if self.stop_process("ui", force=True):
-            self.ui_status.config(text="Not Running")
+        """Stop AriesUI"""
+        self.stop_process("ui", force=True)
+        self.ui_status.config(text="Not Running")
+        logging.info("Stopped AriesUI")
 
     def build_ui(self):
-        current_path = os.getcwd()
-        ui_path = os.path.join(current_path, "ui", "ariesUI")
-        if not os.path.exists(ui_path):
-            messagebox.showerror("Error", f"UI directory not found: {ui_path}")
+        """Build AriesUI for production"""
+        if not os.path.exists("ui/ariesUI"):
+            messagebox.showerror("Error", "AriesUI directory not found at ui/ariesUI")
             return
-        # Use a different name for build process to avoid conflict with "ui" (start/stop)
-        if self.start_process("ui_build", ["npm", "run", "build"], cwd=ui_path):
-            self.ui_status.config(text="Building...")
-            # Monitor the build process and reset status when done
-            def check_build():
-                process = self.processes.get("ui_build")
-                if process and process.poll() is not None:  # Process has finished
-                    self.cleanup_process("ui_build", force=True)
-                    self.ui_status.config(text="Not Running")
-                else:
-                    self.root.after(1000, check_build)
-            self.root.after(1000, check_build)
+        
+        # Check if npm is installed
+        if not shutil.which("npm"):
+            messagebox.showerror("Error", "npm not found. Please install Node.js and npm.")
+            return
+        
+        def check_build():
+            try:
+                # Run npm install first
+                subprocess.run(["npm", "install"], cwd="ui/ariesUI", check=True)
+                
+                # Build the UI
+                subprocess.run(["npm", "run", "build-electron"], cwd="ui/ariesUI", check=True)
+                
+                messagebox.showinfo("Success", "AriesUI built successfully. Check the dist folder.")
+                logging.info("AriesUI build completed successfully")
+            except subprocess.CalledProcessError as e:
+                messagebox.showerror("Error", f"Build failed: {str(e)}")
+                logging.error(f"AriesUI build failed: {str(e)}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Unexpected error during build: {str(e)}")
+                logging.error(f"Unexpected error during AriesUI build: {str(e)}")
+        
+        # Run build in a separate thread to not block the UI
+        Thread(target=check_build, daemon=True).start()
 
     async def monitor_performance(self):
         while True:

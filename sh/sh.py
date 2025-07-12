@@ -6,16 +6,88 @@ from tkinter import ttk, messagebox
 import threading
 import socket
 import sys
+import time
+from datetime import datetime
 
 active_streams = []
 IDLE_TIMEOUT = 0.1  # Set WebSocket idle timeout to 100ms
 DEBUG_REFRESH = 100  # Default debug refresh rate in ms
-VERBOSE_LEVEL = 0  # Default verbose level (Debuglvl)
+VERBOSE_LEVEL = 1  # Default verbose level (Debuglvl)
+
+class ConnectionManager:
+    def __init__(self):
+        self.connections = {}  # WebSocket -> ConnectionInfo
+        self.last_cleanup = time.time()
+        
+    def add_connection(self, ws):
+        self.connections[ws] = {
+            'connected_at': time.time(),
+            'last_ping': time.time(),
+            'last_pong': time.time(),
+            'ping_interval': 0.1,  # 100ms ping interval
+            'latency': 0,
+            'status': 'connected'
+        }
+        
+    def remove_connection(self, ws):
+        if ws in self.connections:
+            del self.connections[ws]
+            
+    def update_ping(self, ws, timestamp=None):
+        if ws in self.connections:
+            self.connections[ws]['last_ping'] = time.time()
+            if timestamp:
+                self.connections[ws]['ping_timestamp'] = timestamp
+            
+    def update_pong(self, ws, timestamp=None):
+        if ws in self.connections:
+            now = time.time()
+            self.connections[ws]['last_pong'] = now
+            if timestamp:
+                try:
+                    # Handle both millisecond and second timestamps
+                    sent_time = float(timestamp)
+                    if sent_time > 1000000000000:  # If timestamp is in milliseconds (> year 2001 in ms)
+                        sent_time_seconds = sent_time / 1000
+                    else:
+                        sent_time_seconds = sent_time
+                    
+                    current_time = now
+                    latency = max(0, (current_time - sent_time_seconds) * 1000)  # Convert to ms
+                    self.connections[ws]['latency'] = latency
+                    
+                    if VERBOSE_LEVEL > 1:
+                        print(f"SH: Ping latency: {latency:.2f}ms")
+                except (ValueError, TypeError):
+                    if VERBOSE_LEVEL > 0:
+                        print(f"SH: Invalid timestamp in pong: {timestamp}")
+                    pass  # Invalid timestamp, keep previous latency
+            
+    def get_connection_info(self, ws):
+        if ws in self.connections:
+            return {
+                'latency': self.connections[ws]['latency'],
+                'status': self.connections[ws]['status'],
+                'last_ping': self.connections[ws]['last_ping'],
+                'last_pong': self.connections[ws]['last_pong']
+            }
+        return None
+
+connection_manager = ConnectionManager()
 
 def ws_open(ws):
     if VERBOSE_LEVEL > 0:
         print("A WebSocket connected!")
     ws.subscribe("broadcast")
+    connection_manager.add_connection(ws)
+    
+    # Send initial ping
+    ws.send(json.dumps({
+        'type': 'ping',
+        'timestamp': time.time(),
+        'status': 'active',
+        'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }), OpCode.TEXT)
 
 def ws_message(ws, message, opcode):
     global active_streams
@@ -23,40 +95,121 @@ def ws_message(ws, message, opcode):
         print(f"Received message: {message}")
     try:
         data = json.loads(message)
-        if data.get('type') == 'query' and data.get('query_type') == 'active_streams':
-            response = {
-                'type': 'active_streams',
-                'data': active_streams
-            }
-            ws.send(json.dumps(response), OpCode.TEXT)
-            if VERBOSE_LEVEL > 0:
-                print("Sent active streams to client.")
-        elif data.get('type') == 'negotiation':
-            active_streams = data["data"]  # Restore original flat structure
-            ws.publish("broadcast", message, opcode)
-        elif data.get('type') == 'control':
-            # Forward control message to all clients (including Engine)
+        msg_type = data.get('type')
+
+        # Handle ping/pong messages
+        if msg_type == 'ping':
+            timestamp = data.get('timestamp')
+            target = data.get('target', 'sh')  # Default to 'sh' if not specified
+            
+            # Only respond if this ping is for us
+            if target == 'sh':
+                connection_manager.update_ping(ws, timestamp)
+                ws.send(json.dumps({
+                    'type': 'pong',
+                    'timestamp': timestamp,  # Echo back the original timestamp
+                    'target': target,
+                    'server_time': time.time(),
+                    'status': 'active',
+                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }), OpCode.TEXT)
+                return
+            else:
+                # Forward ping to intended recipient(s)
+                ws.publish("broadcast", message, opcode)
+                return
+        
+        elif msg_type == 'pong':
+            timestamp = data.get('timestamp')
+            target = data.get('target', 'sh')
+            if target == 'sh':
+                if timestamp:
+                    connection_manager.update_pong(ws, float(timestamp))
+                return
+            else:
+                # Forward pong responses not meant for SH to other clients (e.g., UI)
+                ws.publish("broadcast", message, opcode)
+                return
+
+        # Handle connection info queries
+        elif msg_type == 'query':
+            if data.get('query_type') == 'connection_info':
+                info = connection_manager.get_connection_info(ws)
+                if info:
+                    ws.send(json.dumps({
+                        'type': 'connection_info',
+                        'data': info,
+                        'status': 'active',
+                        'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }))
+                    return
+            elif data.get('query_type') == 'active_streams':
+                response = {
+                    'type': 'active_streams',
+                    'data': active_streams,
+                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                ws.send(json.dumps(response), OpCode.TEXT)
+                if VERBOSE_LEVEL > 0:
+                    print("Sent active streams to client.")
+                return
+
+        # Handle other message types
+        elif msg_type == 'negotiation':
+            active_streams = data["data"]  # Update active streams
+            
+            # Check for engine ping data and respond with pong
+            if "__engine_system__" in active_streams:
+                engine_system = active_streams["__engine_system__"]
+                if "streams" in engine_system and "engine_ping" in engine_system["streams"]:
+                    ping_stream = engine_system["streams"]["engine_ping"]
+                    ping_timestamp = ping_stream.get("ping_timestamp")
+                    
+                    if ping_timestamp and ping_timestamp > 0:
+                        # Send pong response back to engine
+                        pong_response = {
+                            'type': 'engine_pong',
+                            'ping_timestamp': ping_timestamp,
+                            'server_time': time.time() * 1000,
+                            'status': 'active',
+                            'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                        ws.send(json.dumps(pong_response), OpCode.TEXT)
+                        if VERBOSE_LEVEL > 1:
+                            print(f"SH: Sent engine pong for timestamp {ping_timestamp}")
+            
+            ws.publish("broadcast", message, opcode)  # Forward to all clients
+        elif msg_type == 'control':
+            # Forward control messages to all clients (including Engine)
             ws.publish("broadcast", message, opcode)
             response = {
                 'type': 'control_response',
                 'module_id': data.get('module_id'),
-                'status': 'forwarded'
+                'status': 'forwarded',
+                'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
             ws.send(json.dumps(response), OpCode.TEXT)
-        elif data.get('type') == 'config_update':
-            # Forward config update to all clients (including Engine)
+        elif msg_type == 'config_update':
+            # Forward config updates to all clients
             ws.publish("broadcast", message, opcode)
             response = {
                 'type': 'config_response',
                 'module_id': data.get('module_id'),
-                'status': 'forwarded'
+                'status': 'forwarded',
+                'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
             ws.send(json.dumps(response), OpCode.TEXT)
         else:
+            # Forward any other messages to all clients
             ws.publish("broadcast", message, opcode)
     except json.JSONDecodeError:
         if VERBOSE_LEVEL > 0:
             print("Error decoding JSON.")
+
+def ws_close(ws):
+    connection_manager.remove_connection(ws)
+    if VERBOSE_LEVEL > 0:
+        print("WebSocket disconnected")
 
 def cleanup():
     if VERBOSE_LEVEL > 0:
@@ -64,10 +217,9 @@ def cleanup():
     sys.exit(0)
 
 def create_debug_window():
-    global DEBUG_REFRESH
     debug_root = tk.Tk()
     debug_root.title("Stream Handler Debug")
-    debug_root.geometry("800x400")
+    debug_root.geometry("1000x600")
 
     # Add control frame
     control_frame = tk.Frame(debug_root)
@@ -103,6 +255,7 @@ def create_debug_window():
             
     tk.Button(control_frame, text="Update Rate", command=update_refresh).pack(side="left", padx=5)
 
+    # Create tree view for streams
     tree = ttk.Treeview(debug_root, columns=("ModuleID", "Name", "Status", "Timestamp", "StreamID", "StreamName", "Value", "StreamTimestamp"), show="headings")
     tree.heading("ModuleID", text="Module ID")
     tree.heading("Name", text="Module Name")
@@ -125,13 +278,10 @@ def create_debug_window():
     def update_table():
         if not paused:
             for item in tree.get_children():
-                # Store the open/closed state of each item
-                is_open = tree.item(item, "open")
                 tree.delete(item)
             for module_id, module_data in active_streams.items():
                 module_node = tree.insert("", "end", values=(module_id, module_data["name"], module_data["status"], module_data["module-update-timestamp"], "", "", "", ""))
-                # Expand all module nodes by default
-                tree.item(module_node, open=True)
+                tree.item(module_node, open=True)  # Expand module nodes by default
                 for stream_id, stream in module_data["streams"].items():
                     tree.insert(module_node, "end", values=("", "", "", "", stream_id, stream["name"], str(stream["value"]), stream["stream-update-timestamp"]))
         debug_root.after(DEBUG_REFRESH, update_table)
@@ -139,85 +289,9 @@ def create_debug_window():
     update_table()
     debug_root.mainloop()
 
-def create_config_window():
-    global IDLE_TIMEOUT, DEBUG_REFRESH, VERBOSE_LEVEL
-    config_root = tk.Tk()
-    config_root.title("Stream Handler Configuration")
-    config_root.geometry("400x400")
-
-    # Add scrollable frame for configurations
-    canvas = tk.Canvas(config_root)
-    scrollbar = tk.Scrollbar(config_root, orient="vertical", command=canvas.yview)
-    scrollable_frame = tk.Frame(canvas)
-
-    scrollable_frame.bind(
-        "<Configure>",
-        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-    )
-
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    # WebSocket Configuration
-    tk.Label(scrollable_frame, text="WebSocket Configuration", font=("TkDefaultFont", 10, "bold")).pack(pady=10)
-    
-    tk.Label(scrollable_frame, text="WebSocket Idle Timeout (seconds):").pack(pady=5)
-    timeout_entry = tk.Entry(scrollable_frame)
-    timeout_entry.insert(0, str(IDLE_TIMEOUT))
-    timeout_entry.pack()
-
-    tk.Label(scrollable_frame, text="Max Payload Length (MB):").pack(pady=5)
-    payload_entry = tk.Entry(scrollable_frame)
-    payload_entry.insert(0, "16")
-    payload_entry.pack()
-
-    # Debug Configuration
-    tk.Label(scrollable_frame, text="Debug Configuration", font=("TkDefaultFont", 10, "bold")).pack(pady=10)
-    
-    tk.Label(scrollable_frame, text="Debug Refresh Rate (ms):").pack(pady=5)
-    refresh_entry = tk.Entry(scrollable_frame)
-    refresh_entry.insert(0, str(DEBUG_REFRESH))
-    refresh_entry.pack()
-
-    tk.Label(scrollable_frame, text="Verbose Level (0-2):").pack(pady=5)
-    verbose_entry = tk.Entry(scrollable_frame)
-    verbose_entry.insert(0, str(VERBOSE_LEVEL))
-    verbose_entry.pack()
-
-    def save_config():
-        global IDLE_TIMEOUT, DEBUG_REFRESH, VERBOSE_LEVEL
-        try:
-            timeout = int(timeout_entry.get())
-            refresh = int(refresh_entry.get())
-            verbose = int(verbose_entry.get())
-            payload = int(payload_entry.get())
-            
-            if timeout <= 0 or refresh <= 0 or payload <= 0:
-                raise ValueError("Values must be positive")
-            if verbose < 0 or verbose > 2:
-                raise ValueError("Verbose level must be 0-2")
-                
-            IDLE_TIMEOUT = timeout
-            DEBUG_REFRESH = refresh
-            VERBOSE_LEVEL = verbose
-            
-            messagebox.showinfo("Success", "Configuration updated\n(restart required for some changes)")
-            config_root.destroy()
-        except ValueError as e:
-            messagebox.showerror("Error", str(e))
-
-    tk.Button(scrollable_frame, text="Save", command=save_config).pack(pady=20)
-
-    canvas.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
-
 def start_debug_window():
     debug_thread = threading.Thread(target=create_debug_window, daemon=True)
     debug_thread.start()
-
-def start_config_window():
-    config_thread = threading.Thread(target=create_config_window, daemon=True)
-    config_thread.start()
 
 def debug_socket_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -234,8 +308,6 @@ def debug_socket_server():
                     data = client.recv(1024).decode()
                     if data == "debug":
                         start_debug_window()
-                    elif data == "config":
-                        start_config_window()
                 finally:
                     client.close()
             except Exception as e:
@@ -247,23 +319,27 @@ def debug_socket_server():
     finally:
         server.close()
 
+# Start debug socket server in a separate thread
 debug_thread = threading.Thread(target=debug_socket_server, daemon=True)
 debug_thread.start()
 
+# Create and configure the WebSocket app
 app = App()
 app.ws(
     "/*",
     {
         "compression": CompressOptions.SHARED_COMPRESSOR,
         "max_payload_length": 16 * 1024 * 1024,
-        "idle_timeout": 960,  # Set WebSocket idle timeout to 100ms
+        "idle_timeout": 960,  # Set WebSocket idle timeout
         "open": ws_open,
         "message": ws_message,
-        "close": lambda ws, code, message: print(f"WebSocket closed with code {code}") if VERBOSE_LEVEL > 0 else None,
+        "close": ws_close,
     }
 )
+
 app.any("/", lambda res, req: res.end("Nothing to see here!"))
-app.listen(3000, lambda config: print("Listening on http://localhost:3000") if VERBOSE_LEVEL > 0 else None)
+app.listen(8000, lambda config: print("Listening on http://localhost:8000") if VERBOSE_LEVEL > 0 else None)
+
 try:
     app.run()
 except KeyboardInterrupt:

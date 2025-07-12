@@ -1,0 +1,3 @@
+[submodule "ui/ariesUI"]
+	path = ui/ariesUI
+	url = https://github.com/AryanRai/AriesUI
