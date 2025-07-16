@@ -1,15 +1,16 @@
-# Comms v3.0 - Hardware-Integrated Communication Dashboard
+# Comms Alpha v3.0 - Hardware-Integrated Communication Dashboard
 
-[![Version](https://img.shields.io/badge/Version-v3.0-blue)](https://github.com/AryanRai/Comms)
+[![Version](https://img.shields.io/badge/Version-Alpha%20v3.0-blue)](https://github.com/AryanRai/Comms)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Performance](https://img.shields.io/badge/Performance-60fps-brightgreen)](README.md)
 [![Hardware](https://img.shields.io/badge/Hardware-Ready-orange)](README.md)
+[![Integration](https://img.shields.io/badge/StarSim-Integration-purple)](README.md)
 
 ![Comms Dashboard](https://github.com/user-attachments/assets/0dbdf7e4-0cd6-440e-ae04-6de05ffd369d)
 
-> **A high-performance, modular communications platform for hardware development, real-time monitoring, and data acquisition systems.**
+> **A high-performance, modular communications platform for hardware development, real-time monitoring, and data acquisition systems. Now serving as the foundation for StarSim physics simulation integration.**
 
-Comms v3.0 provides a complete ecosystem for hardware interfacing with a modern React-based dashboard (AriesUI), Python backend engine, and real-time WebSocket streaming - designed for ground stations, laboratory equipment, and industrial control systems.
+Comms Alpha v3.0 provides a complete ecosystem for hardware interfacing with a modern React-based dashboard (AriesUI), Python backend engine, and real-time WebSocket streaming - designed for ground stations, laboratory equipment, industrial control systems, and **real-time physics simulation with StarSim integration**.
 
 ---
 
@@ -436,6 +437,139 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - **🐛 Issues**: [GitHub Issues](https://github.com/AryanRai/Comms/issues)
 - **💬 Discussions**: [GitHub Discussions](https://github.com/AryanRai/Comms/discussions)
 - **📖 Documentation**: [Complete Guide](ui/ariesUI/DOCUMENTATION.md)
+
+---
+
+## 🌟 StarSim Integration
+
+Comms Alpha v3.0 serves as the foundational platform for **StarSim** - a real-time physics simulation and computation engine. The integration leverages Comms' proven architecture to accelerate StarSim development while maintaining project independence.
+
+### Integration Architecture
+
+```mermaid
+graph TB
+    subgraph "StarSim Frontend"
+        A[StarSim UI] --> B[AriesUI Core]
+        B --> C[Physics Widgets]
+        C --> D[3D Visualizer]
+        C --> E[Model Builder]
+        C --> F[Timeline Control]
+    end
+    
+    subgraph "Communication Layer"
+        G[Stream Handler] --> H[Physics Data Streams]
+        H --> I[Simulation Control]
+        H --> J[Real-time Results]
+    end
+    
+    subgraph "StarSim Backend"
+        K[ParsecCore C++] --> L[Physics Engine]
+        L --> M[Solver Core]
+        L --> N[ML Core]
+        L --> O[Hardware I/O]
+    end
+    
+    B <--> G
+    G <--> K
+    P[HyperThreader] --> A
+    P --> G
+    P --> K
+```
+
+### Component Mapping
+
+| Comms Component | StarSim Integration | Purpose |
+|----------------|-------------------|---------|
+| **AriesUI** | StarSim Frontend | Physics visualization, model building UI |
+| **Stream Handler** | Orchestration Layer | Real-time data flow between frontend and ParsecCore |
+| **Engine + Dynamic Modules** | I/O Manager | Hardware interfacing for sensors and actuators |
+| **HyperThreader** | System Orchestrator | Manage StarSim instances and debugging |
+
+### StarSim-Specific Features
+
+#### 🎯 Physics Visualization Widgets
+- **Vector Field Visualizer**: Display forces, velocities, fluxes in 2D/3D
+- **Physics Model Builder**: Drag-and-drop interface for system definition
+- **Simulation Timeline**: Scrub through simulation time steps
+- **3D Physics Renderer**: Real-time 3D physics visualization using Three.js
+
+#### 🔄 Real-time Physics Streams
+```json
+{
+  "type": "physics_data",
+  "status": "active",
+  "data": {
+    "simulation_id": "drone_dynamics",
+    "streams": {
+      "position": {
+        "stream_id": 101,
+        "name": "Drone Position",
+        "datatype": "vector3",
+        "unit": "m",
+        "value": [1.2, 0.8, 2.1],
+        "metadata": {
+          "coordinate_system": "world",
+          "solver": "RK4",
+          "timestep": 0.001
+        }
+      },
+      "velocity": {
+        "stream_id": 102,
+        "name": "Drone Velocity",
+        "datatype": "vector3",
+        "unit": "m/s",
+        "value": [0.5, -0.2, 0.1]
+      }
+    }
+  }
+}
+```
+
+#### 🎮 Headless Mode Support
+- **Application-Specific UIs**: Locked layouts for specific simulations
+- **Embedded Runtime**: Minimal UI for edge devices and microcontrollers
+- **API-Driven Operation**: REST/WebSocket APIs for automated workflows
+- **Profile-Based Configuration**: Predefined simulation setups
+
+### Development Status
+
+#### ✅ Completed Integration Points
+- Git submodule setup for StarSim in Comms repository
+- Integration branch structure (`integration/starsim-comms-v3`)
+- Architecture planning and component mapping
+- Stream format extensions for physics data
+
+#### 🚧 In Progress
+- Physics-specific AriesMods widgets
+- ParsecCore communication protocol
+- Stream Handler extensions for simulation data
+- HyperThreader StarSim process management
+
+#### 📋 Planned Features
+- 3D physics visualization with Three.js
+- Real-time solver performance monitoring
+- Hardware-in-the-loop simulation support
+- Multi-physics domain integration
+
+### Quick Start with StarSim
+
+```bash
+# Clone with StarSim submodule
+git clone --recursive -b integration/starsim-comms-v3 https://github.com/AryanRai/Comms.git
+cd Comms
+
+# Initialize StarSim submodule
+git submodule update --init --recursive
+
+# Build ParsecCore
+cd int/StarSim/ParsecCore
+mkdir build && cd build
+cmake .. && cmake --build .
+
+# Start integrated system
+cd ../../../..
+python HyperThreader.py  # Will include StarSim process management
+```
 
 ---
 

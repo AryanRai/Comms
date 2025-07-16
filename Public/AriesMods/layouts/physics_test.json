@@ -1,0 +1,89 @@
+{
+  "name": "Physics Widgets Test",
+  "description": "Test layout for physics widgets",
+  "version": "1.0.0",
+  "author": "AryanRai",
+  "created": "2025-07-17T12:00:00Z",
+  "modified": "2025-07-17T12:00:00Z",
+  "grid": {
+    "items": [
+      {
+        "id": "value-monitor-test",
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4,
+        "modId": "physics-value-monitor",
+        "title": "Physics Value Monitor Test",
+        "config": {
+          "value": 42.5,
+          "unit": "m/s",
+          "precision": 2,
+          "min": 0,
+          "max": 100,
+          "color": "#FF4500"
+        }
+      },
+      {
+        "id": "chart-test",
+        "x": 4,
+        "y": 0,
+        "w": 8,
+        "h": 4,
+        "modId": "physics-chart",
+        "title": "Physics Chart Test",
+        "config": {
+          "windowSize": 100,
+          "timeWindow": 10,
+          "color": "#4169E1",
+          "showGrid": true,
+          "showTooltip": true
+        }
+      },
+      {
+        "id": "vector-field-test",
+        "x": 0,
+        "y": 4,
+        "w": 6,
+        "h": 6,
+        "modId": "physics-vector-field",
+        "title": "Physics Vector Field Test",
+        "config": {
+          "gridSize": 20,
+          "vectorScale": 1.0,
+          "arrowSize": 5,
+          "vectorColor": "#4169E1",
+          "showGrid": true,
+          "showPosition": true,
+          "positionColor": "#FF4500",
+          "positionSize": 8,
+          "xRange": [-10, 10],
+          "yRange": [-10, 10]
+        }
+      },
+      {
+        "id": "control-panel-test",
+        "x": 6,
+        "y": 4,
+        "w": 6,
+        "h": 6,
+        "modId": "physics-control-panel",
+        "title": "Physics Control Panel Test",
+        "config": {
+          "simulationId": "test_simulation",
+          "wsUrl": "ws://localhost:3000",
+          "parameters": [
+            {
+              "name": "test_param",
+              "value": 10.0,
+              "min": 0.0,
+              "max": 20.0,
+              "step": 0.1,
+              "unit": "units"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

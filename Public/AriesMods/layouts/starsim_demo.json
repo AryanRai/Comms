@@ -1,0 +1,199 @@
+{
+  "name": "StarSim Physics Demo",
+  "description": "Demonstration of StarSim physics simulation integration with Comms Alpha v3.0",
+  "version": "1.0.0",
+  "author": "AryanRai",
+  "created": "2025-07-17T12:00:00Z",
+  "modified": "2025-07-17T12:00:00Z",
+  "grid": {
+    "items": [
+      {
+        "id": "spring-mass-control",
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 6,
+        "modId": "physics-control-panel",
+        "title": "Spring-Mass System Control",
+        "config": {
+          "simulationId": "spring_mass_system",
+          "wsUrl": "ws://localhost:3000",
+          "parameters": [
+            {
+              "name": "spring_constant",
+              "value": 10.0,
+              "min": 1.0,
+              "max": 50.0,
+              "step": 0.1,
+              "unit": "N/m"
+            },
+            {
+              "name": "mass",
+              "value": 1.0,
+              "min": 0.1,
+              "max": 10.0,
+              "step": 0.1,
+              "unit": "kg"
+            },
+            {
+              "name": "damping",
+              "value": 0.1,
+              "min": 0.0,
+              "max": 2.0,
+              "step": 0.01,
+              "unit": "Ns/m"
+            },
+            {
+              "name": "initial_position",
+              "value": 1.0,
+              "min": -2.0,
+              "max": 2.0,
+              "step": 0.1,
+              "unit": "m"
+            }
+          ]
+        }
+      },
+      {
+        "id": "position-chart",
+        "x": 4,
+        "y": 0,
+        "w": 8,
+        "h": 6,
+        "modId": "physics-chart",
+        "title": "Position vs Time",
+        "config": {
+          "streamId": "spring_mass_system.position",
+          "windowSize": 200,
+          "timeWindow": 15,
+          "color": "#FF4500",
+          "showGrid": true,
+          "showTooltip": true,
+          "referenceLines": [
+            {
+              "value": 0,
+              "label": "Equilibrium",
+              "color": "#888888",
+              "dashed": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "velocity-chart",
+        "x": 4,
+        "y": 6,
+        "w": 8,
+        "h": 6,
+        "modId": "physics-chart",
+        "title": "Velocity vs Time",
+        "config": {
+          "streamId": "spring_mass_system.velocity",
+          "windowSize": 200,
+          "timeWindow": 15,
+          "color": "#4169E1",
+          "showGrid": true,
+          "showTooltip": true,
+          "referenceLines": [
+            {
+              "value": 0,
+              "label": "Zero",
+              "color": "#888888",
+              "dashed": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "position-monitor",
+        "x": 0,
+        "y": 6,
+        "w": 2,
+        "h": 3,
+        "modId": "physics-value-monitor",
+        "title": "Position",
+        "config": {
+          "streamId": "spring_mass_system.position",
+          "unit": "m",
+          "precision": 3,
+          "min": -2.0,
+          "max": 2.0,
+          "color": "#FF4500"
+        }
+      },
+      {
+        "id": "velocity-monitor",
+        "x": 2,
+        "y": 6,
+        "w": 2,
+        "h": 3,
+        "modId": "physics-value-monitor",
+        "title": "Velocity",
+        "config": {
+          "streamId": "spring_mass_system.velocity",
+          "unit": "m/s",
+          "precision": 3,
+          "min": -10.0,
+          "max": 10.0,
+          "color": "#4169E1"
+        }
+      },
+      {
+        "id": "acceleration-monitor",
+        "x": 0,
+        "y": 9,
+        "w": 2,
+        "h": 3,
+        "modId": "physics-value-monitor",
+        "title": "Acceleration",
+        "config": {
+          "streamId": "spring_mass_system.acceleration",
+          "unit": "m/s²",
+          "precision": 3,
+          "min": -50.0,
+          "max": 50.0,
+          "color": "#32CD32"
+        }
+      },
+      {
+        "id": "energy-monitor",
+        "x": 2,
+        "y": 9,
+        "w": 2,
+        "h": 3,
+        "modId": "physics-value-monitor",
+        "title": "Energy",
+        "config": {
+          "streamId": "spring_mass_system.energy",
+          "unit": "J",
+          "precision": 3,
+          "min": 0.0,
+          "max": 10.0,
+          "color": "#FFD700"
+        }
+      },
+      {
+        "id": "vector-field",
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 6,
+        "modId": "physics-vector-field",
+        "title": "Spring-Mass Phase Space",
+        "config": {
+          "positionStreamId": "spring_mass_system.phase_position",
+          "gridSize": 20,
+          "vectorScale": 1.0,
+          "arrowSize": 5,
+          "vectorColor": "#4169E1",
+          "showGrid": true,
+          "showPosition": true,
+          "positionColor": "#FF4500",
+          "positionSize": 8,
+          "xRange": [-2, 2],
+          "yRange": [-10, 10]
+        }
+      }
+    ]
+  }
+}
