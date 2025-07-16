@@ -1,6 +1,6 @@
 [submodule "ui/ariesUI"]
 	path = ui/ariesUI
 	url = https://github.com/AryanRai/AriesUI
-[submodule "int/StarSim_new"]
-	path = int/StarSim_new
+[submodule "int/StarSim"]
+	path = int/StarSim
 	url = https://github.com/AryanRai/StarSim.git
