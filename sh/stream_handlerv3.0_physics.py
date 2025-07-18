@@ -12,14 +12,92 @@ IDLE_TIMEOUT = 0.1  # Set WebSocket idle timeout to 100ms
 DEBUG_REFRESH = 100  # Default debug refresh rate in ms
 VERBOSE_LEVEL = 1  # Default verbose level (Debuglvl)
 
-# Active data streams
-active_streams = []
-physics_streams = []  # New: Dedicated physics simulation streams
+# Unified stream management with Chyappy protocol compatibility
+active_streams = {}  # Dictionary format: {stream_id: stream_data}
+physics_streams = {}  # Physics simulation streams
+
+# Chyappy protocol constants
+CHYAPPY_V1_2_START = 0x7D
+PAYLOAD_TYPE_STRING = 0x01
+PAYLOAD_TYPE_FLOAT = 0x02
+PAYLOAD_TYPE_INT16 = 0x03
+PAYLOAD_TYPE_INT32 = 0x04
+
+class UnifiedStreamFormat:
+    """
+    Unified stream format compatible with both Chyappy protocol and WebSocket JSON.
+    Maps Chyappy protocol concepts to WebSocket JSON for seamless integration.
+    """
+    
+    @staticmethod
+    def create_stream_data(stream_id, name, datatype, unit, value, status="active", 
+                          sensor_type=None, sensor_id=None, sequence_number=None):
+        """Create unified stream data format"""
+        return {
+            "stream_id": stream_id,
+            "name": name,
+            "datatype": datatype,  # float, int, string, etc.
+            "unit": unit,
+            "value": value,
+            "status": status,
+            "sensor_type": sensor_type,  # Chyappy sensor type (e.g., 'T', 'A', 'G')
+            "sensor_id": sensor_id,      # Chyappy sensor ID (0-255)
+            "sequence_number": sequence_number,  # Chyappy sequence number
+            "timestamp": datetime.now().isoformat(),
+            "payload_type": UnifiedStreamFormat.get_payload_type(datatype)
+        }
+    
+    @staticmethod
+    def get_payload_type(datatype):
+        """Map datatype to Chyappy payload type"""
+        mapping = {
+            "string": PAYLOAD_TYPE_STRING,
+            "float": PAYLOAD_TYPE_FLOAT,
+            "int16": PAYLOAD_TYPE_INT16,
+            "int32": PAYLOAD_TYPE_INT32,
+            "int": PAYLOAD_TYPE_INT32
+        }
+        return mapping.get(datatype, PAYLOAD_TYPE_STRING)
+    
+    @staticmethod
+    def create_negotiation_message(streams, msg_type="negotiation"):
+        """Create unified negotiation message"""
+        return {
+            "type": msg_type,
+            "status": "active",
+            "data": streams,
+            "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+    
+    @staticmethod
+    def create_physics_message(simulation_id, streams, command=None):
+        """Create physics simulation message"""
+        return {
+            "type": "physics_simulation",
+            "simulation_id": simulation_id,
+            "command": command,
+            "streams": streams,
+            "status": "active",
+            "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+    
+    @staticmethod
+    def create_trading_message(symbol, streams, market_data=None):
+        """Create trading stream message"""
+        return {
+            "type": "trading_stream",
+            "symbol": symbol,
+            "streams": streams,
+            "market_data": market_data,
+            "status": "active",
+            "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
 
 # Print banner
 print("=" * 80)
-print("Stream Handler v3.0 with Physics Support")
-print("Integrated with StarSim ParsecCore")
+print("Stream Handler v3.0 - Unified Protocol")
+print("Chyappy Protocol Compatible")
+print("Physics & Trading Streams Integrated")
 print("=" * 80)
 
 class ConnectionManager:
@@ -156,6 +234,8 @@ def ws_message(ws, message, opcode):
     global active_streams, physics_streams
     if VERBOSE_LEVEL > 0:
         print(f"Received message: {message}")
+        if "physics_simulation" in message:
+            print(f"[STARSIM] Physics simulation message detected!")
     try:
         data = json.loads(message)
         msg_type = data.get('type')
@@ -250,20 +330,62 @@ def ws_message(ws, message, opcode):
             action = data.get('action')
             simulation_id = data.get('simulation_id')
             
+            # Debug: Print incoming StarSim messages
+            print(f"[DEBUG] Received from StarSim: simulation_id={simulation_id}, action={action}")
+            if action == 'register_stream':
+                stream_id = data.get('stream_id')
+                stream_data = data.get('stream_data', {})
+                print(f"[DEBUG] Stream registration: {stream_id} - {stream_data}")
+            elif action == 'update':
+                stream_id = data.get('stream_id')
+                stream_data = data.get('data', {})
+                print(f"[DEBUG] Stream update: {stream_id} - value={stream_data.get('value')}")
+            
             if action == 'register':
                 # Register a new physics simulation
                 config = data.get('config', {})
                 simulation = physics_manager.register_simulation(simulation_id, config)
                 physics_streams.append(simulation)
                 
-                # Broadcast to physics channel
-                ws.publish("physics", json.dumps({
-                    'type': 'physics_simulation',
-                    'action': 'registered',
-                    'simulation_id': simulation_id,
-                    'status': 'initializing',
-                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }), OpCode.TEXT)
+                # Broadcast to physics channel using unified format
+                unified_message = UnifiedStreamFormat.create_physics_message(
+                    simulation_id, {}, command='registered')
+                ws.publish("physics", json.dumps(unified_message), OpCode.TEXT)
+                return
+                
+            elif action == 'register_stream':
+                # Register a new stream for physics simulation
+                stream_id = data.get('stream_id')
+                stream_data = data.get('stream_data', {})
+                
+                if stream_id and stream_data:
+                    # Add to active_streams for AriesUI
+                    stream_key = f"{simulation_id}_{stream_id}"
+                    active_streams[stream_key] = {
+                        "stream_id": stream_key,
+                        "name": f"StarSim {stream_data.get('name', stream_id)}",
+                        "datatype": stream_data.get('datatype', 'float'),
+                        "unit": stream_data.get('unit', ''),
+                        "value": stream_data.get('value', 0.0),
+                        "status": stream_data.get('status', 'active'),
+                        "timestamp": stream_data.get('timestamp', datetime.now().isoformat()),
+                        "simulation_id": simulation_id
+                    }
+                    print(f"[DEBUG] Added to active_streams: {stream_key} - {active_streams[stream_key]}")
+                    
+                    # Broadcast to main channel for AriesUI
+                    unified_message = UnifiedStreamFormat.create_negotiation_message(active_streams)
+                    ws.publish("broadcast", json.dumps(unified_message), OpCode.TEXT)
+                    
+                    # Send confirmation
+                    response = {
+                        'type': 'physics_simulation',
+                        'action': 'stream_registered',
+                        'simulation_id': simulation_id,
+                        'stream_id': stream_id,
+                        'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    ws.send(json.dumps(response), OpCode.TEXT)
                 return
                 
             elif action == 'update':
@@ -272,6 +394,20 @@ def ws_message(ws, message, opcode):
                 stream_data = data.get('data', {})
                 
                 if physics_manager.update_simulation_data(simulation_id, stream_id, stream_data):
+                    # Add to active_streams for AriesUI
+                    stream_key = f"{simulation_id}_{stream_id}"
+                    active_streams[stream_key] = {
+                        "stream_id": stream_key,
+                        "name": f"StarSim {stream_id}",
+                        "datatype": "float",
+                        "unit": stream_data.get('unit', ''),
+                        "value": stream_data.get('value', 0.0),
+                        "status": "active",
+                        "timestamp": stream_data.get('timestamp', datetime.now().isoformat()),
+                        "simulation_id": simulation_id
+                    }
+                    print(f"[DEBUG] Updated active_streams: {stream_key} - value={stream_data.get('value')}")
+                    
                     # Broadcast update to physics channel
                     ws.publish("physics", json.dumps({
                         'type': 'physics_simulation',
@@ -281,6 +417,10 @@ def ws_message(ws, message, opcode):
                         'data': stream_data,
                         'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     }), OpCode.TEXT)
+                    
+                    # Also broadcast to main channel for AriesUI
+                    unified_message = UnifiedStreamFormat.create_negotiation_message(active_streams)
+                    ws.publish("broadcast", json.dumps(unified_message), OpCode.TEXT)
                     return
                 else:
                     response = {
@@ -349,10 +489,31 @@ def ws_message(ws, message, opcode):
                     ws.send(json.dumps(response), OpCode.TEXT)
                     return
 
-        # Handle standard negotiation messages
+        # Handle standard negotiation messages with unified format
         elif msg_type == 'negotiation':
-            active_streams = data.get("data", [])
-            ws.publish("broadcast", message, opcode)
+            incoming_streams = data.get("data", {})
+            
+            # Convert to unified format if needed
+            for stream_id, stream_data in incoming_streams.items():
+                if isinstance(stream_data, dict):
+                    # Update active streams with unified format
+                    active_streams[stream_id] = stream_data
+            
+            # Broadcast unified message
+            unified_message = UnifiedStreamFormat.create_negotiation_message(active_streams)
+            ws.publish("broadcast", json.dumps(unified_message), opcode)
+            return
+
+        # Handle trading stream messages
+        elif msg_type == 'trading_stream':
+            symbol = data.get('symbol')
+            stream_data = data.get('streams', {})
+            market_data = data.get('market_data', {})
+            
+            # Create unified trading message
+            unified_message = UnifiedStreamFormat.create_trading_message(
+                symbol, stream_data, market_data)
+            ws.publish("trading", json.dumps(unified_message), opcode)
             return
 
         # Default: broadcast to all clients
