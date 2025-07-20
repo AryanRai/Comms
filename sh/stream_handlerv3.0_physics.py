@@ -232,6 +232,12 @@ def ws_open(ws):
 
 def ws_message(ws, message, opcode):
     global active_streams, physics_streams
+    
+    # Always print incoming messages for debugging
+    print(f"\n=== STREAM HANDLER DEBUG ===")
+    print(f"[RECEIVED] Raw message: {message}")
+    print(f"[RECEIVED] Message length: {len(message)} characters")
+    
     if VERBOSE_LEVEL > 0:
         print(f"Received message: {message}")
         if "physics_simulation" in message:
@@ -239,6 +245,11 @@ def ws_message(ws, message, opcode):
     try:
         data = json.loads(message)
         msg_type = data.get('type')
+        print(f"[PARSED] Message type: {msg_type}")
+        if msg_type == 'physics_simulation':
+            action = data.get('action', 'no_action')
+            simulation_id = data.get('simulation_id', 'no_sim_id')
+            print(f"[PHYSICS] Action: {action}, Simulation ID: {simulation_id}")
 
         # Handle ping/pong messages
         if msg_type == 'ping':
@@ -345,7 +356,17 @@ def ws_message(ws, message, opcode):
                 # Register a new physics simulation
                 config = data.get('config', {})
                 simulation = physics_manager.register_simulation(simulation_id, config)
-                physics_streams.append(simulation)
+                print(f"[DEBUG] Registered physics simulation: {simulation_id} with config: {config}")
+                
+                # Send confirmation back to the simulation
+                response = {
+                    'type': 'physics_simulation',
+                    'action': 'registered',
+                    'simulation_id': simulation_id,
+                    'status': 'success',
+                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                ws.send(json.dumps(response), OpCode.TEXT)
                 
                 # Broadcast to physics channel using unified format
                 unified_message = UnifiedStreamFormat.create_physics_message(
@@ -359,6 +380,9 @@ def ws_message(ws, message, opcode):
                 stream_data = data.get('stream_data', {})
                 
                 if stream_id and stream_data:
+                    # Update physics manager
+                    physics_manager.update_simulation_data(simulation_id, stream_id, stream_data)
+                    
                     # Add to active_streams for AriesUI
                     stream_key = f"{simulation_id}_{stream_id}"
                     active_streams[stream_key] = {
@@ -377,15 +401,17 @@ def ws_message(ws, message, opcode):
                     unified_message = UnifiedStreamFormat.create_negotiation_message(active_streams)
                     ws.publish("broadcast", json.dumps(unified_message), OpCode.TEXT)
                     
-                    # Send confirmation
+                    # Send confirmation back to StarSim
                     response = {
                         'type': 'physics_simulation',
                         'action': 'stream_registered',
                         'simulation_id': simulation_id,
                         'stream_id': stream_id,
+                        'status': 'success',
                         'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     }
                     ws.send(json.dumps(response), OpCode.TEXT)
+                    print(f"[DEBUG] Sent stream registration confirmation for {stream_id}")
                 return
                 
             elif action == 'update':
@@ -393,20 +419,36 @@ def ws_message(ws, message, opcode):
                 stream_id = data.get('stream_id')
                 stream_data = data.get('data', {})
                 
-                if physics_manager.update_simulation_data(simulation_id, stream_id, stream_data):
-                    # Add to active_streams for AriesUI
+                if stream_id and stream_data:
+                    # Update physics manager
+                    physics_manager.update_simulation_data(simulation_id, stream_id, stream_data)
+                    
+                    # Update active_streams for AriesUI
                     stream_key = f"{simulation_id}_{stream_id}"
-                    active_streams[stream_key] = {
-                        "stream_id": stream_key,
-                        "name": f"StarSim {stream_id}",
-                        "datatype": "float",
-                        "unit": stream_data.get('unit', ''),
-                        "value": stream_data.get('value', 0.0),
-                        "status": "active",
-                        "timestamp": stream_data.get('timestamp', datetime.now().isoformat()),
-                        "simulation_id": simulation_id
-                    }
-                    print(f"[DEBUG] Updated active_streams: {stream_key} - value={stream_data.get('value')}")
+                    if stream_key in active_streams:
+                        # Update existing stream
+                        active_streams[stream_key].update({
+                            "value": stream_data.get('value', active_streams[stream_key].get('value', 0.0)),
+                            "timestamp": stream_data.get('timestamp', datetime.now().isoformat())
+                        })
+                        if 'vector_value' in stream_data:
+                            active_streams[stream_key]['vector_value'] = stream_data['vector_value']
+                    else:
+                        # Create new stream entry if it doesn't exist
+                        active_streams[stream_key] = {
+                            "stream_id": stream_key,
+                            "name": f"StarSim {stream_id}",
+                            "datatype": "float",
+                            "unit": "",
+                            "value": stream_data.get('value', 0.0),
+                            "status": "active",
+                            "timestamp": stream_data.get('timestamp', datetime.now().isoformat()),
+                            "simulation_id": simulation_id
+                        }
+                        if 'vector_value' in stream_data:
+                            active_streams[stream_key]['vector_value'] = stream_data['vector_value']
+                    
+                    print(f"[DEBUG] Updated active_streams: {stream_key} - value={stream_data.get('value', 'N/A')}")
                     
                     # Broadcast update to physics channel
                     ws.publish("physics", json.dumps({
@@ -423,12 +465,7 @@ def ws_message(ws, message, opcode):
                     ws.publish("broadcast", json.dumps(unified_message), OpCode.TEXT)
                     return
                 else:
-                    response = {
-                        'type': 'error',
-                        'error': f"Simulation {simulation_id} not found",
-                        'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    }
-                    ws.send(json.dumps(response), OpCode.TEXT)
+                    print(f"[DEBUG] Invalid update data: stream_id={stream_id}, stream_data={stream_data}")
                     return
                     
             elif action == 'status':
@@ -516,13 +553,20 @@ def ws_message(ws, message, opcode):
             ws.publish("trading", json.dumps(unified_message), opcode)
             return
 
-        # Default: broadcast to all clients
+        # Default: broadcast to all clients and echo back for debugging
+        print(f"[BROADCAST] Broadcasting message to all clients")
         ws.publish("broadcast", message, opcode)
+        print(f"[ECHO] Echoing message back to sender")
+        ws.send(message, opcode)
+        print(f"=== END STREAM HANDLER DEBUG ===\n")
         
     except json.JSONDecodeError:
-        print("Error decoding JSON message.")
+        print("[ERROR] Error decoding JSON message.")
+        print(f"=== END STREAM HANDLER DEBUG (JSON ERROR) ===\n")
+        
     except Exception as e:
-        print(f"Error processing message: {str(e)}")
+        print(f"[ERROR] Error processing message: {str(e)}")
+        print(f"=== END STREAM HANDLER DEBUG (ERROR) ===\n")
 
 def ws_close(ws, code, message):
     print(f"WebSocket closed with code {code}")
