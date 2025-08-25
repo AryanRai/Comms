@@ -1,18 +1,104 @@
-# sh/sh.py
 from socketify import App, OpCode, CompressOptions
 import json
-import tkinter as tk
-from tkinter import ttk, messagebox
-import threading
-import socket
-import sys
 import time
 from datetime import datetime
+import asyncio
+import threading
+import sys
+import os
 
-active_streams = []
+# Configuration
 IDLE_TIMEOUT = 0.1  # Set WebSocket idle timeout to 100ms
 DEBUG_REFRESH = 100  # Default debug refresh rate in ms
 VERBOSE_LEVEL = 1  # Default verbose level (Debuglvl)
+
+# Unified stream management with Chyappy protocol compatibility
+active_streams = {}  # Dictionary format: {stream_id: stream_data}
+physics_streams = {}  # Physics simulation streams
+
+# Chyappy protocol constants
+CHYAPPY_V1_2_START = 0x7D
+PAYLOAD_TYPE_STRING = 0x01
+PAYLOAD_TYPE_FLOAT = 0x02
+PAYLOAD_TYPE_INT16 = 0x03
+PAYLOAD_TYPE_INT32 = 0x04
+
+class UnifiedStreamFormat:
+    """
+    Unified stream format compatible with both Chyappy protocol and WebSocket JSON.
+    Maps Chyappy protocol concepts to WebSocket JSON for seamless integration.
+    """
+    
+    @staticmethod
+    def create_stream_data(stream_id, name, datatype, unit, value, status="active", 
+                          sensor_type=None, sensor_id=None, sequence_number=None):
+        """Create unified stream data format"""
+        return {
+            "stream_id": stream_id,
+            "name": name,
+            "datatype": datatype,  # float, int, string, etc.
+            "unit": unit,
+            "value": value,
+            "status": status,
+            "sensor_type": sensor_type,  # Chyappy sensor type (e.g., 'T', 'A', 'G')
+            "sensor_id": sensor_id,      # Chyappy sensor ID (0-255)
+            "sequence_number": sequence_number,  # Chyappy sequence number
+            "timestamp": datetime.now().isoformat(),
+            "payload_type": UnifiedStreamFormat.get_payload_type(datatype)
+        }
+    
+    @staticmethod
+    def get_payload_type(datatype):
+        """Map datatype to Chyappy payload type"""
+        mapping = {
+            "string": PAYLOAD_TYPE_STRING,
+            "float": PAYLOAD_TYPE_FLOAT,
+            "int16": PAYLOAD_TYPE_INT16,
+            "int32": PAYLOAD_TYPE_INT32,
+            "int": PAYLOAD_TYPE_INT32
+        }
+        return mapping.get(datatype, PAYLOAD_TYPE_STRING)
+    
+    @staticmethod
+    def create_negotiation_message(streams, msg_type="negotiation"):
+        """Create unified negotiation message"""
+        return {
+            "type": msg_type,
+            "status": "active",
+            "data": streams,
+            "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+    
+    @staticmethod
+    def create_physics_message(simulation_id, streams, command=None):
+        """Create physics simulation message"""
+        return {
+            "type": "physics_simulation",
+            "simulation_id": simulation_id,
+            "command": command,
+            "streams": streams,
+            "status": "active",
+            "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+    
+    @staticmethod
+    def create_trading_message(symbol, streams, market_data=None):
+        """Create trading stream message"""
+        return {
+            "type": "trading_stream",
+            "symbol": symbol,
+            "streams": streams,
+            "market_data": market_data,
+            "status": "active",
+            "msg-sent-timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+# Print banner
+print("=" * 80)
+print("Stream Handler v3.0 - Unified Protocol")
+print("Chyappy Protocol Compatible")
+print("Physics & Trading Streams Integrated")
+print("=" * 80)
 
 class ConnectionManager:
     def __init__(self):
@@ -75,10 +161,65 @@ class ConnectionManager:
 
 connection_manager = ConnectionManager()
 
+# New: Physics simulation manager
+class PhysicsSimulationManager:
+    def __init__(self):
+        self.simulations = {}  # simulation_id -> simulation_data
+        self.active_solvers = {}  # simulation_id -> solver_status
+        
+    def register_simulation(self, simulation_id, config):
+        """Register a new physics simulation"""
+        self.simulations[simulation_id] = {
+            'id': simulation_id,
+            'config': config,
+            'status': 'initializing',
+            'streams': {},
+            'created_at': time.time(),
+            'last_update': time.time()
+        }
+        return self.simulations[simulation_id]
+    
+    def update_simulation_status(self, simulation_id, status):
+        """Update the status of a simulation"""
+        if simulation_id in self.simulations:
+            self.simulations[simulation_id]['status'] = status
+            self.simulations[simulation_id]['last_update'] = time.time()
+            return True
+        return False
+    
+    def update_simulation_data(self, simulation_id, stream_id, data):
+        """Update data for a specific stream in a simulation"""
+        if simulation_id in self.simulations:
+            if stream_id not in self.simulations[simulation_id]['streams']:
+                self.simulations[simulation_id]['streams'][stream_id] = {}
+            
+            self.simulations[simulation_id]['streams'][stream_id].update(data)
+            self.simulations[simulation_id]['last_update'] = time.time()
+            return True
+        return False
+    
+    def get_simulation(self, simulation_id):
+        """Get simulation data by ID"""
+        return self.simulations.get(simulation_id)
+    
+    def get_all_simulations(self):
+        """Get all active simulations"""
+        return self.simulations
+    
+    def remove_simulation(self, simulation_id):
+        """Remove a simulation"""
+        if simulation_id in self.simulations:
+            del self.simulations[simulation_id]
+            return True
+        return False
+
+physics_manager = PhysicsSimulationManager()
+
 def ws_open(ws):
     if VERBOSE_LEVEL > 0:
         print("A WebSocket connected!")
     ws.subscribe("broadcast")
+    ws.subscribe("physics")  # New: Subscribe to physics-specific channel
     connection_manager.add_connection(ws)
     
     # Send initial ping
@@ -90,12 +231,25 @@ def ws_open(ws):
     }), OpCode.TEXT)
 
 def ws_message(ws, message, opcode):
-    global active_streams
+    global active_streams, physics_streams
+    
+    # Always print incoming messages for debugging
+    print(f"\n=== STREAM HANDLER DEBUG ===")
+    print(f"[RECEIVED] Raw message: {message}")
+    print(f"[RECEIVED] Message length: {len(message)} characters")
+    
     if VERBOSE_LEVEL > 0:
         print(f"Received message: {message}")
+        if "physics_simulation" in message:
+            print(f"[STARSIM] Physics simulation message detected!")
     try:
         data = json.loads(message)
         msg_type = data.get('type')
+        print(f"[PARSED] Message type: {msg_type}")
+        if msg_type == 'physics_simulation':
+            action = data.get('action', 'no_action')
+            simulation_id = data.get('simulation_id', 'no_sim_id')
+            print(f"[PHYSICS] Action: {action}, Simulation ID: {simulation_id}")
 
         # Handle ping/pong messages
         if msg_type == 'ping':
@@ -150,197 +304,300 @@ def ws_message(ws, message, opcode):
                     'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 ws.send(json.dumps(response), OpCode.TEXT)
-                if VERBOSE_LEVEL > 0:
-                    print("Sent active streams to client.")
                 return
-
-        # Handle other message types
-        elif msg_type == 'negotiation':
-            active_streams = data["data"]  # Update active streams
-            
-            # Check for engine ping data and respond with pong
-            if "__engine_system__" in active_streams:
-                engine_system = active_streams["__engine_system__"]
-                if "streams" in engine_system and "engine_ping" in engine_system["streams"]:
-                    ping_stream = engine_system["streams"]["engine_ping"]
-                    ping_timestamp = ping_stream.get("ping_timestamp")
-                    
-                    if ping_timestamp and ping_timestamp > 0:
-                        # Send pong response back to engine
-                        pong_response = {
-                            'type': 'engine_pong',
-                            'ping_timestamp': ping_timestamp,
-                            'server_time': time.time() * 1000,
-                            'status': 'active',
+            # New: Query for physics simulations
+            elif data.get('query_type') == 'physics_simulations':
+                response = {
+                    'type': 'physics_simulations',
+                    'data': physics_manager.get_all_simulations(),
+                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                ws.send(json.dumps(response), OpCode.TEXT)
+                return
+            # New: Query for specific physics simulation
+            elif data.get('query_type') == 'physics_simulation':
+                simulation_id = data.get('simulation_id')
+                if simulation_id:
+                    simulation = physics_manager.get_simulation(simulation_id)
+                    if simulation:
+                        response = {
+                            'type': 'physics_simulation',
+                            'data': simulation,
                             'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         }
-                        ws.send(json.dumps(pong_response), OpCode.TEXT)
-                        if VERBOSE_LEVEL > 1:
-                            print(f"SH: Sent engine pong for timestamp {ping_timestamp}")
+                        ws.send(json.dumps(response), OpCode.TEXT)
+                        return
+                    else:
+                        response = {
+                            'type': 'error',
+                            'error': f"Simulation {simulation_id} not found",
+                            'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                        ws.send(json.dumps(response), OpCode.TEXT)
+                        return
+
+        # New: Handle physics simulation messages
+        elif msg_type == 'physics_simulation':
+            action = data.get('action')
+            simulation_id = data.get('simulation_id')
             
-            ws.publish("broadcast", message, opcode)  # Forward to all clients
-        elif msg_type == 'control':
-            # Forward control messages to all clients (including Engine)
-            ws.publish("broadcast", message, opcode)
-            response = {
-                'type': 'control_response',
-                'module_id': data.get('module_id'),
-                'status': 'forwarded',
-                'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            ws.send(json.dumps(response), OpCode.TEXT)
-        elif msg_type == 'config_update':
-            # Forward config updates to all clients
-            ws.publish("broadcast", message, opcode)
-            response = {
-                'type': 'config_response',
-                'module_id': data.get('module_id'),
-                'status': 'forwarded',
-                'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            ws.send(json.dumps(response), OpCode.TEXT)
-        else:
-            # Forward any other messages to all clients
-            ws.publish("broadcast", message, opcode)
-    except json.JSONDecodeError:
-        if VERBOSE_LEVEL > 0:
-            print("Error decoding JSON.")
+            # Debug: Print incoming StarSim messages
+            print(f"[DEBUG] Received from StarSim: simulation_id={simulation_id}, action={action}")
+            if action == 'register_stream':
+                stream_id = data.get('stream_id')
+                stream_data = data.get('stream_data', {})
+                print(f"[DEBUG] Stream registration: {stream_id} - {stream_data}")
+            elif action == 'update':
+                stream_id = data.get('stream_id')
+                stream_data = data.get('data', {})
+                print(f"[DEBUG] Stream update: {stream_id} - value={stream_data.get('value')}")
+            
+            if action == 'register':
+                # Register a new physics simulation
+                config = data.get('config', {})
+                simulation = physics_manager.register_simulation(simulation_id, config)
+                print(f"[DEBUG] Registered physics simulation: {simulation_id} with config: {config}")
+                
+                # Send confirmation back to the simulation
+                response = {
+                    'type': 'physics_simulation',
+                    'action': 'registered',
+                    'simulation_id': simulation_id,
+                    'status': 'success',
+                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                ws.send(json.dumps(response), OpCode.TEXT)
+                
+                # Broadcast to physics channel using unified format
+                unified_message = UnifiedStreamFormat.create_physics_message(
+                    simulation_id, {}, command='registered')
+                ws.publish("physics", json.dumps(unified_message), OpCode.TEXT)
+                return
+                
+            elif action == 'register_stream':
+                # Register a new stream for physics simulation
+                stream_id = data.get('stream_id')
+                stream_data = data.get('stream_data', {})
+                
+                if stream_id and stream_data:
+                    # Update physics manager
+                    physics_manager.update_simulation_data(simulation_id, stream_id, stream_data)
+                    
+                    # Add to active_streams for AriesUI
+                    stream_key = f"{simulation_id}_{stream_id}"
+                    active_streams[stream_key] = {
+                        "stream_id": stream_key,
+                        "name": f"StarSim {stream_data.get('name', stream_id)}",
+                        "datatype": stream_data.get('datatype', 'float'),
+                        "unit": stream_data.get('unit', ''),
+                        "value": stream_data.get('value', 0.0),
+                        "status": stream_data.get('status', 'active'),
+                        "timestamp": stream_data.get('timestamp', datetime.now().isoformat()),
+                        "simulation_id": simulation_id
+                    }
+                    print(f"[DEBUG] Added to active_streams: {stream_key} - {active_streams[stream_key]}")
+                    
+                    # Broadcast to main channel for AriesUI
+                    unified_message = UnifiedStreamFormat.create_negotiation_message(active_streams)
+                    ws.publish("broadcast", json.dumps(unified_message), OpCode.TEXT)
+                    
+                    # Send confirmation back to StarSim
+                    response = {
+                        'type': 'physics_simulation',
+                        'action': 'stream_registered',
+                        'simulation_id': simulation_id,
+                        'stream_id': stream_id,
+                        'status': 'success',
+                        'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    ws.send(json.dumps(response), OpCode.TEXT)
+                    print(f"[DEBUG] Sent stream registration confirmation for {stream_id}")
+                return
+                
+            elif action == 'update':
+                # Update simulation data
+                stream_id = data.get('stream_id')
+                stream_data = data.get('data', {})
+                
+                if stream_id and stream_data:
+                    # Update physics manager
+                    physics_manager.update_simulation_data(simulation_id, stream_id, stream_data)
+                    
+                    # Update active_streams for AriesUI
+                    stream_key = f"{simulation_id}_{stream_id}"
+                    if stream_key in active_streams:
+                        # Update existing stream
+                        active_streams[stream_key].update({
+                            "value": stream_data.get('value', active_streams[stream_key].get('value', 0.0)),
+                            "timestamp": stream_data.get('timestamp', datetime.now().isoformat())
+                        })
+                        if 'vector_value' in stream_data:
+                            active_streams[stream_key]['vector_value'] = stream_data['vector_value']
+                    else:
+                        # Create new stream entry if it doesn't exist
+                        active_streams[stream_key] = {
+                            "stream_id": stream_key,
+                            "name": f"StarSim {stream_id}",
+                            "datatype": "float",
+                            "unit": "",
+                            "value": stream_data.get('value', 0.0),
+                            "status": "active",
+                            "timestamp": stream_data.get('timestamp', datetime.now().isoformat()),
+                            "simulation_id": simulation_id
+                        }
+                        if 'vector_value' in stream_data:
+                            active_streams[stream_key]['vector_value'] = stream_data['vector_value']
+                    
+                    print(f"[DEBUG] Updated active_streams: {stream_key} - value={stream_data.get('value', 'N/A')}")
+                    
+                    # Broadcast update to physics channel
+                    ws.publish("physics", json.dumps({
+                        'type': 'physics_simulation',
+                        'action': 'updated',
+                        'simulation_id': simulation_id,
+                        'stream_id': stream_id,
+                        'data': stream_data,
+                        'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }), OpCode.TEXT)
+                    
+                    # Also broadcast to main channel for AriesUI
+                    unified_message = UnifiedStreamFormat.create_negotiation_message(active_streams)
+                    ws.publish("broadcast", json.dumps(unified_message), OpCode.TEXT)
+                    return
+                else:
+                    print(f"[DEBUG] Invalid update data: stream_id={stream_id}, stream_data={stream_data}")
+                    return
+                    
+            elif action == 'status':
+                # Update simulation status
+                status = data.get('status')
+                if physics_manager.update_simulation_status(simulation_id, status):
+                    # Broadcast status update to physics channel
+                    ws.publish("physics", json.dumps({
+                        'type': 'physics_simulation',
+                        'action': 'status',
+                        'simulation_id': simulation_id,
+                        'status': status,
+                        'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }), OpCode.TEXT)
+                    return
+                else:
+                    response = {
+                        'type': 'error',
+                        'error': f"Simulation {simulation_id} not found",
+                        'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    ws.send(json.dumps(response), OpCode.TEXT)
+                    return
+                    
+            elif action == 'control':
+                # Control commands for simulation (start, pause, stop, etc.)
+                command = data.get('command')
+                params = data.get('params', {})
+                
+                # Broadcast control command to physics channel
+                ws.publish("physics", json.dumps({
+                    'type': 'physics_simulation',
+                    'action': 'control',
+                    'simulation_id': simulation_id,
+                    'command': command,
+                    'params': params,
+                    'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }), OpCode.TEXT)
+                return
+                
+            elif action == 'remove':
+                # Remove a simulation
+                if physics_manager.remove_simulation(simulation_id):
+                    # Broadcast removal to physics channel
+                    ws.publish("physics", json.dumps({
+                        'type': 'physics_simulation',
+                        'action': 'removed',
+                        'simulation_id': simulation_id,
+                        'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }), OpCode.TEXT)
+                    return
+                else:
+                    response = {
+                        'type': 'error',
+                        'error': f"Simulation {simulation_id} not found",
+                        'msg-sent-timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    ws.send(json.dumps(response), OpCode.TEXT)
+                    return
 
-def ws_close(ws):
-    connection_manager.remove_connection(ws)
-    if VERBOSE_LEVEL > 0:
-        print("WebSocket disconnected")
+        # Handle standard negotiation messages with unified format
+        elif msg_type == 'negotiation':
+            incoming_streams = data.get("data", {})
+            
+            # Convert to unified format if needed
+            for stream_id, stream_data in incoming_streams.items():
+                if isinstance(stream_data, dict):
+                    # Update active streams with unified format
+                    active_streams[stream_id] = stream_data
+            
+            # Broadcast unified message
+            unified_message = UnifiedStreamFormat.create_negotiation_message(active_streams)
+            ws.publish("broadcast", json.dumps(unified_message), opcode)
+            return
 
-def cleanup():
-    if VERBOSE_LEVEL > 0:
-        print("Shutting down stream handler...")
-    sys.exit(0)
+        # Handle trading stream messages
+        elif msg_type == 'trading_stream':
+            symbol = data.get('symbol')
+            stream_data = data.get('streams', {})
+            market_data = data.get('market_data', {})
+            
+            # Create unified trading message
+            unified_message = UnifiedStreamFormat.create_trading_message(
+                symbol, stream_data, market_data)
+            ws.publish("trading", json.dumps(unified_message), opcode)
+            return
 
-def create_debug_window():
-    debug_root = tk.Tk()
-    debug_root.title("Stream Handler Debug")
-    debug_root.geometry("1000x600")
-
-    # Add control frame
-    control_frame = tk.Frame(debug_root)
-    control_frame.pack(fill="x", pady=5)
-    
-    # Add pause button
-    paused = False
-    def toggle_pause():
-        nonlocal paused
-        paused = not paused
-        pause_button.config(text="Resume" if paused else "Pause")
+        # Default: broadcast to all clients and echo back for debugging
+        print(f"[BROADCAST] Broadcasting message to all clients")
+        ws.publish("broadcast", message, opcode)
+        print(f"[ECHO] Echoing message back to sender")
+        ws.send(message, opcode)
+        print(f"=== END STREAM HANDLER DEBUG ===\n")
         
-    pause_button = tk.Button(control_frame, text="Pause", command=toggle_pause)
-    pause_button.pack(side="left", padx=5)
-    
-    # Add refresh rate control
-    tk.Label(control_frame, text="Display Refresh Rate (ms):").pack(side="left", padx=5)
-    refresh_entry = tk.Entry(control_frame, width=10)
-    refresh_entry.insert(0, str(DEBUG_REFRESH))
-    refresh_entry.pack(side="left", padx=5)
-    
-    def update_refresh():
-        global DEBUG_REFRESH
-        try:
-            new_rate = int(refresh_entry.get())
-            if new_rate > 0:
-                DEBUG_REFRESH = new_rate
-                messagebox.showinfo("Success", f"Refresh rate updated to {new_rate}ms")
-            else:
-                messagebox.showerror("Error", "Refresh rate must be positive")
-        except ValueError:
-            messagebox.showerror("Error", "Invalid refresh rate")
-            
-    tk.Button(control_frame, text="Update Rate", command=update_refresh).pack(side="left", padx=5)
-
-    # Create tree view for streams
-    tree = ttk.Treeview(debug_root, columns=("ModuleID", "Name", "Status", "Timestamp", "StreamID", "StreamName", "Value", "StreamTimestamp"), show="headings")
-    tree.heading("ModuleID", text="Module ID")
-    tree.heading("Name", text="Module Name")
-    tree.heading("Status", text="Status")
-    tree.heading("Timestamp", text="Timestamp")
-    tree.heading("StreamID", text="Stream ID")
-    tree.heading("StreamName", text="Stream Name")
-    tree.heading("Value", text="Value")
-    tree.heading("StreamTimestamp", text="Stream Timestamp")
-    tree.column("ModuleID", width=100)
-    tree.column("Name", width=150)
-    tree.column("Status", width=80)
-    tree.column("Timestamp", width=150)
-    tree.column("StreamID", width=100)
-    tree.column("StreamName", width=150)
-    tree.column("Value", width=80)
-    tree.column("StreamTimestamp", width=150)
-    tree.pack(fill="both", expand=True)
-
-    def update_table():
-        if not paused:
-            for item in tree.get_children():
-                tree.delete(item)
-            for module_id, module_data in active_streams.items():
-                module_node = tree.insert("", "end", values=(module_id, module_data["name"], module_data["status"], module_data["module-update-timestamp"], "", "", "", ""))
-                tree.item(module_node, open=True)  # Expand module nodes by default
-                for stream_id, stream in module_data["streams"].items():
-                    tree.insert(module_node, "end", values=("", "", "", "", stream_id, stream["name"], str(stream["value"]), stream["stream-update-timestamp"]))
-        debug_root.after(DEBUG_REFRESH, update_table)
-
-    update_table()
-    debug_root.mainloop()
-
-def start_debug_window():
-    debug_thread = threading.Thread(target=create_debug_window, daemon=True)
-    debug_thread.start()
-
-def debug_socket_server():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    try:
-        server.bind(('localhost', 5001))
-        server.listen(1)
-        if VERBOSE_LEVEL > 0:
-            print("SH debug socket server listening on localhost:5001")
-        while True:
-            try:
-                client, addr = server.accept()
-                try:
-                    data = client.recv(1024).decode()
-                    if data == "debug":
-                        start_debug_window()
-                finally:
-                    client.close()
-            except Exception as e:
-                if VERBOSE_LEVEL > 0:
-                    print(f"Error handling client connection: {e}")
+    except json.JSONDecodeError:
+        print("[ERROR] Error decoding JSON message.")
+        print(f"=== END STREAM HANDLER DEBUG (JSON ERROR) ===\n")
+        
     except Exception as e:
-        if VERBOSE_LEVEL > 0:
-            print(f"Error in debug socket server: {e}")
-    finally:
-        server.close()
+        print(f"[ERROR] Error processing message: {str(e)}")
+        print(f"=== END STREAM HANDLER DEBUG (ERROR) ===\n")
 
-# Start debug socket server in a separate thread
-debug_thread = threading.Thread(target=debug_socket_server, daemon=True)
-debug_thread.start()
+def ws_close(ws, code, message):
+    print(f"WebSocket closed with code {code}")
+    connection_manager.remove_connection(ws)
 
-# Create and configure the WebSocket app
+# WebSocket server setup
 app = App()
 app.ws(
-    "/*",
+    "/*",  # Listen on all routes
     {
         "compression": CompressOptions.SHARED_COMPRESSOR,
-        "max_payload_length": 16 * 1024 * 1024,
-        "idle_timeout": 960,  # Set WebSocket idle timeout
+        "max_payload_length": 16 * 1024 * 1024,  # 16MB payload limit
+        "idle_timeout": 60,
         "open": ws_open,
         "message": ws_message,
         "close": ws_close,
     }
 )
 
-app.any("/", lambda res, req: res.end("Nothing to see here!"))
-app.listen(8000, lambda config: print("Listening on http://localhost:8000") if VERBOSE_LEVEL > 0 else None)
+# HTTP routes
+app.any("/", lambda res, req: res.end("Stream Handler v3.0 with Physics Support"))
+app.any("/status", lambda res, req: res.end(json.dumps({
+    "status": "active",
+    "connections": len(connection_manager.connections),
+    "physics_simulations": len(physics_manager.simulations),
+    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+})))
 
-try:
+# Start server
+if __name__ == "__main__":
+    port = 3000
+    print(f"Starting Stream Handler v3.0 with Physics Support on port {port}")
+    app.listen(port, lambda config: print(f"Listening on http://localhost:{port}"))
     app.run()
-except KeyboardInterrupt:
-    cleanup()
