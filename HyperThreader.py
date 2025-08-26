@@ -36,6 +36,67 @@ class ProcessManager:
         
         self.output_queue = queue.Queue()
 
+    def force_remove_directory(self, path):
+        """Force remove directory with Windows file permission handling"""
+        def handle_remove_readonly(func, path, exc):
+            """Handle readonly files and directories"""
+            if os.path.exists(path):
+                # Make the file writable and try again
+                os.chmod(path, 0o777)
+                func(path)
+        
+        if not os.path.exists(path):
+            return
+        
+        try:
+            # First try normal removal
+            shutil.rmtree(path)
+            logging.info(f"Successfully removed directory: {path}")
+        except (OSError, PermissionError) as e:
+            logging.warning(f"Normal removal failed: {e}. Trying force removal...")
+            try:
+                # Try with error handler for readonly files
+                shutil.rmtree(path, onerror=handle_remove_readonly)
+                logging.info(f"Successfully removed directory with force: {path}")
+            except (OSError, PermissionError) as e2:
+                logging.warning(f"Force removal failed: {e2}. Trying Windows-specific removal...")
+                try:
+                    # Windows-specific: use cmd to remove
+                    subprocess.run(f'rmdir /s /q "{path}"', shell=True, check=True)
+                    logging.info(f"Successfully removed directory with rmdir: {path}")
+                except subprocess.CalledProcessError:
+                    # Kill processes that might be locking files
+                    logging.warning("Trying to kill processes that might be locking files...")
+                    self.kill_build_processes()
+                    time.sleep(2)
+                    
+                    # Try one more time after killing processes
+                    try:
+                        subprocess.run(f'rmdir /s /q "{path}"', shell=True, check=True)
+                        logging.info(f"Successfully removed directory after killing processes: {path}")
+                    except subprocess.CalledProcessError:
+                        # Last resort: rename and try again later
+                        import uuid
+                        temp_name = f"{path}_to_delete_{uuid.uuid4().hex[:8]}"
+                        try:
+                            os.rename(path, temp_name)
+                            logging.warning(f"Renamed directory to {temp_name} for later cleanup")
+                        except OSError:
+                            logging.error(f"Could not remove directory {path}. Manual cleanup required.")
+                            # Don't raise - just continue with build
+    
+    def kill_build_processes(self):
+        """Kill processes that might be locking build files"""
+        try:
+            # Kill Visual Studio processes
+            subprocess.run("taskkill /f /im devenv.exe", shell=True, capture_output=True)
+            subprocess.run("taskkill /f /im MSBuild.exe", shell=True, capture_output=True)
+            subprocess.run("taskkill /f /im cmake.exe", shell=True, capture_output=True)
+            subprocess.run("taskkill /f /im git.exe", shell=True, capture_output=True)
+            logging.info("Killed potential file-locking processes")
+        except Exception as e:
+            logging.warning(f"Could not kill processes: {e}")
+
     def setup_ui(self):
         control_frame = Frame(self.root)
         control_frame.pack(pady=10, fill="x")
@@ -70,10 +131,26 @@ class ProcessManager:
         button_frame = Frame(ui_frame)
         button_frame.pack()
         Button(button_frame, text="Start UI", command=self.start_ui).pack(side="left", padx=2)
+        Button(button_frame, text="Web Only", command=self.start_ui_web_only).pack(side="left", padx=2)
         Button(button_frame, text="Stop UI", command=self.stop_ui).pack(side="left", padx=2)
+        Button(button_frame, text="Install Deps", command=self.install_ui_dependencies).pack(side="left", padx=2)
         Button(button_frame, text="Build UI", command=self.build_ui).pack(side="left", padx=2)
         self.ui_status = Label(ui_frame, text="Not Running")
         self.ui_status.pack()
+        
+        # StarSim controls
+        starsim_frame = Frame(control_frame)
+        starsim_frame.pack(pady=5)
+        Label(starsim_frame, text="StarSim Physics Engine").pack()
+        button_frame = Frame(starsim_frame)
+        button_frame.pack()
+        Button(button_frame, text="Start StarSim", command=self.start_starsim).pack(side="left", padx=2)
+        Button(button_frame, text="Stop StarSim", command=self.stop_starsim).pack(side="left", padx=2)
+        Button(button_frame, text="Build StarSim", command=self.build_starsim).pack(side="left", padx=2)
+        Button(button_frame, text="Manual Build", command=self.manual_build_starsim).pack(side="left", padx=2)
+        Button(button_frame, text="Run Demo", command=self.run_starsim_demo).pack(side="left", padx=2)
+        self.starsim_status = Label(starsim_frame, text="Not Running")
+        self.starsim_status.pack()
         
         # Add control buttons for terminal output
         terminal_control_frame = Frame(control_frame)
@@ -211,6 +288,15 @@ class ProcessManager:
                 )
                 self.processes[name] = process
                 
+                # Check if process started successfully
+                time.sleep(0.5)  # Give it a moment to start
+                if process.poll() is not None:
+                    # Process already exited, check return code
+                    if process.returncode != 0:
+                        stderr_output = process.stderr.read()
+                        logging.error(f"Process {name} failed to start: {stderr_output}")
+                        return False
+                
                 Thread(target=self.read_output, args=(process.stdout, name), daemon=True).start()
                 Thread(target=self.read_output, args=(process.stderr, name), daemon=True).start()
                 
@@ -313,7 +399,7 @@ class ProcessManager:
             self.en_status.config(text="Not Running")
 
     def start_ui(self):
-        """Start AriesUI in development mode"""
+        """Start AriesUI in development mode with enhanced error handling"""
         if not os.path.exists("ui/ariesUI"):
             messagebox.showerror("Error", "AriesUI directory not found at ui/ariesUI")
             return
@@ -323,22 +409,245 @@ class ProcessManager:
             messagebox.showerror("Error", "npm not found. Please install Node.js and npm.")
             return
         
-        # Start the UI in development mode
+        # Check if dependencies are installed
+        if not os.path.exists("ui/ariesUI/node_modules"):
+            messagebox.showwarning("Warning", "Dependencies not installed. Installing npm packages...")
+            self.install_ui_dependencies()
+            return
+        
+        # Clean up any existing processes first
+        self.cleanup_ui_processes()
+        
+        # Wait a moment for cleanup
+        time.sleep(1)
+        
+        # Start electron-dev directly (like your manual execution)
+        success = self.start_ui_electron_dev()
+        
+        if not success:
+            # Fallback to web-only mode if electron-dev fails
+            messagebox.showwarning("Warning", "Electron-dev failed. Starting web-only mode...")
+            self.start_ui_web_only()
+    
+    def start_ui_electron_dev(self):
+        """Start AriesUI with electron-dev (matches your manual execution)"""
+        try:
+            # Use shell=True and let Windows handle the npm command resolution
+            # This matches exactly how PowerShell executes npm
+            process = subprocess.Popen(
+                "npm run electron-dev",
+                cwd="ui/ariesUI",
+                creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == 'nt' else 0,
+                shell=True
+            )
+            
+            self.processes["ui"] = process
+            
+            # Check if process started successfully
+            time.sleep(2)
+            if process.poll() is None:
+                self.ui_status.config(text="Running (Electron-dev)")
+                logging.info("Started AriesUI with electron-dev")
+                messagebox.showinfo("AriesUI Started", 
+                                  "AriesUI is starting with electron-dev.\\n\\n"
+                                  "Check the new console window for output.\\n\\n"
+                                  "The app should open automatically when ready.")
+                return True
+            else:
+                # Process already exited
+                logging.error(f"electron-dev process exited immediately with code {process.returncode}")
+                return False
+                
+        except Exception as e:
+            logging.error(f"Failed to start electron-dev: {e}")
+            return False
+    
+    def install_ui_dependencies(self):
+        """Install AriesUI dependencies"""
+        if not os.path.exists("ui/ariesUI"):
+            messagebox.showerror("Error", "AriesUI directory not found at ui/ariesUI")
+            return
+        
+        def install_deps():
+            try:
+                # Install dependencies
+                subprocess.run(["npm", "install"], cwd="ui/ariesUI", check=True)
+                messagebox.showinfo("Success", "Dependencies installed successfully. You can now start the UI.")
+                logging.info("AriesUI dependencies installed successfully")
+            except subprocess.CalledProcessError as e:
+                messagebox.showerror("Error", f"Failed to install dependencies: {str(e)}")
+                logging.error(f"Failed to install AriesUI dependencies: {str(e)}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Unexpected error: {str(e)}")
+                logging.error(f"Unexpected error installing dependencies: {str(e)}")
+        
+        # Run in separate thread to not block UI
+        Thread(target=install_deps, daemon=True).start()
+    
+    def start_ui_web_only(self):
+        """Start AriesUI in web-only mode (without Electron)"""
         success = self.start_process(
-            "ui",
-            ["npm", "run", "electron-dev"],
+            "ui_web",
+            ["npm", "run", "dev"],
             cwd="ui/ariesUI"
         )
         
         if success:
-            self.ui_status.config(text="Running")
-            logging.info("Started AriesUI in development mode")
+            self.ui_status.config(text="Running (Web)")
+            logging.info("Started AriesUI in web-only mode")
+            
+            # Open browser after a delay
+            def open_browser():
+                time.sleep(3)
+                import webbrowser
+                webbrowser.open("http://localhost:3000")
+            
+            Thread(target=open_browser, daemon=True).start()
+            
+            messagebox.showinfo("AriesUI Started", 
+                              "AriesUI is starting in web mode.\n\n"
+                              "It will open in your browser at:\n"
+                              "http://localhost:3000\n\n"
+                              "Please wait a moment for the server to start.")
+        else:
+            messagebox.showerror("Error", "Failed to start AriesUI in web mode")
+            logging.error("Failed to start AriesUI in web mode")
+    
+    def start_electron_client(self):
+        """Start Electron client separately (connects to existing web server)"""
+        try:
+            # Check if web server is running
+            import requests
+            try:
+                response = requests.get("http://localhost:3000", timeout=2)
+                if response.status_code != 200:
+                    messagebox.showerror("Error", "Web server is not running on port 3000")
+                    return
+            except requests.RequestException:
+                messagebox.showerror("Error", "Web server is not responding on port 3000")
+                return
+            
+            # Start Electron client
+            success = self.start_process(
+                "electron_client",
+                ["npm", "run", "electron"],
+                cwd="ui/ariesUI"
+            )
+            
+            if success:
+                logging.info("Started Electron client")
+                messagebox.showinfo("Electron Started", "Electron desktop app is starting...")
+            else:
+                messagebox.showerror("Error", "Failed to start Electron client")
+                
+        except ImportError:
+            messagebox.showwarning("Warning", "requests library not available. Starting Electron without web server check...")
+            
+            # Try to start Electron anyway
+            success = self.start_process(
+                "electron_client",
+                ["npm", "run", "electron"],
+                cwd="ui/ariesUI"
+            )
+            
+            if success:
+                logging.info("Started Electron client (without web server check)")
+            else:
+                messagebox.showerror("Error", "Failed to start Electron client")
+    
+    def cleanup_ui_processes(self):
+        """Clean up any running UI processes and temp files"""
+        try:
+            # Stop any existing UI processes
+            for proc_name in ["ui", "ui_web", "electron_client"]:
+                if proc_name in self.processes:
+                    self.stop_process(proc_name)
+            
+            # Kill any Node.js processes that might be holding the port
+            try:
+                for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                    if proc.info['name'] in ['node.exe', 'node'] and proc.info['cmdline']:
+                        cmdline = ' '.join(proc.info['cmdline'])
+                        if 'next dev' in cmdline or 'electron' in cmdline:
+                            logging.info(f"Killing hanging Node.js process: {proc.info['pid']}")
+                            proc.kill()
+            except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                logging.warning(f"Could not kill process: {e}")
+            
+            # Clean up .next directory if it exists and is causing issues
+            next_dir = "ui/ariesUI/.next"
+            if os.path.exists(next_dir):
+                try:
+                    shutil.rmtree(next_dir)
+                    logging.info("Cleaned up .next directory")
+                except (OSError, PermissionError) as e:
+                    logging.warning(f"Could not clean .next directory: {e}")
+            
+            # Wait for processes to fully terminate
+            time.sleep(2)
+            
+        except Exception as e:
+            logging.error(f"Error during UI cleanup: {e}")
+    
+    def check_ui_status(self):
+        """Check AriesUI status and dependencies"""
+        status_info = []
+        
+        # Check if directory exists
+        if os.path.exists("ui/ariesUI"):
+            status_info.append("✅ AriesUI directory found")
+        else:
+            status_info.append("❌ AriesUI directory not found")
+            
+        # Check if npm is available
+        if shutil.which("npm"):
+            status_info.append("✅ npm is available")
+        else:
+            status_info.append("❌ npm not found")
+            
+        # Check if dependencies are installed
+        if os.path.exists("ui/ariesUI/node_modules"):
+            status_info.append("✅ Dependencies installed")
+        else:
+            status_info.append("❌ Dependencies not installed")
+            
+        # Check if electron is available
+        if os.path.exists("ui/ariesUI/node_modules/electron"):
+            status_info.append("✅ Electron available")
+        else:
+            status_info.append("❌ Electron not installed")
+            
+        # Check running processes
+        ui_running = "ui" in self.processes and self.processes["ui"].poll() is None
+        web_running = "ui_web" in self.processes and self.processes["ui_web"].poll() is None
+        
+        if ui_running:
+            status_info.append("✅ UI process running (Electron)")
+        elif web_running:
+            status_info.append("✅ UI process running (Web)")
+        else:
+            status_info.append("❌ No UI process running")
+            
+        messagebox.showinfo("UI Status", "\n".join(status_info))
 
     def stop_ui(self):
-        """Stop AriesUI"""
-        self.stop_process("ui", force=True)
-        self.ui_status.config(text="Not Running")
-        logging.info("Stopped AriesUI")
+        """Stop AriesUI with full cleanup"""
+        stopped = False
+        
+        # Stop all UI-related processes
+        ui_processes = ["ui", "ui_web", "electron_client"]
+        for proc_name in ui_processes:
+            if self.stop_process(proc_name, force=True):
+                stopped = True
+        
+        # Perform cleanup
+        self.cleanup_ui_processes()
+        
+        if stopped:
+            self.ui_status.config(text="Not Running")
+            logging.info("Stopped AriesUI and cleaned up processes")
+        else:
+            logging.warning("No AriesUI process found to stop")
 
     def build_ui(self):
         """Build AriesUI for production"""
@@ -661,6 +970,202 @@ class ProcessManager:
 
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
+    
+    def start_starsim(self):
+        """Start StarSim physics engine - Simple approach"""
+        if not os.path.exists("int/StarSim"):
+            messagebox.showerror("Error", "StarSim directory not found at int/StarSim")
+            return
+        
+        # Simple approach: just open a command prompt and run the demo
+        try:
+            # Create a simple run script
+            run_script = """@echo off
+echo ===============================================
+echo StarSim Integration Demo
+echo ===============================================
+echo.
+echo Starting StarSim-Comms integration demo...
+echo.
+echo Current directory: %CD%
+echo.
+cd int\\StarSim
+echo Changed to StarSim directory: %CD%
+echo.
+echo Running integration demo...
+python run_integration_demo.py
+echo.
+echo Demo finished. Press any key to close...
+pause
+"""
+            
+            with open("run_starsim_demo.bat", 'w') as f:
+                f.write(run_script)
+            
+            # Run the demo script in a new console using start command
+            os.system("start cmd /c run_starsim_demo.bat")
+            
+            self.starsim_status.config(text="Running")
+            logging.info("Started StarSim integration demo")
+            
+            messagebox.showinfo("StarSim Started", 
+                              "StarSim integration demo started in new console window.\n\n"
+                              "The demo will start all components automatically.")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to start StarSim demo: {str(e)}")
+            logging.error(f"StarSim demo failed: {str(e)}")
+    
+    def stop_starsim(self):
+        """Stop StarSim physics engine"""
+        if self.stop_process("starsim"):
+            self.starsim_status.config(text="Not Running")
+            logging.info("Stopped StarSim physics engine")
+    
+    def build_starsim(self):
+        """Build StarSim - Simple direct approach"""
+        if not os.path.exists("int/StarSim"):
+            messagebox.showerror("Error", "StarSim directory not found at int/StarSim")
+            return
+        
+        # Simple approach: just open a command prompt in the right directory
+        try:
+            # Create a simple build script
+            build_script = """@echo off
+echo ===============================================
+echo StarSim Build Script
+echo ===============================================
+echo.
+echo This will build ParsecCore for StarSim integration
+echo.
+echo Current directory: %CD%
+echo.
+echo Step 1: Navigate to ParsecCore directory
+cd int\\StarSim\\ParsecCore
+echo.
+echo Step 2: Create build directory
+if exist build rmdir /s /q build
+mkdir build
+cd build
+echo.
+echo Step 3: Configure with CMake
+cmake .. -G "Visual Studio 17 2022"
+if errorlevel 1 (
+    echo.
+    echo CMake configuration failed!
+    echo Make sure you have Visual Studio 2022 and CMake installed
+    pause
+    exit /b 1
+)
+echo.
+echo Step 4: Build the project
+cmake --build .
+if errorlevel 1 (
+    echo.
+    echo Build failed!
+    pause
+    exit /b 1
+)
+echo.
+echo ===============================================
+echo BUILD SUCCESSFUL!
+echo ===============================================
+echo.
+echo StarSim ParsecCore has been built successfully
+echo You can now use HyperThreader to start StarSim
+echo.
+pause
+"""
+            
+            with open("build_starsim_simple.bat", 'w') as f:
+                f.write(build_script)
+            
+            # Run the build script in a new console using start command
+            os.system("start cmd /c build_starsim_simple.bat")
+            
+            messagebox.showinfo("StarSim Build", 
+                              "StarSim build script started in new console window.\n\n"
+                              "Follow the prompts to build ParsecCore.\n\n"
+                              "This approach is simpler and more reliable.")
+            
+            logging.info("Started StarSim build script")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to start build script: {str(e)}")
+            logging.error(f"Build script failed: {str(e)}")
+    
+    def manual_build_starsim(self):
+        """Open command prompt for manual StarSim build"""
+        build_dir = "int/StarSim/ParsecCore/build"
+        
+        # Create build directory if it doesn't exist
+        if not os.path.exists(build_dir):
+            os.makedirs(build_dir, exist_ok=True)
+        
+        # Create batch file for manual build
+        batch_content = f"""@echo off
+echo Manual ParsecCore Build
+echo ======================
+cd /d "{os.path.abspath(build_dir)}"
+echo.
+echo Current directory: %CD%
+echo.
+echo Step 1: Run CMake configuration
+echo cmake .. -G "Visual Studio 17 2022"
+echo.
+echo Step 2: Build the project
+echo cmake --build .
+echo.
+echo Step 3: Run tests (optional)
+echo ctest
+echo.
+echo Press any key to start CMake configuration...
+pause
+cmake .. -G "Visual Studio 17 2022"
+if errorlevel 1 (
+    echo CMake configuration failed!
+    pause
+    exit /b 1
+)
+echo.
+echo CMake configuration completed. Press any key to build...
+pause
+cmake --build .
+if errorlevel 1 (
+    echo Build failed!
+    pause
+    exit /b 1
+)
+echo.
+echo Build completed successfully!
+echo.
+echo You can now run tests with: ctest
+echo.
+pause
+"""
+        
+        batch_file = "manual_build_starsim.bat"
+        with open(batch_file, 'w') as f:
+            f.write(batch_content)
+        
+        # Open command prompt with the batch file
+        subprocess.Popen(f'cmd /c "{batch_file}"', shell=True, creationflags=subprocess.CREATE_NEW_CONSOLE)
+        
+        messagebox.showinfo("Manual Build", 
+                          "Manual build console opened.\n\n"
+                          "Follow the prompts to build ParsecCore step by step.\n\n"
+                          "This allows you to see progress and troubleshoot any issues.")
+        
+        logging.info("Opened manual build console")
+    
+    def run_starsim_demo(self):
+        """Run StarSim integration demo - Simple approach"""
+        if not os.path.exists("int/StarSim"):
+            messagebox.showerror("Error", "StarSim directory not found at int/StarSim")
+            return
+        
+        # Just use the same simple approach as start_starsim
+        self.start_starsim()
 
 if __name__ == "__main__":
     manager = ProcessManager()

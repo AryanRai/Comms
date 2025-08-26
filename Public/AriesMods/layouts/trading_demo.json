@@ -1,0 +1,215 @@
+{
+  "name": "Trading Demo",
+  "description": "Comprehensive trading dashboard with portfolio monitoring, stock prices, and market status",
+  "author": "Comms Trading Team",
+  "version": "1.0.0",
+  "created": "2024-01-15T10:00:00Z",
+  "tags": ["trading", "portfolio", "stocks", "market", "alpaca"],
+  "layout": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 5,
+      "i": "portfolio-monitor-1",
+      "type": "ariesmod",
+      "component": "portfolio-monitor",
+      "title": "Portfolio Overview",
+      "config": {
+        "initialValue": 100000,
+        "updateInterval": 1000
+      }
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "w": 3,
+      "h": 4,
+      "i": "market-status-1",
+      "type": "ariesmod",
+      "component": "market-status",
+      "title": "Market Status",
+      "config": {
+        "showPreMarket": true,
+        "timezone": "EST"
+      }
+    },
+    {
+      "x": 7,
+      "y": 0,
+      "w": 3,
+      "h": 4,
+      "i": "spy-price-1",
+      "type": "ariesmod",
+      "component": "stock-price-monitor",
+      "title": "SPY - S&P 500",
+      "config": {
+        "symbol": "SPY",
+        "showTechnicals": true,
+        "alertThreshold": 0.02
+      }
+    },
+    {
+      "x": 10,
+      "y": 0,
+      "w": 3,
+      "h": 4,
+      "i": "qqq-price-1",
+      "type": "ariesmod",
+      "component": "stock-price-monitor",
+      "title": "QQQ - NASDAQ",
+      "config": {
+        "symbol": "QQQ",
+        "showTechnicals": true,
+        "alertThreshold": 0.02
+      }
+    },
+    {
+      "x": 0,
+      "y": 5,
+      "w": 3,
+      "h": 4,
+      "i": "aapl-price-1",
+      "type": "ariesmod",
+      "component": "stock-price-monitor",
+      "title": "AAPL - Apple",
+      "config": {
+        "symbol": "AAPL",
+        "showTechnicals": true,
+        "alertThreshold": 0.03
+      }
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "w": 3,
+      "h": 4,
+      "i": "msft-price-1",
+      "type": "ariesmod",
+      "component": "stock-price-monitor",
+      "title": "MSFT - Microsoft",
+      "config": {
+        "symbol": "MSFT",
+        "showTechnicals": true,
+        "alertThreshold": 0.03
+      }
+    },
+    {
+      "x": 6,
+      "y": 5,
+      "w": 3,
+      "h": 4,
+      "i": "nvda-price-1",
+      "type": "ariesmod",
+      "component": "stock-price-monitor",
+      "title": "NVDA - NVIDIA",
+      "config": {
+        "symbol": "NVDA",
+        "showTechnicals": true,
+        "alertThreshold": 0.05
+      }
+    },
+    {
+      "x": 9,
+      "y": 5,
+      "w": 3,
+      "h": 4,
+      "i": "googl-price-1",
+      "type": "ariesmod",
+      "component": "stock-price-monitor",
+      "title": "GOOGL - Google",
+      "config": {
+        "symbol": "GOOGL",
+        "showTechnicals": true,
+        "alertThreshold": 0.03
+      }
+    },
+    {
+      "x": 4,
+      "y": 4,
+      "w": 3,
+      "h": 4,
+      "i": "tsla-price-1",
+      "type": "ariesmod",
+      "component": "stock-price-monitor",
+      "title": "TSLA - Tesla",
+      "config": {
+        "symbol": "TSLA",
+        "showTechnicals": true,
+        "alertThreshold": 0.05
+      }
+    }
+  ],
+  "stream_mappings": {
+    "portfolio-monitor-1": [
+      "portfolio_value",
+      "buying_power",
+      "cash",
+      "portfolio_heat",
+      "risk_alert"
+    ],
+    "market-status-1": [
+      "market_open",
+      "market_hours",
+      "SPY_price",
+      "QQQ_price"
+    ],
+    "spy-price-1": [
+      "SPY_price",
+      "SPY_volume",
+      "SPY_signal",
+      "SPY_signal_strength"
+    ],
+    "qqq-price-1": [
+      "QQQ_price",
+      "QQQ_volume",
+      "QQQ_signal",
+      "QQQ_signal_strength"
+    ],
+    "aapl-price-1": [
+      "AAPL_price",
+      "AAPL_volume",
+      "AAPL_signal",
+      "AAPL_signal_strength"
+    ],
+    "msft-price-1": [
+      "MSFT_price",
+      "MSFT_volume",
+      "MSFT_signal",
+      "MSFT_signal_strength"
+    ],
+    "nvda-price-1": [
+      "NVDA_price",
+      "NVDA_volume",
+      "NVDA_signal",
+      "NVDA_signal_strength"
+    ],
+    "googl-price-1": [
+      "GOOGL_price",
+      "GOOGL_volume",
+      "GOOGL_signal",
+      "GOOGL_signal_strength"
+    ],
+    "tsla-price-1": [
+      "TSLA_price",
+      "TSLA_volume",
+      "TSLA_signal",
+      "TSLA_signal_strength"
+    ]
+  },
+  "metadata": {
+    "recommended_window_size": {
+      "width": 1400,
+      "height": 900
+    },
+    "theme": "trading",
+    "refresh_rate": 1000,
+    "data_sources": [
+      "alpaca_trading_module"
+    ],
+    "requirements": [
+      "Alpaca API credentials",
+      "Trading module enabled in Engine"
+    ]
+  }
+}
