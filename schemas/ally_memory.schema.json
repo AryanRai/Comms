@@ -1,0 +1,238 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://chyappy.v3.0/schemas/ally_memory.json",
+  "title": "Ally Memory Message",
+  "description": "Schema for memory storage and retrieval messages in Chyappy v3.0 protocol",
+  "type": "object",
+  "required": [
+    "type",
+    "source",
+    "action",
+    "msg-sent-timestamp"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "ally_memory",
+      "description": "Message type identifier"
+    },
+    "source": {
+      "type": "string",
+      "description": "Source component handling memory operations",
+      "examples": ["ally_overlay", "memory_service", "cognitive_processor"]
+    },
+    "action": {
+      "type": "string",
+      "enum": ["store", "retrieve", "update", "delete", "search"],
+      "description": "Memory operation to perform"
+    },
+    "memory_type": {
+      "type": "string",
+      "enum": ["episodic", "semantic", "procedural", "working", "tool_execution"],
+      "description": "Classification of memory type"
+    },
+    "memory_id": {
+      "type": "string",
+      "description": "Unique identifier for the memory entry"
+    },
+    "content": {
+      "type": "object",
+      "description": "Memory content (for store/update operations)",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Textual content of the memory"
+        },
+        "embedding": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Vector embedding for similarity search"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional metadata about the memory",
+          "properties": {
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "user_id": {
+              "type": "string"
+            },
+            "session_id": {
+              "type": "string"
+            },
+            "importance": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "location": {
+              "type": "object",
+              "properties": {
+                "x": {"type": "number"},
+                "y": {"type": "number"},
+                "z": {"type": "number"}
+              }
+            }
+          },
+          "additionalProperties": true
+        },
+        "relationships": {
+          "type": "array",
+          "description": "Relationships to other memories",
+          "items": {
+            "type": "object",
+            "properties": {
+              "memory_id": {
+                "type": "string"
+              },
+              "relationship_type": {
+                "type": "string",
+                "examples": ["caused_by", "followed_by", "related_to", "contradicts"]
+              },
+              "strength": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            },
+            "required": ["memory_id", "relationship_type"]
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "query": {
+      "type": "object",
+      "description": "Query parameters (for retrieve/search operations)",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Text query for semantic search"
+        },
+        "embedding": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Vector embedding for similarity search"
+        },
+        "filters": {
+          "type": "object",
+          "description": "Filters to apply to the search",
+          "properties": {
+            "memory_type": {
+              "type": "string"
+            },
+            "user_id": {
+              "type": "string"
+            },
+            "session_id": {
+              "type": "string"
+            },
+            "time_range": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "end": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "importance_threshold": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          },
+          "additionalProperties": true
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "default": 10,
+          "description": "Maximum number of results to return"
+        },
+        "similarity_threshold": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.7,
+          "description": "Minimum similarity score for results"
+        }
+      }
+    },
+    "results": {
+      "type": "array",
+      "description": "Query results (for retrieve/search responses)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "memory_id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "object"
+          },
+          "similarity_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "relevance_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        "required": ["memory_id", "content"]
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "Context information for the memory operation",
+      "properties": {
+        "user_id": {
+          "type": "string"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "conversation_id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "msg-sent-timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when message was sent"
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Optional correlation ID for message tracking"
+    }
+  },
+  "additionalProperties": false
+}

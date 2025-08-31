@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://chyappy.v3.0/schemas/tool_call.json",
+  "title": "Tool Call Message",
+  "description": "Schema for tool execution request messages in Chyappy v3.0 protocol",
+  "type": "object",
+  "required": [
+    "type",
+    "source",
+    "tool_name",
+    "parameters",
+    "execution_id",
+    "msg-sent-timestamp"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "tool_call",
+      "description": "Message type identifier"
+    },
+    "source": {
+      "type": "string",
+      "description": "Source component that initiated the tool call",
+      "examples": ["ally_overlay", "engine", "external_client"]
+    },
+    "tool_name": {
+      "type": "string",
+      "description": "Name of the tool to execute",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
+      "examples": ["robot_navigate", "file_read", "web_scrape", "speak"]
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Parameters to pass to the tool",
+      "additionalProperties": true
+    },
+    "execution_id": {
+      "type": "string",
+      "description": "Unique identifier for this tool execution",
+      "pattern": "^exec_[a-zA-Z0-9_-]+$",
+      "examples": ["exec_12345", "exec_nav_001", "exec_abc123"]
+    },
+    "context": {
+      "type": "object",
+      "description": "Execution context information",
+      "properties": {
+        "user": {
+          "type": "string",
+          "description": "User identifier who initiated the request"
+        },
+        "session": {
+          "type": "string",
+          "description": "Session identifier"
+        },
+        "conversation_id": {
+          "type": "string",
+          "description": "Conversation context identifier"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "normal", "high", "critical"],
+          "default": "normal",
+          "description": "Execution priority level"
+        },
+        "timeout": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Execution timeout in seconds"
+        },
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "default": 0,
+          "description": "Number of retry attempts allowed"
+        }
+      },
+      "additionalProperties": true
+    },
+    "security": {
+      "type": "object",
+      "description": "Security and validation requirements",
+      "properties": {
+        "require_confirmation": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether user confirmation is required before execution"
+        },
+        "safety_level": {
+          "type": "string",
+          "enum": ["safe", "moderate", "dangerous", "critical"],
+          "default": "safe",
+          "description": "Safety classification of the tool call"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Required permissions for tool execution"
+        }
+      }
+    },
+    "msg-sent-timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when message was sent",
+      "examples": ["2025-07-27T19:25:35.123Z"]
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Optional correlation ID for message tracking"
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "Optional workflow identifier for multi-tool orchestration"
+    }
+  },
+  "additionalProperties": false
+}

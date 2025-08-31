@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://chyappy.v3.0/schemas/tool_result.json",
+  "title": "Tool Result Message",
+  "description": "Schema for tool execution result messages in Chyappy v3.0 protocol",
+  "type": "object",
+  "required": [
+    "type",
+    "execution_id",
+    "tool_name",
+    "status",
+    "msg-sent-timestamp"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "tool_result",
+      "description": "Message type identifier"
+    },
+    "execution_id": {
+      "type": "string",
+      "description": "Unique identifier matching the original tool_call",
+      "pattern": "^exec_[a-zA-Z0-9_-]+$"
+    },
+    "tool_name": {
+      "type": "string",
+      "description": "Name of the tool that was executed",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "error", "timeout", "cancelled", "partial"],
+      "description": "Execution status"
+    },
+    "result": {
+      "description": "Tool execution result data (only present on success or partial)",
+      "oneOf": [
+        { "type": "object" },
+        { "type": "array" },
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "error": {
+      "type": "object",
+      "description": "Error information (only present on error status)",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code identifier",
+          "examples": ["TOOL_NOT_FOUND", "INVALID_PARAMETERS", "PERMISSION_DENIED", "EXECUTION_FAILED", "TIMEOUT"]
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message"
+        },
+        "details": {
+          "type": "object",
+          "description": "Additional error details",
+          "additionalProperties": true
+        },
+        "stack_trace": {
+          "type": "string",
+          "description": "Stack trace for debugging (optional)"
+        }
+      },
+      "required": ["code", "message"],
+      "additionalProperties": false
+    },
+    "execution_info": {
+      "type": "object",
+      "description": "Execution metadata and performance information",
+      "properties": {
+        "start_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When execution started"
+        },
+        "end_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When execution completed"
+        },
+        "duration_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Execution duration in milliseconds"
+        },
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of retries attempted"
+        },
+        "resource_usage": {
+          "type": "object",
+          "properties": {
+            "cpu_time_ms": {
+              "type": "number",
+              "minimum": 0
+            },
+            "memory_peak_mb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "network_bytes": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "string",
+      "description": "Component that executed the tool",
+      "examples": ["tool_executor", "robot_controller", "web_service"]
+    },
+    "msg-sent-timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when result message was sent"
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Optional correlation ID matching the original request"
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "Optional workflow identifier for multi-tool orchestration"
+    },
+    "next_actions": {
+      "type": "array",
+      "description": "Suggested next actions or follow-up tool calls",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tool_name": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": ["tool_name", "parameters"]
+      }
+    }
+  },
+  "additionalProperties": false,
+  "if": {
+    "properties": {
+      "status": {
+        "const": "error"
+      }
+    }
+  },
+  "then": {
+    "required": ["error"]
+  }
+}

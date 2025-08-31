@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://chyappy.v3.0/schemas/ally_status.json",
+  "title": "Ally Status Message",
+  "description": "Schema for system status messages in Chyappy v3.0 protocol",
+  "type": "object",
+  "required": [
+    "type",
+    "source",
+    "component",
+    "status",
+    "msg-sent-timestamp"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "ally_status",
+      "description": "Message type identifier"
+    },
+    "source": {
+      "type": "string",
+      "description": "Source component reporting status",
+      "examples": ["ally_overlay", "robot_controller", "memory_service", "tool_executor"]
+    },
+    "component": {
+      "type": "string",
+      "description": "Component being reported on",
+      "examples": ["cognitive_processor", "robot_navigation", "speech_service", "tool_manager"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["online", "offline", "degraded", "error", "initializing", "shutting_down"],
+      "description": "Current status of the component"
+    },
+    "health": {
+      "type": "object",
+      "description": "Detailed health information",
+      "properties": {
+        "cpu_usage": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 100.0,
+          "description": "CPU usage percentage"
+        },
+        "memory_usage": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Memory usage in MB"
+        },
+        "uptime": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Uptime in seconds"
+        },
+        "error_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of errors in recent period"
+        },
+        "last_error": {
+          "type": "object",
+          "properties": {
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "message": {
+              "type": "string"
+            },
+            "code": {
+              "type": "string"
+            }
+          }
+        },
+        "performance_metrics": {
+          "type": "object",
+          "properties": {
+            "requests_per_second": {
+              "type": "number",
+              "minimum": 0
+            },
+            "average_response_time": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Average response time in milliseconds"
+            },
+            "success_rate": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Success rate as a fraction"
+            }
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "Current capabilities of the component",
+      "items": {
+        "type": "string"
+      },
+      "examples": [
+        ["navigation", "manipulation", "perception"],
+        ["speech_synthesis", "speech_recognition"],
+        ["tool_execution", "workflow_orchestration"]
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "description": "Current configuration settings",
+      "additionalProperties": true
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "Status of component dependencies",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["available", "unavailable", "degraded"]
+          },
+          "version": {
+            "type": "string"
+          },
+          "last_check": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["name", "status"]
+      }
+    },
+    "alerts": {
+      "type": "array",
+      "description": "Active alerts or warnings",
+      "items": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": ["info", "warning", "error", "critical"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": ["level", "message", "timestamp"]
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "Additional context information",
+      "additionalProperties": true
+    },
+    "msg-sent-timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when message was sent"
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Optional correlation ID for message tracking"
+    }
+  },
+  "additionalProperties": false
+}
