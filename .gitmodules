@@ -4,3 +4,6 @@
 [submodule "int/StarSim"]
 	path = int/StarSim
 	url = https://github.com/AryanRai/StarSim.git
+[submodule "int/chyappy"]
+	path = int/chyappy
+	url = https://github.com/AryanRai/chyappy.git

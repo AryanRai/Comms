@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(cmake:*)",
+      "Bash(ls:*)",
+      "Bash(if exist build rmdir /s /q build)",
+      "Bash(rmdir:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": []
+  }
+}
