@@ -250,59 +250,14 @@ class UnifiedStreamHandler:
         self.connection_manager = ConnectionManager()
         self.physics_manager = PhysicsSimulationManager()
         
-    async def start(self):
-        """Start the stream handler and all subsystems"""
-        global tool_handlers_started
-        
-        if not tool_handlers_started:
-            await start_tool_handlers()
-            tool_handlers_started = True
-            logger.info("Tool message handlers started")
-        
-        # Set up WebSocket server
-        self.app = App()
-        self.app.ws(
-            "/*",
-            {
-                "compression": CompressOptions.SHARED_COMPRESSOR,
-                "max_payload_length": 16 * 1024 * 1024,  # 16MB payload limit
-                "idle_timeout": 60,
-                "open": self.ws_open,
-                "message": self.ws_message,
-                "close": self.ws_close,
-            }
-        )
-        
-        # HTTP routes
-        self.app.any("/", lambda res, req: res.end("Stream Handler v4.0 - Tool Calling + Physics + Ally"))
-        self.app.any("/status", lambda res, req: res.end(json.dumps({
-            "status": "active",
-            "version": "4.0",
-            "connections": len(self.connection_manager.connections),
-            "physics_simulations": len(self.physics_manager.simulations),
-            "tool_support": True,
-            "supported_message_types": message_registry.list_types(),
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })))
-        
-        logger.info(f"Starting Unified Stream Handler v4.0 on port {self.port}")
-        self.app.listen(self.port, lambda config: logger.info(f"Listening on http://localhost:{self.port}"))
+    def start_sync(self):
+        """Start the stream handler (synchronous version for socketify compatibility)"""
         self.running = True
-        
-        # Run the server
-        self.app.run()
+        logger.info(f"Unified Stream Handler v4.0 initialized on port {self.port}")
     
-    async def stop(self):
-        """Stop the stream handler and all subsystems"""
-        global tool_handlers_started
-        
+    def stop_sync(self):
+        """Stop the stream handler (synchronous version)"""
         self.running = False
-        
-        if tool_handlers_started:
-            await stop_tool_handlers()
-            tool_handlers_started = False
-            logger.info("Tool message handlers stopped")
-        
         logger.info("Unified Stream Handler v4.0 stopped")
     
     def ws_open(self, ws):
@@ -817,13 +772,65 @@ if __name__ == "__main__":
         # Enhanced mode - use new unified handler class
         logger.info("Running in unified mode with tool calling, physics, and Ally support")
         
-        async def main():
-            handler = UnifiedStreamHandler(args.port)
-            try:
-                await handler.start()
-            except KeyboardInterrupt:
-                logger.info("Received interrupt signal")
-            finally:
-                await handler.stop()
+        # Create and initialize the handler
+        handler = UnifiedStreamHandler(args.port)
         
-        asyncio.run(main())
+        # Initialize async components
+        async def init_async_components():
+            global tool_handlers_started
+            if not tool_handlers_started:
+                await start_tool_handlers()
+                tool_handlers_started = True
+                logger.info("Tool message handlers started")
+        
+        # Run async initialization
+        asyncio.run(init_async_components())
+        
+        # Set up the app with socketify's event loop
+        app = App()
+        app.ws(
+            "/*",
+            {
+                "compression": CompressOptions.SHARED_COMPRESSOR,
+                "max_payload_length": 16 * 1024 * 1024,
+                "idle_timeout": 60,
+                "open": handler.ws_open,
+                "message": handler.ws_message,
+                "close": handler.ws_close,
+            }
+        )
+        
+        # HTTP routes
+        app.any("/", lambda res, req: res.end("Stream Handler v4.0 - Tool Calling + Physics + Ally"))
+        app.any("/status", lambda res, req: res.end(json.dumps({
+            "status": "active",
+            "version": "4.0",
+            "connections": len(handler.connection_manager.connections),
+            "physics_simulations": len(handler.physics_manager.simulations),
+            "tool_support": True,
+            "supported_message_types": message_registry.list_types(),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })))
+        
+        # Store app reference in handler for broadcasting
+        handler.app = app
+        
+        logger.info(f"Starting Unified Stream Handler v4.0 on port {args.port}")
+        app.listen(args.port, lambda config: logger.info(f"Listening on http://localhost:{args.port}"))
+        
+        # Let socketify control the event loop
+        try:
+            app.run()
+        except KeyboardInterrupt:
+            logger.info("Received interrupt signal")
+        finally:
+            # Cleanup async components
+            async def cleanup():
+                global tool_handlers_started
+                if tool_handlers_started:
+                    await stop_tool_handlers()
+                    tool_handlers_started = False
+                    logger.info("Tool message handlers stopped")
+            
+            asyncio.run(cleanup())
+            logger.info("Unified Stream Handler v4.0 stopped")
